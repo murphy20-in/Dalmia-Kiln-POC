@@ -1,0 +1,32 @@
+### Review process
+
+Phase 2 was planned first and then reviewed three times. The environment has no agents named `planner`, `cs-product-analyst`, `python-reviewer` or `mle-reviewer`. The planner role was run with the `Plan` agent. The three reviewer roles were run with general-purpose agents, each briefed with its role's remit. All reviews were read-only. `database-reviewer` was not invoked because Phase 2 adds no database (Parquet + CSV only).
+
+| Role | Verdict | Outcome |
+|---|---|---|
+| planner | Plan delivered | Adopted. Two changes: the transition window is measured from the data rather than a fixed ±60 min, and the operating-state timeline is composite. |
+| cs-product-analyst | 8 questions: 5 YES, 3 PARTIAL | Gaps addressed. See the table below. |
+| python-reviewer | No critical issues; 1 HIGH, 4 MEDIUM, 5 LOW | All fixed. |
+| mle-reviewer | PASS-WITH-CONDITIONS; 3 HIGH, 5 MEDIUM, 2 LOW | Conditions cleared. Two naming items were kept, with reasons below. |
+
+### Findings and disposition
+
+| # | Source | Finding | Disposition |
+|---|---|---|---|
+| 1 | MLE H1 + Python H1/M2 | The restart-ramp threshold (running P05) was low and partly circular. The ramp search crossed later stops, the fallback median (714 min) was inflated, and the ramp was measured in rows rather than clock minutes. | **Fixed.** The ramp now ends when the signal regains P25 of *its own* last 1,440 pre-stop RUNNING minutes for 60 clock minutes. The search stops at the next stop. A level not regained is censored and the whole run counts as transition. The fallback is the median of uncensored ramps and is capped at run length. A post-ramp sensitivity analysis (6/12/24 h) was added: the P90 median shift is ≤ 0.05 MAD. |
+| 2 | MLE H2 | September state rested on Kiln MD alone, using a fixed fallback ramp. | **Fixed.** Kiln-IA hood temperature is now a feed-independent secondary ramp signal: the 2025-09-10 restart measures 1,016 min. `state_basis` is recorded per minute, and a sensitivity variant excludes minutes without Kiln-I feed evidence. |
+| 3 | MLE H3 + Python M4/L7 | Confidence was too lenient: bands inherited the overall grade, C4/C5 used Phase 1 all-row statistics, `n_observations` held total cells, and C6 treated missing data as a pass or fail without saying so. | **Fixed.** Confidence is now graded per population on its own INCLUDED values. C5, C6 or C7 failing gives LOW. C6 needs ≥ 2 evaluable months. Tentative bands are capped at MEDIUM. `n_observations` is now the population size. |
+| 4 | MLE M4 | The drift denominator had no floor, and a prior of under a month was accepted. | **Fixed.** The prior scale is max(scaled MAD, IQR/1.349, resolution, 1% of the median). At least 30 prior days are required, otherwise the period is NOT EVALUABLE. The logic is shared (`p2common.prior_compare`). |
+| 5 | MLE M5 | The day-resampled CI understated uncertainty. | **Fixed.** It is now a week-block bootstrap, and the observed monthly min/max median is reported next to the CI. |
+| 6 | MLE M6 | Regime evidence was fragile: BIC on autocorrelated 1-minute data. | **Fixed.** The GMM is fitted on 10-minute medians with a 20-resample day-block bootstrap. Only 40% of resamples reproduce 3 bands, so the regimes are **TENTATIVE**. The single running baseline stays primary. |
+| 7 | MLE M7 | Single-tag flatlines were not flagged. | **Fixed.** Added `tag_flatline` (SUSPECT, not invalid), a matching sensitivity variant, and a C4 criterion computed on INCLUDED values. |
+| 8 | MLE M8 | Full-period fits could leak into later phases. | **Documented.** A `fit_window` column appears on every statistic and band. The report and README state that later phases must refit on a training window. |
+| 9 | MLE L9 | The names `lower_reference`/`upper_reference` and HIGH/READY could read as limits or health. | **Partly kept.** These names are **mandated by the Phase 2 specification** (reference schema and confidence/readiness vocabularies). The mitigations: every band row carries `band_label` ("NOT AN ENGINEERING / ALARM / CONTROL LIMIT"), the confidence condition says "describes baseline evidence, not equipment health", and the report has a plain-language glossary. Zero-width robust bands (MAD = 0) are now NaN. |
+| 10 | MLE L10 | Validation gaps: no G5 evidence, and some checks only searched code for strings. | **Fixed.** New checks: ramp ≤ run, no curated value in stop/transition minutes, curated count = INCLUDED count, P05 ≤ median ≤ P95, MAD=0 → NaN band, n_observations, fit_window, regime bootstrap, sensitivity coverage. The trailing regime median is recomputed at 100 points, and a direct no-look-ahead test (erasing future values) was added. G5 is recorded by `run_phase2.py --clean`, including byte-level determinism against the previous run. |
+| 11 | Python M3 | Feed-band populations did not cover September, and nothing said so. | **Fixed.** Added a `BASELINE_UNBANDED` population and a `band_coverage_of_running_pct` column. |
+| 12 | Python M5 | Re-running steps out of order could leave stale labels. | **Fixed.** `build_quality_masks.py` now drops every downstream column before recomputing. |
+| 13 | Python L6/L8/L9/L10 | GOOD cells carried an informational reason; the validator had a datetime/CWD fragility; the cache ignored parser changes; the PCA subset constant guard was missing. | **Fixed.** The docstring now documents informational reasons, the validator uses `isoformat` and `Path(__file__)`, the cache key includes the Phase 1 parser hash, and PCA filters on the complete-case subset. |
+| 14 | Product Q6 | No "current reference state", and Kiln-I ends earlier than the other datasets. | **Fixed.** Added `baseline_current_reference.csv`: the last 7 days per dataset against the prior-only baseline, with an as-of date per dataset. |
+| 15 | Product 1 | Two Sp.Heat definitions; Kiln-I G duplicates Kiln-IIIA X. | **Documented** as a plant question and flagged in the Phase 3 inputs. |
+| 16 | Product 2/3/5/6 | Two bands per tag, implausible-looking ranges, jargon, and possible health readings. | **Addressed.** P05–P95 is presented as the "typical range" (the robust band is kept in the CSV only). `band_caution` flags negative non-negative units, O2 near atmospheric, and MAD = 0. The report has a plain-language glossary, and the data-quality class is labelled as describing data only. |
+| 17 | Product 9 | Figure titles overlapped. | **Fixed** (`tight_layout(rect=…)`). |

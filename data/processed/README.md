@@ -1,15 +1,19 @@
 # processed/
 
-Empty. It will be populated in Phase 2, after the Phase 1 findings are reviewed.
+Written by Phase 2 (`phase-02-baseline/scripts/`) and reproducible with `run_phase2.py --clean`. The Parquet files are git-ignored.
 
-Intended content: parsed, typed, 1-minute time-indexed copies of the `USE` files listed in `../raw/source_manifest.csv`, one dataset per equipment folder.
+| File | Content |
+|---|---|
+| `<dataset>.parquet` (10 files) | One row per source cell (source file, source row, source column) from the manifest `USE` files. Nothing is resampled, interpolated, unit-converted or deleted. |
+| `operating_state_timeline.parquet` | Per-minute operating state, labelled **POC PROXY — UNCONFIRMED** (composite view), plus `state_basis`. |
+| `regime_timeline.parquet` | Per-minute load band from Kiln-I feed. The bands are **TENTATIVE**. |
 
-Inputs Phase 2 must take from Phase 1 (`phase-01-data-discovery/outputs/`):
+Main columns in `<dataset>.parquet`:
 
-- `process_tag_inventory.csv`: column letters, `original_name`, units, families, confidence
-- `sheet_inventory.csv`: header rows and data start row per file
-- `duplicate_records.csv`, `gap_events.csv`, `flatline_periods.csv`: duplicates to resolve, gaps and frozen windows to mask
-- `data_quality_report.csv`, `outlier_profile.csv`: sentinel and invalid-value candidates
-- `unit_consistency_review.csv`: columns whose unit or label needs plant confirmation
+- **Source trace:** `dataset`, `source_file`, `source_sheet`, `source_row`, `source_column`, `ts`, `ts_raw`
+- **Names:** `original_name`, `normalized_name`, `unit`, `likely_process_family`
+- **Values:** `value` (native numeric only), `raw_value_text` (verbatim non-numeric content), `cell_class`
+- **Masks:** `value_valid`, `quality_flag` (GOOD/SUSPECT/BAD/MISSING), `mask_reason`, `dup_status`, `row_repeat_prev`, `segment_id`, `column_hold`, `tag_flatline`
+- **State and population:** `operating_state`, `state_basis`, `load_regime`, `baseline_status` (INCLUDED / MASKED / EXCLUDED_COLUMN / EXCLUDED_STATE / EXCLUDED_RESOLUTION), `baseline_reason`
 
-Masking and de-duplication rules are **not decided yet**. Phase 2 must document each rule and its justification. Masked values are to be flagged, not deleted, and gaps are not interpolated across.
+The rules are documented in the docstrings of `build_quality_masks.py`, `analyze_operating_state.py` and `calculate_baseline.py`.

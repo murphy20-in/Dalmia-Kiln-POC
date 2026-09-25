@@ -1,9 +1,19 @@
 # curated/
 
-Empty. It will be populated from Phase 2 onward with analysis-ready datasets (for example a time-aligned multi-dataset table for the baseline, KPI and leading-indicator phases).
+Holds only data **approved for baseline analysis**: the `baseline_status == INCLUDED` cells from `../processed/`. It is written by Phase 2 `calculate_baseline.py`. The Parquet files are git-ignored and reproducible.
 
-Constraints carried from Phase 1:
+| File | Content |
+|---|---|
+| `<dataset>_baseline.parquet` (10 files) | 1-minute values that passed every mask, are not column-held, fall in RUNNING_PROXY minutes and are not hourly-resolution. |
 
-- Datasets can be aligned on the shared 1-minute timestamp. Kiln-I has no September 2025 and Kiln-IIIA has no April 2025, so alignment must not bridge those months.
-- No event labels exist. Any label added here must come from plant-supplied records and be traceable to them.
-- Each curated file needs a sidecar note naming its source files (by SHA-256 from `../raw/source_manifest.csv`), the transformation scripts, and the masking rules applied.
+Every row keeps full traceability:
+- **Source:** `source_file`, `source_row`, `source_column`, `ts`
+- **Naming:** `original_name`, `unit`
+- **Masks and labels:** `mask_reason`, `operating_state`, `state_basis`, `load_regime`
+
+Constraints carried forward:
+- Kiln-I has no September 2025 and Kiln-IIIA has no April 2025. Do not bridge those months.
+- There are no event labels. Any label added later must come from plant records and be traceable to them.
+- The operating state is a **POC PROXY — UNCONFIRMED**.
+- Cross-dataset joins are a **POC COMPOSITE PROCESS VIEW — PLANT CONFIRMATION REQUIRED**.
+- This baseline is fitted on the full supplied period. A phase that scores or validates periods must refit on its own training window.

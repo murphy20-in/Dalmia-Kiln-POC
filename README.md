@@ -16,7 +16,7 @@ Reactive Detection
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | Data Discovery | COMPLETE, awaiting review (see `phase-01-data-discovery/reports/`) |
-| 2 | Normal Operating Baseline | NOT STARTED |
+| 2 | Normal Operating Baseline | COMPLETE, awaiting review — baseline PARTIAL (see `phase-02-baseline/reports/`) |
 | 3 | Efficiency Deterioration KPI | NOT STARTED |
 | 4 | Leading Indicators | NOT STARTED |
 | 5 | Alternative Fuel Analysis | NOT STARTED |

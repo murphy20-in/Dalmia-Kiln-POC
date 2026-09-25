@@ -5,3 +5,5 @@ scikit-learn
 openpyxl
 pyarrow
 python-dateutil
+matplotlib
+markdown-it-py
