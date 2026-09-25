@@ -12,6 +12,9 @@ data/curated/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/curated/.gitkeep
+!data/*/README.md
+!data/raw/source_manifest.csv
+!data/raw/dataset_registry.csv
 
 phase-*/outputs/*
 phase-*/reports/*
@@ -19,3 +22,5 @@ phase-*/reports/*
 !phase-*/reports/.gitkeep
 
 reports/generated/*
+
+phase-*/cache/

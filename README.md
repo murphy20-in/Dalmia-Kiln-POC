@@ -15,7 +15,7 @@ Reactive Detection
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | Data Discovery | NOT STARTED |
+| 1 | Data Discovery | COMPLETE, awaiting review (see `phase-01-data-discovery/reports/`) |
 | 2 | Normal Operating Baseline | NOT STARTED |
 | 3 | Efficiency Deterioration KPI | NOT STARTED |
 | 4 | Leading Indicators | NOT STARTED |
@@ -30,7 +30,9 @@ Reactive Detection
 
 ## Source Data
 
-Source data is located in a separate read-only directory and is not copied into this project.
+Source data is located in a separate read-only directory and is not copied into this project:
+`/home/admin1/POPOS-DATA/Codebases/Dalmia/Dalmia/Dalmia/AI Automation(Kiln)` (60 monthly `.xlsx` process-log workbooks, Apr–Sep 2025).
+Phase 1 inventory and data-quality findings: `phase-01-data-discovery/README.md`.
 
 ## Project Structure
 
