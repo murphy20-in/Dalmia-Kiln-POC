@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
 **As of:** 2026-09-25
-**Branch:** `phase-01-data-discovery` (Phase 1 pushed as `b39d374`; Phase 2 not yet committed)
-**Current state:** Phase 1 and Phase 2 are COMPLETE and awaiting review. Phase 3 has not started.
+**Branch:** `phase-03-efficiency-kpi` (Phase 1 `b39d374`, Phase 2 `6e54477`; Phase 3 not yet committed)
+**Current state:** Phases 1–3 are COMPLETE and awaiting review. Phase 4 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -14,7 +14,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 |---|---|---|
 | 1 | Data Discovery | **COMPLETE, awaiting review** |
 | 2 | Normal Operating Baseline | **COMPLETE, awaiting review — baseline PARTIAL** |
-| 3 | Efficiency Deterioration KPI | NOT STARTED |
+| 3 | Efficiency Deterioration KPI | **COMPLETE, awaiting review — KPI PARTIAL** |
 | 4 | Leading Indicators | NOT STARTED |
 | 5 | Alternative Fuel Analysis | NOT STARTED |
 | 6 | Historical Abnormal Events | NOT STARTED |
@@ -182,6 +182,37 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 ### Phase 3 can consume
 `data/curated/*_baseline.parquet`, `data/processed/*.parquet`, the state and regime timelines, and these outputs: `baseline_reference_bands.csv`, `baseline_statistics.csv`, `baseline_stability.csv`, `baseline_temporal_analysis.csv`, `multivariate_baseline.csv`, `baseline_confidence.csv`, `baseline_family_readiness.csv`, `baseline_current_reference.csv`, `column_holds.csv`.
 
-## 8. Next step
+## 8. Phase 3 — Efficiency Deterioration KPI (COMPLETE, awaiting review)
 
-Waiting for the Phase 3 prompt (Efficiency Deterioration KPI), after the Phase 2 findings have been reviewed. Nothing from Phase 2 has been committed yet.
+**KPI status: PARTIAL.** It is a POC Kiln Efficiency Deterioration KPI: a 0–100 POC normalized score, not a plant limit and not a deposit or ring detector. It is conditional on the unconfirmed state proxy, the unconfirmed equipment mapping and the unresolved Sp.Heat definition, and it has no event validation.
+
+- **Pipeline:** `phase-03-efficiency-kpi/scripts/`. Run `../../.venv/bin/python run_phase3.py --clean` (about 80 s).
+  - The pure scoring code is `kpi_core.py`: causal masks, causal state, 10-min buckets, fit and score.
+  - 23 unit tests are in `phase-03-efficiency-kpi/tests/`.
+- **Definition:**
+  - D = 0.5·S_EFFICIENCY (Sp.Heat F and G, one-sided, load-adjusted) + 0.5·mean(combustion, thermal, draft/pressure, stability).
+  - P = trailing 6 h median of D.
+  - KPI = 100·(1 − 2^−e), with 0 = the training median and 50 = the training P95.
+  - 33 tags are included.
+- **Windows:** training 2025-04-01 → 05-31, refitted on its own (the Phase 2 full-period stats are not used). Scoring runs 2025-06-01 → 2025-08-23; there is no September, because Kiln-I is missing.
+- **Result:** out-of-sample median KPI 18.5, rising from 13.1 in June to 23.6 in August.
+  - About 94% of buckets are PROCESS_DEVIATION_LED. The unadjusted Sp.Heat component is 0 in every month, so specific heat did not rise against a high-Sp.Heat April–May reference.
+  - Beyond-reference readings (1%) are mostly SPECIFIC_HEAT_LED.
+  - Levels depend on the window and the weights; the direction of change is robust. A held-out calibration shows much of June's level is fit optimism.
+- **Gates:**
+  - 55/55 validation checks PASS.
+  - Leakage test PASS: 9 cut points, exact.
+  - Sp.Heat F vs G: PASS (Spearman 0.96 / 0.98).
+  - Two clean runs gave byte-identical outputs.
+  - Source, Phase 2 outputs and `data/` are unchanged.
+- **Reviews:** planner, product analyst, python reviewer and MLE reviewer (PASS-WITH-CONDITIONS, conditions cleared). See `phase-03-efficiency-kpi/reviews/REVIEW_LOG.md`.
+- **Phase 4 inputs:**
+  - `outputs/efficiency_deterioration_kpi.parquet`
+  - `kpi_component_scores.parquet`
+  - `kpi_reference.json` (the frozen reference)
+  - `kpi_reference_bands.csv`, `kpi_definition.json`, `kpi_candidate_inventory.csv`
+  - `kpi_core.run_kpi` (leakage-tested scorer)
+
+## 9. Next step
+
+Waiting for review of Phase 3 and the Phase 4 prompt (Leading Indicators). Nothing from Phase 3 has been committed yet.
