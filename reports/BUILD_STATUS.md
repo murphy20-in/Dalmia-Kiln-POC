@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
-**As of:** 2026-09-25
-**Branch:** `phase-03-efficiency-kpi` (Phase 1 `b39d374`, Phase 2 `6e54477`; Phase 3 not yet committed)
-**Current state:** Phases 1–3 are COMPLETE and awaiting review. Phase 4 has not started.
+**As of:** 2026-09-27
+**Branch:** `phase-04-leading-indicators`, created from `phase-03-efficiency-kpi` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`; Phase 4 not yet committed)
+**Current state:** Phases 1–4 are COMPLETE and awaiting review. Phase 5 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -15,7 +15,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 1 | Data Discovery | **COMPLETE, awaiting review** |
 | 2 | Normal Operating Baseline | **COMPLETE, awaiting review — baseline PARTIAL** |
 | 3 | Efficiency Deterioration KPI | **COMPLETE, awaiting review — KPI PARTIAL** |
-| 4 | Leading Indicators | NOT STARTED |
+| 4 | Leading Indicators | **COMPLETE, awaiting review — indicators weak / tentative** |
 | 5 | Alternative Fuel Analysis | NOT STARTED |
 | 6 | Historical Abnormal Events | NOT STARTED |
 | 7 | Deposit/Inefficiency Risk Score | NOT STARTED |
@@ -213,6 +213,47 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - `kpi_reference_bands.csv`, `kpi_definition.json`, `kpi_candidate_inventory.csv`
   - `kpi_core.run_kpi` (leakage-tested scorer)
 
-## 9. Next step
+## 9. Phase 4 — Leading Indicators (COMPLETE, awaiting review)
 
-Waiting for review of Phase 3 and the Phase 4 prompt (Leading Indicators). Nothing from Phase 3 has been committed yet.
+**Result: weak / tentative.** These are empirical leading indicators of the Phase 3 POC KPI. They are not validated predictors of deposits, rings, coating or failures, and there is no event ground truth.
+
+- **Pipeline:** `phase-04-leading-indicators/scripts/`. Run `../../.venv/bin/python run_phase4.py --clean` (about 6.5 min).
+  - The pure code is in `indicator_core.py`.
+  - 32 unit tests are in `phase-04-leading-indicators/tests/`.
+  - Phase 3's `kpi_core` is imported read-only, with no bytecode written.
+- **Design:**
+  - Candidates: 137 candidate tags plus 3 load-context tags, 7 causal features each, 10 lags from 10 min to 12 h.
+  - Target: the future KPI change ΔK(t, H).
+  - Statistic: partial Spearman controlling for K(t), momentum and Kpend, with n_eff, a 3-day-block bootstrap and BH.
+  - Windows: discovery (Apr–May) chooses lag and sign; replication (Jun–Jul) drives gates, score and set; the **August holdout** is reported once.
+  - Gates: replication, feed controls, forward ≥ backward, circular-shift null.
+  - KPI inputs and proxies become component precursors and are never in the set.
+- **Result:**
+  - Screening: 54 of 9,800 discovery tests pass q ≤ 0.10, from 22 indicators.
+  - **Selected set:** `Kiln-I!I|ROC_1H`, a rising PC coal-firing trend about 60 min before a KPI increase. Partial ρ is 0.056 in Jun–Jul; the August holdout has the same sign but is not significant. Confidence LOW. It is a manipulated variable, most plausibly an operator response.
+  - **Component precursors:** the burning-zone temperature, Sp.Heat F and cyclone-4 temperature trends.
+  - **Load proxies:** 12, including cooler fans, CBS gas flow and feed.
+  - **Unstable:** 5, including kiln drive power and current. **Lagging:** 1.
+  - The KPI's own momentum is far more informative.
+- **Gates:**
+  - Validation: 61 PASS, 0 FAIL, 7 INFO, 4 NOT_MET_REPORTED (robustness rules reported, including F-vs-G ranking 0.67).
+  - Leakage: exact at 9 cut points.
+  - Null calibration: 6.6 % of shifted nulls with p < 0.05, 0 BH discoveries.
+  - Determinism: two clean runs byte-identical on 14 files.
+  - Phases 1–3, `data/` and the source are unchanged.
+- **Reviews:** planner, python-reviewer, mle-reviewer (PASS-WITH-CONDITIONS; resolved by the holdout redesign) and product analyst, plus a confirmatory re-review. See `phase-04-leading-indicators/reviews/REVIEW_LOG.md`.
+- **Phase 5 may consume:**
+  - `leading_indicator_set.csv`: use only rows with `usable_downstream = True`, following each row's `permitted_use`.
+  - `indicator_feature_values.parquet` and `indicator_feature_reference.json`.
+  - `indicator_scores.csv`: the load-proxy classes.
+  - `indicator_lag_analysis.csv`, `indicator_episodes.csv`, `indicator_data_quality.csv`.
+  - AFR `Kiln-I!K` was reserved and not analysed. Fuel firing tags are set-points, so in Phase 5 they are explanatory variables, not outcomes.
+- **New plant questions:**
+  - Is PC coal firing manual or controller-set, and what drives it?
+  - What drives kiln drive power at constant feed?
+  - What do negative bypass-gas-flow values mean?
+  - Which tags are set-points?
+
+## 10. Next step
+
+Waiting for review of Phase 4 and for the Phase 5 prompt (Alternative Fuel Analysis). Phase 5 has not been started, and nothing from Phase 4 has been committed.
