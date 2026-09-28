@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
-**As of:** 2026-09-27
-**Branch:** `phase-04-leading-indicators`, created from `phase-03-efficiency-kpi` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`; Phase 4 not yet committed)
-**Current state:** Phases 1–4 are COMPLETE and awaiting review. Phase 5 has not started.
+**As of:** 2026-09-28
+**Branch:** `phase-05-af-analysis`, created from `phase-04-leading-indicators` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`; Phase 5 not yet committed)
+**Current state:** Phases 1–5 are COMPLETE and awaiting review. Phase 6 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -16,7 +16,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 2 | Normal Operating Baseline | **COMPLETE, awaiting review — baseline PARTIAL** |
 | 3 | Efficiency Deterioration KPI | **COMPLETE, awaiting review — KPI PARTIAL** |
 | 4 | Leading Indicators | **COMPLETE, awaiting review — indicators weak / tentative** |
-| 5 | Alternative Fuel Analysis | NOT STARTED |
+| 5 | Alternative Fuel Analysis | **COMPLETE, awaiting review — AFR-associated only (no fuel properties)** |
 | 6 | Historical Abnormal Events | NOT STARTED |
 | 7 | Deposit/Inefficiency Risk Score | NOT STARTED |
 | 8 | Early Warning Validation | NOT STARTED |
@@ -254,6 +254,61 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - What do negative bypass-gas-flow values mean?
   - Which tags are set-points?
 
-## 10. Next step
+## 10. Phase 5 — Alternative Fuel Analysis (COMPLETE, awaiting review)
 
-Waiting for review of Phase 4 and for the Phase 5 prompt (Alternative Fuel Analysis). Phase 5 has not been started, and nothing from Phase 4 has been committed.
+**Result: AFR-associated process behaviour only.** Nothing here is AFR-caused. No fuel properties exist in the supplied data: no calorific value, moisture, RDF / plastic split or fuel mix. No energy-based metric (substitution rate, energy flow) is computed, and nothing is a plant limit, set-point or recommendation.
+
+- **Pipeline:** `phase-05-af-analysis/scripts/`. Run `../../.venv/bin/python run_phase5.py --clean` (about 4.5 min; six analysis steps run in parallel).
+  - The pure code is in `af_core.py`, and the relationship engine in `af_context.py`.
+  - 17 unit tests are in `phase-05-af-analysis/tests/`.
+  - Phase 4 `indicator_core` / `p4common` and Phase 3 `kpi_core` / `load_dataset` are imported read-only, with no bytecode written.
+- **Signals:**
+  - `Kiln-I!K` *AFR | Solid* (TPH) is analysed as a FUEL_CONTROL_INPUT.
+  - `Kiln-I!L` *Liquid* is **INSUFFICIENT_DATA**: 8.3 % present, bimodal, 9 values ≥ 9,999.
+  - Coal and PC firing are co-manipulated covariates only.
+  - CV, moisture, RDF, plastic and fuel mix are NOT_AVAILABLE.
+  - Excluded targets: the held `Kiln-I!AA` / `AE`, the constant `Kiln-IA!F` and `CBS-Calculation!B` / `C`, and the plant-calculated `CBS-Calculation!D..G`.
+- **Design:**
+  - RUNNING 10-min buckets.
+  - The primary AFR series is Phase 2-valid with no single-tag flatline mask. Masked variants are in sensitivity G.
+  - POC_EMPIRICAL_BANDs are NO / LOW / MEDIUM / HIGH_AFR (Apr–May non-zero P25 = 31 and P75 = 35.5 TPH, frozen).
+  - The correlation engine (LAGGED_LEVEL / FUTURE_CHANGE / MOMENTUM, lags 0–360 min) uses partial Spearman with n_eff, a 3-day-block bootstrap and BH. Discovery (Apr–May) chooses lag and sign, Jun–Jul replicates, and August is the holdout.
+  - AFR TRANSITION EPISODES (START / STOP / RAMP) are compared with feed-matched controls using a label-permutation test; 129 are eligible.
+  - Matched ON/OFF comparisons were attempted.
+  - Negative controls: circular shift, 30-day misalignment and randomised labels.
+  - Sensitivity groups A–H.
+  - Pre-declared evidence labels.
+- **Findings** (Apr–May / Jun–Jul / Aug):
+  - **Load:** AFR tracks feed (partial ρ +0.35 / +0.34 / +0.50). 80 % of AFR = 0 minutes are kiln stops.
+  - **Coal swap (co-manipulation, capped LOW):** AFR and PC coal move in opposite directions (level ρ −0.37 / −0.30 / −0.45). PC coal rises a median +6 TPH within 1 h of AFR stops.
+  - **Combustion:** higher AFR goes with lower preheater-outlet O₂ (−0.16 / −0.44 / −0.19) and falling NOx.
+  - **Temperatures:** preheater, TAD and hood temperatures dip after AFR stops and ramp-downs, at the same time as the coal increase and feed cuts.
+  - **Sp.Heat:** F and G co-vary with AFR. Firing rates per ton of feed, including AFR, reproduce them with R² 0.92 (F) / 0.65 (G), which is consistent with Sp.Heat being calculated from the firing inputs. The plant must confirm.
+  - **Efficiency KPI:** no supported relationship. The current-KPI association does not replicate, the future change is NOT SUPPORTED, and there is no AFR precursor before the Phase 4 KPI episodes.
+  - **Phase 4 indicator:** `Kiln-I!I|ROC_1H` fires +56 percentage points more often in falling-AFR hours. It is largely a coal-for-AFR swap signature.
+  - **Matching:** MATCHING_NOT_SUPPORTED everywhere, because steady AFR-off running hours are too rare.
+- **Evidence:**
+  - 43 ASSOCIATED (26 process, 8 co-manipulation, 9 Sp.Heat / KPI), 40 WEAK, 191 NOT SUPPORTED, 60 INSUFFICIENT.
+  - 21 MEDIUM (process / load only) and 22 LOW. HIGH is never assigned.
+  - August CONFIRMED 27 of the 43 ASSOCIATED rows.
+- **Gates:**
+  - Validation: 56 PASS, 5 INFO, 0 FAIL (G1–G7). This covers a leakage perturbation test, an independent re-derivation of every lag choice and evidence label, BH vs scipy, a null calibration, and a check that the confidence cap was applied.
+  - Determinism: two clean runs byte-identical on 17 files.
+  - Phases 1–4, `data/` and the source are unchanged.
+- **Reviews:** planner, product analyst, python-reviewer and mle-reviewer (PASS-WITH-CONDITIONS; no leakage found). All findings are resolved, plus revalidation fixes for the prior-transition rule and the confidence cap. See `phase-05-af-analysis/reviews/REVIEW_LOG.md`.
+- **Phase 6 may consume:**
+  - `afr_transition_episodes.parquet` and `afr_*_relationships.csv`: use `evidence`, `confidence` and `confidence_cap_reason` exactly.
+  - `afr_operating_bands.csv`, `afr_daily_summary.csv`, `afr_data_quality.csv`, `afr_data_requirements.csv`.
+  - Check AFR stops and ramp-downs (with the simultaneous PC-coal increase) as **context** for any abnormal period.
+  - AFR transition episodes are not abnormal events.
+- **New plant questions:**
+  - Is `Kiln-I!K` a set-point, a feeder demand or a measurement?
+  - What are the Sp.Heat F / G formulas, and what heat factor do they use for AFR?
+  - Why are AFR stops and ramps initiated (is there an operating log)?
+  - Is PC coal raised deliberately when AFR drops?
+  - What do the Liquid AFR values (~4 LPH, 10,000) mean?
+  - The priority list is in `outputs/afr_data_requirements.csv`, and the questions are in report §22a.
+
+## 11. Next step
+
+Waiting for review of Phase 5 and for the Phase 6 prompt (Historical Abnormal Events). Phase 6 has not been started. Phase 5 is not yet committed; its files are on branch `phase-05-af-analysis`.
