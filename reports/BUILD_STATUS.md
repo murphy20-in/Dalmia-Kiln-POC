@@ -413,4 +413,4 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 
 ## 14. Next step
 
-Waiting for review of Phase 8 and for the Phase 9 prompt. Phase 9 has not been started. Phase 8 is committed (not pushed) on branch `phase-08-early-warning`.
+Waiting for review of Phase 8 and for the Phase 9 prompt. Phase 9 has not been started. Phase 8 is committed and pushed on branch `phase-08-early-warning`.
