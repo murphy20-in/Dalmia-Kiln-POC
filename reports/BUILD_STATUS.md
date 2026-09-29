@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
 **As of:** 2026-09-29
-**Branch:** `phase-07-risk-score`, created from `phase-06-abnormal-events` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`)
-**Current state:** Phases 1–7 are COMPLETE and awaiting review. Phase 8 has not started.
+**Branch:** `phase-08-early-warning`, created from `phase-07-risk-score` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 — see section 13)
+**Current state:** Phases 1–8 are COMPLETE and awaiting review. Phase 9 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -19,7 +19,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 5 | Alternative Fuel Analysis | **COMPLETE, awaiting review — AFR-associated only (no fuel properties)** |
 | 6 | Historical Abnormal Events | **COMPLETE, awaiting review — 12 empirical abnormal periods (not plant events)** |
 | 7 | Deposit/Inefficiency Risk Score | **COMPLETE, awaiting review — empirical POC risk score (not deposit-validated)** |
-| 8 | Early Warning Validation | NOT STARTED |
+| 8 | Early Warning Validation | **COMPLETE, awaiting review — primary endpoint NOT_SUPPORTED (no early-warning claim)** |
 | 9–12 | API, Dashboard, QA, Final Report | NOT STARTED |
 
 Phase 1 completion checklist (all items verified): full recursive inventory, all workbooks and sheets inspected, column/tag inventory, timestamp structure, date coverage, sampling intervals, missingness, gaps, duplicates, outliers, flatlines, units, process families, equipment coverage, event and AF/RDF availability, readiness assessment, scripts created and rerun from a clean state, master report generated, no source data modified.
@@ -387,6 +387,30 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - Repeat key results with the O₂-excluded variant.
 - **New plant questions:** the purge / calibration behaviour of the `Kiln-I!X` O₂ analyser, which period the plant regards as normal, and whether feed reductions are logged. The full priority list is in report §20.
 
-## 13. Next step
+## 13. Phase 8 — Early Warning Validation (COMPLETE, awaiting review)
 
-Waiting for review of Phase 7 and for the Phase 8 prompt. Phase 8 has not been started. Phase 7 is committed and pushed on branch `phase-07-risk-score`.
+**Result: the frozen Phase 7 score (`p7-risk-1.1.0`) is NOT shown to rise before the 12 Phase 6 empirical abnormal periods.** This is a validation / falsification stage only: nothing in Phase 7 was changed, and no deposit, ring, failure or maintenance claim is possible (no event ground truth).
+
+- **Pipeline:** `phase-08-early-warning/scripts/`. Run `../../.venv/bin/python run_phase8.py --clean` (about 70 s; run twice for gate G11).
+  - 48 unit tests in `tests/` (`../../.venv/bin/python -B -m unittest discover -s ../tests -t ../tests`).
+  - Reads only Phase 6 / 7 outputs and the Phase 7 cache (`operational == True` scores; no `afr_context`, no `risk_score_diagnostics.parquet`). Writes a provenance manifest to `outputs/run_manifest.json`.
+- **Primary endpoint (pre-declared):** median rank excess over (T0 − 60 min, T0] vs month-matched ordinary running, T0 = Phase 6 CUSUM onset.
+  - PE +0.051 (about 5 percentile points), 95 % CI −0.087 to +0.119, randomisation p 0.118, Cliff's δ +0.21, 10 of 12 periods, 6,641 controls → **NOT_SUPPORTED**.
+  - O₂-excluded variant (`Kiln-I!X` removed): like-for-like PE +0.088, p 0.063; on its own 12-period set p 0.045 → WEAK, analyser-dependent. Neither variant is preferred until the plant explains the analyser.
+- **Why the small positive estimate is not precedence:** 6 of 12 onsets are censored (T0 = look-back cap, window inside the KPI shift). Censored onsets carry all of the excess at every horizon; the 5 uncensored ones give PE −0.072.
+- **Other results:**
+  - 2–6 h horizons WEAK on raw p only (BH q 0.088–0.097, n 8), carried by censored onsets; 12 h and 24 h NOT_SUPPORTED.
+  - None of W1–W5 covers the periods more often than it fires in ordinary running. In ordinary August running they are on 9–79 % of the time; lead-time tables are capped by the 24-h look-back and are not lead times.
+  - Negative controls: NC1 p 0.19 and NC2 p 0.12 (nulls centred on 0); the score is higher just after periods end (+0.099) than before they start; NC5 (future perturbation) identical.
+  - Load: INSUFFICIENT_DATA (5 periods left after removing load transitions). Control-selection and control-DQ sensitivities (F19, F20) leave the primary unchanged.
+- **Gates:** G1–G12, 43 checks, all PASS on the final double clean run (byte-identical; see `phase-08-early-warning/reviews/REVIEW_LOG.md`). Source (60 files) and Phase 1–7 artifacts (543 files) unchanged.
+- **Reviews:** senior-data-scientist, statistical-analyst, data-quality-auditor, python-reviewer, mle-reviewer, product-analytics, cs-product-analyst, plus a Ponytail audit; 49 log entries, none open.
+- **Phase 9 handoff** (report §26):
+  - MAY show: the historical score trend with the O₂-excluded overlay and a "retrospective, not an early warning" disclaimer; the 12 periods labelled "KPI-derived abnormal periods (not plant events)"; the finding classes; an event-annotation tool for the plant.
+  - MUST NOT show: live W1–W5 flags or alarms, band colours as alarms, lead-time or coverage numbers, the Phase 7 AUC, the word "prediction", `afr_context`.
+  - Decision: no alerting in Phase 9; collect plant event labels; re-run this frozen protocol once ≥ 8 evaluable labelled events exist.
+- **Plant data required (priority 1):** timestamped coating / ring / cleaning / maintenance / stoppage logs for Apr–Sep 2025, and the `Kiln-I!X` purge / calibration schedule. The three Phase 7 plant questions remain open.
+
+## 14. Next step
+
+Waiting for review of Phase 8 and for the Phase 9 prompt. Phase 9 has not been started. Phase 8 is committed (not pushed) on branch `phase-08-early-warning`.
