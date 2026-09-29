@@ -1,7 +1,7 @@
 # Dalmia Kiln POC — Build Status
 
 **As of:** 2026-09-29
-**Branch:** `phase-07-risk-score`, created from `phase-06-abnormal-events` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`; Phase 7 is the commit that updates this line)
+**Branch:** `phase-07-risk-score`, created from `phase-06-abnormal-events` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`)
 **Current state:** Phases 1–7 are COMPLETE and awaiting review. Phase 8 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
