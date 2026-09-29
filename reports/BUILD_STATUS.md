@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
 **As of:** 2026-09-29
-**Branch:** `phase-06-abnormal-events`, created from `phase-05-af-analysis` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`)
-**Current state:** Phases 1–6 are COMPLETE and awaiting review. Phase 7 has not started.
+**Branch:** `phase-07-risk-score`, created from `phase-06-abnormal-events` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`; Phase 7 is the commit that updates this line)
+**Current state:** Phases 1–7 are COMPLETE and awaiting review. Phase 8 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -18,7 +18,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 4 | Leading Indicators | **COMPLETE, awaiting review — indicators weak / tentative** |
 | 5 | Alternative Fuel Analysis | **COMPLETE, awaiting review — AFR-associated only (no fuel properties)** |
 | 6 | Historical Abnormal Events | **COMPLETE, awaiting review — 12 empirical abnormal periods (not plant events)** |
-| 7 | Deposit/Inefficiency Risk Score | NOT STARTED |
+| 7 | Deposit/Inefficiency Risk Score | **COMPLETE, awaiting review — empirical POC risk score (not deposit-validated)** |
 | 8 | Early Warning Validation | NOT STARTED |
 | 9–12 | API, Dashboard, QA, Final Report | NOT STARTED |
 
@@ -345,6 +345,48 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - These are not confirmed events.
   - Never use the post-event fields as features.
 
-## 12. Next step
+## 12. Phase 7 — Deposit / Inefficiency Risk Score (COMPLETE, awaiting review)
 
-Waiting for review of Phase 6 and for the Phase 7 prompt. Phase 7 has not been started. Phase 6 is committed and pushed on branch `phase-06-abnormal-events`.
+**Result: an EMPIRICAL POC RISK SCORE (0–100, `p7-risk-1.1.0`).** It measures how strongly the current kiln condition resembles abnormal / inefficient process behaviour relative to the frozen Apr–May 2025 reference. It is **not** a deposit, ring or failure probability, a plant limit or a control recommendation. There is no event ground truth.
+
+- **Pipeline:** `phase-07-risk-score/scripts/`. Run `../../.venv/bin/python run_phase7.py --clean` (about 1 min).
+  - The pure scorer is `risk_core.score_frame`; config and paths are in `common.py`.
+  - 83 unit tests are in `tests/` (`../../.venv/bin/python -B -m unittest discover -s ../tests -t ../tests`).
+  - Phase 3–6 code is imported read-only.
+- **Definition:**
+  - Per family (efficiency / Sp.Heat, combustion, thermal, draft / pressure, stability): the trailing 1-h median of the RUNNING-masked Phase 3 component, mapped to `a_d = 1 − 2^(−excess)` against the Apr–May median and P90.
+  - `risk_score = 100·(0.5·H + 0.25·C + 0.25·P)`: magnitude H (max and mean, fixed denominator 5), concurrence C and persistence P over the last 3 h.
+  - Architecture `H_PRIMARY_HYBRID` was selected by a pre-declared rule, not by coverage of the Phase 6 periods.
+  - Confidence is a separate six-part mean, capped at MEDIUM. There is an explicit status, reason codes and an `operational` flag.
+- **Bands (empirical, reference-relative):** ELEVATED ≥ 21.1 (Apr–May P75) and HIGH ≥ 38.2 (P90). The P95 edge was not supported and was merged into HIGH.
+- **Results (9,557 operational Jun–Aug buckets; September not scored):**
+  - Share ≥ HIGH: June 25.1 %, July 41.6 %, August 53.0 %. Only August > June is separable (+0.28, block CI +0.10 to +0.42).
+  - Excluding the kiln-inlet O₂ analyser (`Kiln-I!X`, frequent ambient-air readings) roughly halves the rise. This is a major caveat for the plant to confirm.
+  - All 12 Phase 6 periods reach HIGH (AUC 0.868). This is circular coverage, not accuracy. Severity is inconclusive (ρ 0.33, n = 12).
+  - AFR and the Phase 4 indicator add no gain, so they stay context only.
+  - The score is not load-independent: it is higher at low feed and during load changes.
+- **Robustness:** ranks are stable (median Spearman 0.97), band levels are not (14 of 25 variants SENSITIVE, reported as NOT_MET). August > June holds in 25 of 25 variants.
+- **Gates:**
+  - 48 PASS, 0 FAIL, 1 NOT_MET_REPORTED, 6 INFO (G1–G9).
+  - Leakage is exact at 8 truncation cuts, under full post-T randomisation, under post-event perturbation of all 12 periods, and under reference refit.
+  - NC1 / NC2 PASS (consistency controls).
+  - Two clean runs were byte-identical on 16 files.
+  - Phases 1–6, `data/` and the source are unchanged.
+- **Reviews:** planner, python-reviewer, mle-reviewer (PASS-WITH-CONDITIONS), senior data scientist, statistical analyst, data-quality auditor (PASS-WITH-CONDITIONS), product, and a Ponytail audit. The log has 75 findings, all RESOLVED / ACCEPTED / DEFERRED and none OPEN. See `phase-07-risk-score/reviews/REVIEW_LOG.md`.
+- **Phase 8 may consume** (schemas in `phase-07-risk-score/docs/FEATURE_CONTRACT.md`):
+  - `risk_scores.parquet`, filtered on `operational == True`;
+  - the `_components`, `_confidence` and `_reasons` parquets;
+  - `risk_score_reference.json` and `risk_score_variant_references.json` (frozen, hash-checked), `risk_score_bands.csv` and `risk_score_feature_inventory.csv`;
+  - `risk_core.score_frame`.
+  - `risk_score_diagnostics.parquet` is not operational.
+- **Guards for Phase 8:**
+  - HIGH is not a rare-event flag (it covers about half of August).
+  - Use ranks and trends, not band levels.
+  - Report empirical rates only, never false-positive rates.
+  - Do not use `afr_context` live (it holds retrospective labels).
+  - Repeat key results with the O₂-excluded variant.
+- **New plant questions:** the purge / calibration behaviour of the `Kiln-I!X` O₂ analyser, which period the plant regards as normal, and whether feed reductions are logged. The full priority list is in report §20.
+
+## 13. Next step
+
+Waiting for review of Phase 7 and for the Phase 8 prompt. Phase 8 has not been started. Phase 7 is committed and pushed on branch `phase-07-risk-score`.
