@@ -2,7 +2,7 @@
 
 **As of:** 2026-09-28
 **Branch:** `phase-05-af-analysis`, created from `phase-04-leading-indicators` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`; Phase 5 not yet committed)
-**Current state:** Phases 1–5 are COMPLETE and awaiting review. Phase 6 has not started.
+**Current state:** Phases 1–6 are COMPLETE and awaiting review. Phase 7 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -17,7 +17,7 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 3 | Efficiency Deterioration KPI | **COMPLETE, awaiting review — KPI PARTIAL** |
 | 4 | Leading Indicators | **COMPLETE, awaiting review — indicators weak / tentative** |
 | 5 | Alternative Fuel Analysis | **COMPLETE, awaiting review — AFR-associated only (no fuel properties)** |
-| 6 | Historical Abnormal Events | NOT STARTED |
+| 6 | Historical Abnormal Events | **COMPLETE, awaiting review — 12 empirical abnormal periods (not plant events)** |
 | 7 | Deposit/Inefficiency Risk Score | NOT STARTED |
 | 8 | Early Warning Validation | NOT STARTED |
 | 9–12 | API, Dashboard, QA, Final Report | NOT STARTED |
@@ -309,6 +309,42 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - What do the Liquid AFR values (~4 LPH, 10,000) mean?
   - The priority list is in `outputs/afr_data_requirements.csv`, and the questions are in report §22a.
 
-## 11. Next step
+## 11. Phase 6 — Historical Abnormal Events (COMPLETE, awaiting review)
 
-Waiting for review of Phase 5 and for the Phase 6 prompt (Historical Abnormal Events). Phase 6 has not been started. Phase 5 is not yet committed; its files are on branch `phase-05-af-analysis`.
+**Result: 12 empirical HISTORICAL ABNORMAL PERIODS (Jun–Aug).** They are derived from the Phase 3 POC KPI and process measurements. They are **not** validated plant events: no coating, ring, deposit, maintenance, failure, cleaning or shutdown-reason ground truth exists (`event_ground_truth_status = NOT_AVAILABLE`).
+
+- **Pipeline:** `phase-06-abnormal-events/scripts/`. Run `../../.venv/bin/python run_phase6.py --clean` (about 40 s).
+  - The pure code is in `abn_core.py`, with 18 thin mandated steps.
+  - 12 unit tests are in `tests/`.
+- **Definition:**
+  - Candidate: RUNNING buckets with KPI ≥ 41.82 (the frozen training P90), merged across gaps of ≤ 60 min. Stops, long gaps and the frozen window break an episode.
+  - Final: out of sample, no ordinary-context rule matched, and ≥ 1 process family above its training P90.
+  - Ordinary-context categories are kept, never deleted.
+  - Apr–May periods are `CALIBRATION_ONLY_ABNORMAL_LIKE`.
+- **Results:**
+  - 35 candidates, of which 16 are out of sample.
+  - 12 final periods: 3 HIGH, 4 MODERATE and 5 LOW severity; confidence 10 MEDIUM (capped) and 2 LOW.
+  - 11 of the 12 are multi-family, most often thermal, combustion and draft.
+  - COMBUSTION_DOMINANT is the only type that recurs across months.
+- **Context:**
+  - 8 of the 12 are LOAD_ASSOCIATED, and none is load-independent.
+  - AFR transitions cluster near onsets above chance. This is context, and its causal role is not assessed.
+  - The Phase 4 indicator is not distinguishable from chance.
+- **Robustness:**
+  - Every period is kept by ≥ 81 % of the robustness variants.
+  - The alternative Jun–Jul15 KPI reference keeps only 8 % (NOT_MET, reported). The abnormal level depends on the reference period.
+- **Gates:**
+  - 47 PASS, 0 FAIL, 2 NOT_MET_REPORTED, 1 INFO.
+  - The leakage test is identical at 13 cut points.
+  - Two clean runs were byte-identical on 15 files.
+  - Phases 1–5, `data/` and the source are unchanged.
+- **Reviews:** planner, python-reviewer (Approve), mle-reviewer (PASS-WITH-CONDITIONS, resolved) and product analyst (resolved). See `phase-06-abnormal-events/reviews/REVIEW_LOG.md`.
+- **Phase 7 may consume:**
+  - `abnormal_episodes.parquet` (filter `in_final_set`);
+  - the `_signals`, `_context`, `_severity`, `_confidence`, `_pre_event`, `_post_event` and `_types` outputs.
+  - These are not confirmed events.
+  - Never use the post-event fields as features.
+
+## 12. Next step
+
+Waiting for review of Phase 6 and for the Phase 7 prompt. Phase 7 has not been started. Phase 6 is not yet committed; its files are on branch `phase-05-af-analysis`.
