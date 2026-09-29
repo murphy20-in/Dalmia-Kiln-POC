@@ -1,7 +1,7 @@
 # Dalmia Kiln POC — Build Status
 
-**As of:** 2026-09-28
-**Branch:** `phase-05-af-analysis`, created from `phase-04-leading-indicators` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`; Phase 5 not yet committed)
+**As of:** 2026-09-29
+**Branch:** `phase-06-abnormal-events`, created from `phase-05-af-analysis` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`)
 **Current state:** Phases 1–6 are COMPLETE and awaiting review. Phase 7 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
@@ -347,4 +347,4 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 
 ## 12. Next step
 
-Waiting for review of Phase 6 and for the Phase 7 prompt. Phase 7 has not been started. Phase 6 is not yet committed; its files are on branch `phase-05-af-analysis`.
+Waiting for review of Phase 6 and for the Phase 7 prompt. Phase 7 has not been started. Phase 6 is committed and pushed on branch `phase-06-abnormal-events`.
