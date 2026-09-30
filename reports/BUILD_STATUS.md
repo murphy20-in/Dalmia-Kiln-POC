@@ -473,6 +473,7 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 **Result:** a seven-page retrospective dashboard on the frozen Phase 9 API. It is not a live monitor, an alarm board, or a prediction view.
 
 - **Branch:** `phase-10-dashboard` (from `phase-09-api`).
+- **Commit:** `182ef71` (dashboard). Phase 9 remains `d84244e`.
 - **Stack:** plain HTML, CSS, and ES modules. `phase-10-dashboard/serve.py` (stdlib) serves `public/` and proxies `/api`, `/health`, and `/ready` to Phase 9 at `127.0.0.1:8009`. No npm dependency and no chart library (inline SVG). Phase 9 code and artifacts are unchanged.
 - **Pages:** `/` Overview, `/history` Historical Risk, `/abnormal-periods`, `/events`, `/validation`, `/data-quality`, `/methodology`.
 - **API:** metadata and status, limitations, methodology, data-requirements, provenance, risk-scores, variant-comparison, abnormal-periods, validation/early-warning-historical, findings, events CRUD and audit.
