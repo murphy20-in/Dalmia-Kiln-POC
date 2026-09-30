@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dalmia Cement — Ariyalur Kiln Analytical POC</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <div class="brand">
+      <p class="brand-kicker">Dalmia Cement</p>
+      <p class="brand-title">Ariyalur Kiln <span>Analytical POC</span></p>
+    </div>
+    <p class="status-pill">Retrospective analytical POC</p>
+  </header>
+  <div class="disclaimer" role="note">
+    <p><strong>Retrospective, not an early warning.</strong>
+      The dashboard presents historical analytical evidence from the POC. It does not provide live alarms, predictions, probabilities, or validated deposit/ring/failure detection.</p>
+  </div>
+  <div class="shell">
+    <nav aria-label="Dashboard">
+      <ul>
+        <li><a data-nav href="/">Overview</a></li>
+        <li><a data-nav href="/history">Historical Risk</a></li>
+        <li><a data-nav href="/abnormal-periods">Abnormal Periods</a></li>
+        <li><a data-nav href="/events">Plant Events</a></li>
+        <li><a data-nav href="/validation">Validation</a></li>
+        <li><a data-nav href="/data-quality">Data Quality</a></li>
+        <li><a data-nav href="/methodology">Methodology</a></li>
+      </ul>
+    </nav>
+    <div class="content">
+      <p id="range-status" class="range-status">Score window not set.</p>
+      <main id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <footer class="foot">
+    <p>Dalmia Cement · Ariyalur Kiln · historical analytical POC. Plant descriptions are shown as entered text.</p>
+    <p><a href="/methodology">Methodology</a> · <a href="/data-quality">Limitations</a> · <a href="/validation">Validation</a></p>
+  </footer>
+  <noscript><p class="state state-error">This dashboard needs JavaScript to read the analytical service.</p></noscript>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

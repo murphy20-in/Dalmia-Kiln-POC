@@ -18,6 +18,7 @@ data/curated/*
 
 phase-*/outputs/*
 phase-*/reports/*
+!phase-10-dashboard/reports/PHASE_10_DASHBOARD_REPORT.md
 !phase-*/outputs/.gitkeep
 !phase-*/reports/.gitkeep
 

@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
 **As of:** 2026-09-30
-**Branch:** `phase-09-api`, created from `phase-08-early-warning` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 `ab1facc`, Phase 9 `d84244e`)
-**Current state:** Phases 1–9 are COMPLETE and awaiting review. Phase 10 has not started.
+**Branch:** `phase-10-dashboard`, created from `phase-09-api` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 `ab1facc`, Phase 9 `d84244e`)
+**Current state:** Phases 1–10 are COMPLETE and awaiting review. Phase 11 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -21,7 +21,8 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 7 | Deposit/Inefficiency Risk Score | **COMPLETE, awaiting review — empirical POC risk score (not deposit-validated)** |
 | 8 | Early Warning Validation | **COMPLETE, awaiting review — primary endpoint NOT_SUPPORTED (no early-warning claim)** |
 | 9 | API / Analytical Service | **COMPLETE, awaiting review — read-only evidence API + plant event annotation store (no alerting, no prediction)** |
-| 10–12 | Dashboard, QA, Final Report | NOT STARTED |
+| 10 | Multi-Page Analytical Dashboard | **COMPLETE, awaiting review — retrospective dashboard on the Phase 9 API (no live monitoring)** |
+| 11–12 | QA, Final Report | NOT STARTED |
 
 Phase 1 completion checklist (all items verified): full recursive inventory, all workbooks and sheets inspected, column/tag inventory, timestamp structure, date coverage, sampling intervals, missingness, gaps, duplicates, outliers, flatlines, units, process families, equipment coverage, event and AF/RDF availability, readiness assessment, scripts created and rerun from a clean state, master report generated, no source data modified.
 
@@ -467,10 +468,26 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - present O₂-excluded as preferred;
   - treat the API as a live alerting source.
 
-## 15. Next step
+## 15. Phase 10 — Multi-page analytical dashboard (COMPLETE, awaiting review)
 
-Waiting for review of Phase 9 and for the Phase 10 prompt. Phase 10 has not been started. Phase 9 is committed and pushed on branch `phase-09-api`.
+**Result:** a seven-page retrospective dashboard on the frozen Phase 9 API. It is not a live monitor, an alarm board, or a prediction view.
 
-- Branch `phase-09-api` (from `phase-08-early-warning`): Phase 9 implementation `d84244e`, plus BUILD_STATUS updates. **Pushed to GitHub** (`origin/phase-09-api`, https://github.com/murphy20-in/Dalmia-Kiln-POC/tree/phase-09-api). No pull request has been opened.
-- To reproduce: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean`. Run it twice. The final double clean run gave G1–G15 all PASS and 59 of 59 tests passing.
-- Before Phase 10, answer the open plant questions. The priority-1 data requests are the timestamped coating / ring / cleaning / maintenance / stoppage logs and the `Kiln-I!X` purge / calibration schedule (`/api/v1/metadata/data-requirements`). Plant annotations can now be entered through `/api/v1/events`.
+- **Branch:** `phase-10-dashboard` (from `phase-09-api`).
+- **Stack:** plain HTML, CSS, and ES modules. `phase-10-dashboard/serve.py` (stdlib) serves `public/` and proxies `/api`, `/health`, and `/ready` to Phase 9 at `127.0.0.1:8009`. No npm dependency and no chart library (inline SVG). Phase 9 code and artifacts are unchanged.
+- **Pages:** `/` Overview, `/history` Historical Risk, `/abnormal-periods`, `/events`, `/validation`, `/data-quality`, `/methodology`.
+- **API:** metadata and status, limitations, methodology, data-requirements, provenance, risk-scores, variant-comparison, abnormal-periods, validation/early-warning-historical, findings, events CRUD and audit.
+- **Tests:** `cd phase-10-dashboard && node --test tests/*.mjs` — 9 tests (gaps, form, forbidden wording, live Phase 9 contract). Browser journeys in `phase-10-dashboard/reviews/E2E_LOG.md`. Playwright is not installed.
+- **Accessibility:** semantic shell, focus ring, chart description plus table plus keyboard slider, stacked tables under 720px. No Lighthouse score and no screen-reader session (`reviews/ACCESSIBILITY_REVIEW.md`).
+- **Security:** descriptions are text nodes. XSS payload did not execute. Same-origin proxy; no wildcard CORS (`reviews/SECURITY_REVIEW.md`).
+- **Ponytail:** no critical or high finding (`reviews/PONYTAIL_AUDIT.md`).
+- **Screenshots:** `phase-10-dashboard/screenshots/` (overview, historical-risk, abnormal-periods, plant-events, validation, data-quality, methodology, mobile-overview, mobile-historical-risk).
+- **Known limitations:** no authentication; chart thinning above about 900 points; F16’s API title contains “Lead time” and is shown as BLOCKED with no lead-time number; one soft-deleted test annotation in the local gitignored event store.
+- **Phase 11 handoff:** running dashboard, node tests, browser journey log, screenshots, and the three review notes above. Phase 11 is broader QA. Do not add live monitoring here.
+
+## 16. Next step
+
+Waiting for review of Phase 10. Phase 11 has not been started.
+
+- To reproduce the dashboard: start Phase 9 (`cd phase-09-api/scripts && ../../.venv/bin/python -B api_app.py`), then `cd phase-10-dashboard && ../.venv/bin/python serve.py`, and open `http://127.0.0.1:8010/`.
+- Phase 9 reproduction is unchanged: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean` (twice).
+
