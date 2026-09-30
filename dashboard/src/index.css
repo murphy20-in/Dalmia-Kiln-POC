@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  html.present { font-size: 18.4px; } /* 1.15 × for presentation mode */
+  body { @apply bg-page text-ink font-sans; font-feature-settings: "cv11", "ss01"; }
+  .num, table td, table th { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 3px solid #2a469c; outline-offset: 2px; border-radius: 4px; }
+  h1, h2, h3 { @apply text-navy-ink; letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .card { @apply bg-white rounded-card shadow-card p-6; }
+  .eyebrow { @apply text-xs font-semibold uppercase tracking-wider text-ink-muted; }
+  .btn { @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors; }
+  .btn-primary { @apply btn bg-white text-navy hover:bg-navy-tint; }
+  .btn-navy { @apply btn bg-navy text-white hover:bg-navy-deep; }
+  .btn-ghost { @apply btn border border-white/40 text-white hover:bg-white/10; }
+  .btn-outline { @apply btn border border-line bg-white text-navy hover:bg-navy-tint; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-ink; }
+  .data-table { @apply w-full text-sm; }
+  .data-table th { @apply text-left font-semibold text-ink-muted border-b border-line py-2 pr-4; }
+  .data-table td { @apply border-b border-line/70 py-1.5 pr-4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+@media print {
+  aside, header, .no-print { display: none !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; border: 1px solid #e3e6ec; break-inside: avoid; }
+  main { padding: 0 !important; }
+}

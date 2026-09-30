@@ -11,6 +11,16 @@ Reactive Detection
 → Planned Intervention
 ```
 
+## Pitch dashboard
+
+The client-facing demo lives in [`dashboard/`](dashboard/README.md): a static, eight-page app on the frozen Phase 1–9 outputs.
+
+```bash
+cd dashboard && npm install && npm run dev   # http://localhost:5173/
+```
+
+The demo script is `reports/PITCH_DEMO_SCRIPT.md`, and the current status is `reports/BUILD_STATUS.md`.
+
 ## POC Phases
 
 | # | Phase | Status |
@@ -49,7 +59,7 @@ phase-07-risk-score/             - Phase 7: Deposit/Inefficiency Risk Score
 phase-08-early-warning/          - Phase 8: Early Warning Validation
 src/                             - Shared source code modules
 api/                             - API layer
-dashboard/                       - Operator dashboard
+dashboard/                       - Pitch dashboard (Vite + React, static; see dashboard/README.md)
 tests/                           - Test suites
 reports/                         - Generated reports
 docs/                            - Documentation

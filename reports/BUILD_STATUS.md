@@ -2,7 +2,7 @@
 
 **As of:** 2026-09-30
 **Branch:** `phase-10-dashboard`, created from `phase-09-api` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 `ab1facc`, Phase 9 `d84244e`)
-**Current state:** Phases 1–10 are COMPLETE and awaiting review. Phase 11 has not started.
+**Current state:** Phases 1–9 are COMPLETE and awaiting review. The Phase 10 dashboard is replaced by the pitch dashboard in `dashboard/` (§16).
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -488,10 +488,24 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 - **Known limitations:** no authentication; drawing is thinned above about 900 points; served Phase 8/9 text keeps some enum names; the local, gitignored event store holds withdrawn test annotations.
 - **Phase 11 handoff:** `phase-10-dashboard/reports/PHASE_10_DASHBOARD_REPORT.md`. Phase 11 is broader QA, including a screen-reader session. Do not add live monitoring here.
 
-## 16. Next step
+## 16. Pitch dashboard (replaces Phase 10 dashboard)
 
-Waiting for review of Phase 10 v2. Phase 11 has not been started. Phase 10 v2 is committed on branch `phase-10-dashboard` but not yet pushed.
+**Result:** a static, eight-page product demo in `dashboard/` for the Dalmia pitch on 2026-10-01. It runs on branch `pitch-dashboard` (from `phase-10-dashboard`). The old `phase-10-dashboard/` is removed on this branch and remains in history on `phase-10-dashboard`. Phases 1–9 are untouched.
 
-- To reproduce the dashboard: start Phase 9 (`cd phase-09-api/scripts && ../../.venv/bin/python -B api_app.py`), then `cd phase-10-dashboard && ../.venv/bin/python serve.py`, and open `http://127.0.0.1:8010/`.
+- **Stack:** Vite + React 18 + TypeScript, Tailwind 3, ECharts (`echarts/core`, SVG renderer), HashRouter. No backend.
+- **Data:** `dashboard/scripts/export_data.py` reads frozen Phase 1–9 outputs read-only and writes 7 JSON files to `dashboard/public/data/`. Each file carries a `_sources` map. Two runs are byte-identical. `console.json` holds the 9,557 operational 10-min buckets (1.1 MB).
+- **Pages:** Executive Summary, Kiln Health Console (historical replay, `?t=`), Efficiency Story, Abnormal Periods (`/periods/:id` drawer), Alternative Fuel, Data Readiness, Roadmap & Value (illustrative calculator), How we validated. Presentation mode is `P` or `?present=1`.
+- **Wording:** on screen it is the Kiln Health Index (the Phase 7 score), Normal / Watch / Warning (21.1 / 38.2), and Critical locked until calibration. `tests/wording.test.ts` bans prediction, forecast, lead-time and accuracy claims, tag IDs and phase numbers.
+- **Tests:** vitest covers the data contract, wording and value model (9 tests). `tsc` and the build are clean. Playwright journeys cover replay, jump, reload and gap.
+- **Lighthouse (desktop, production build):** Accessibility, Best Practices and SEO are 100 on all 8 pages. The Performance category is not available in the audit tool, so it was measured by trace instead: LCP 0.17 s, CLS 0.00.
+- **Console playback:** 61.5 fps at 4× (p95 frame 20 ms, no frame over 50 ms). No horizontal scroll at 375, 1280 or 1440 px. No console errors or warnings.
+- **Reviews:** claims audit (0 blockers), buyer language, React/TS, Python, WCAG 2.2 AA, and two live evaluation rounds. See `dashboard/REVIEW_LOG.md`; nothing is open.
+- **Demo script:** `reports/PITCH_DEMO_SCRIPT.md`.
+- **Deploy:** `.github/workflows/pages.yml` builds `dashboard/` for GitHub Pages. It has not been pushed or enabled.
+
+## 17. Next step
+
+Pitch on 2026-10-01. The Stage 2 ask is plant event logs (coating / ring / cleaning / stoppage, Apr–Sep 2025), the O₂ analyser calibration schedule, fuel-quality logs and a process-engineering contact. After that, re-run the frozen Phase 8 protocol once ≥ 8 evaluable labelled events exist.
+
+- Run the dashboard: `cd dashboard && npm install && npm run dev`, then open `http://localhost:5173/`.
 - Phase 9 reproduction is unchanged: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean` (twice).
-
