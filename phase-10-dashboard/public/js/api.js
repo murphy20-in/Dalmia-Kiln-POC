@@ -1,3 +1,4 @@
+import { MSG } from "./copy.js";
 import { buildQuery } from "./pure/query.js";
 import { snapshotRequest, useSnapshot } from "./snapshot.js";
 
@@ -15,9 +16,8 @@ function publicMessage(status, body) {
   if (/traceback|\/home\/|sqlite|\.parquet|events\.sqlite/i.test(raw)) {
     return "The analytical service could not complete this request.";
   }
-  if (status === 503 || body?.error?.code === "ANALYTICAL_SERVICE_UNAVAILABLE") {
-    return "Analytical service unavailable. Check that the Phase 9 service is running.";
-  }
+  if (body?.error?.code === "ANALYTICAL_ARTIFACT_UNAVAILABLE") return MSG.mismatch;
+  if (status === 503 || body?.error?.code === "ANALYTICAL_SERVICE_UNAVAILABLE") return MSG.unavailable;
   if (status === 409) return raw || "The record changed before this update was saved.";
   if (raw) return raw;
   return "The analytical service could not complete this request.";
@@ -80,4 +80,17 @@ export async function getAll(path, params, { signal, pageLimit = 5000, maxRows =
     offset = page.pagination.next_offset;
   }
   return { rows, gaps, envelope };
+}
+
+/** Frozen artifacts do not change while the service runs, so their GETs are fetched once per page load.
+ *  Not for /events (plant writes change it). No signal: a shared request must not die with one page. */
+const frozen = new Map();
+export function getFrozen(path) {
+  if (!frozen.has(path)) {
+    frozen.set(path, api(path).catch((err) => {
+      frozen.delete(path);
+      throw err;
+    }));
+  }
+  return frozen.get(path);
 }

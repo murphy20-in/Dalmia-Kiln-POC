@@ -3,45 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dalmia Cement — Ariyalur Kiln Analytical POC</title>
-  <link rel="stylesheet" href="css/app.css">
+  <title>Kiln Analytical POC — Dalmia Cement</title>
+  <meta name="description" content="Retrospective analysis of the Ariyalur kiln, Jun–Aug 2025. Not an early warning.">
+  <link rel="icon" href="data:,">
+  <style>html.css-wait body { visibility: hidden; }</style>
+  <script>
+    /* Local routes can be nested (/abnormal-periods/P6-020), so assets are absolute there. The GitHub Pages copy
+       uses hash routes under /Dalmia-Kiln-POC/, so relative paths are right. Inserted here rather than written as
+       tags so the browser never requests them from the wrong directory. */
+    (function () {
+      document.documentElement.classList.add("css-wait");
+      var root = location.hostname.slice(-9) === "github.io" ? "" : "/";
+      var css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = root + "css/app.css";
+      css.onload = css.onerror = function () { document.documentElement.classList.remove("css-wait"); };
+      document.head.appendChild(css);
+      var app = document.createElement("script");
+      app.type = "module";
+      app.src = root + "js/app.js";
+      document.head.appendChild(app);
+    })();
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="top">
-    <div class="brand">
-      <p class="brand-kicker">Dalmia Cement</p>
-      <p class="brand-title">Ariyalur Kiln <span>Analytical POC</span></p>
-    </div>
-    <p class="status-pill">Retrospective analytical POC</p>
+    <p class="wordmark"><span class="wm-brand">DALMIA CEMENT</span><span class="wm-sep" aria-hidden="true">|</span><span class="wm-product">Kiln Analytical POC</span></p>
+    <p class="top-tag">Ariyalur kiln · Jun–Aug 2025 · historical</p>
   </header>
-  <p id="static-note" class="callout static-note" hidden>Static export of the Phase 9 analytical service. This site does not save plant annotations.</p>
   <div class="disclaimer" role="note">
-    <p><strong>Retrospective, not an early warning.</strong>
-      The dashboard presents historical analytical evidence from the POC. It does not provide live alarms, predictions, probabilities, or validated deposit/ring/failure detection.</p>
+    <p><strong>Retrospective, not an early warning.</strong> Historical analysis of Jun–Aug 2025 only. It does not show live data, raise alarms or detect deposits, rings or coating.</p>
   </div>
+  <p id="ro-banner" class="ro-banner" hidden>Read-only hosted copy. It shows exported analysis results and cannot save plant annotations.</p>
   <div class="shell">
-    <nav aria-label="Dashboard">
-      <ul>
-        <li><a data-nav href="/">Overview</a></li>
-        <li><a data-nav href="/history">Historical Risk</a></li>
-        <li><a data-nav href="/abnormal-periods">Abnormal Periods</a></li>
-        <li><a data-nav href="/events">Plant Events</a></li>
-        <li><a data-nav href="/validation">Validation</a></li>
-        <li><a data-nav href="/data-quality">Data Quality</a></li>
-        <li><a data-nav href="/methodology">Methodology</a></li>
-      </ul>
-    </nav>
-    <div class="content">
-      <p id="range-status" class="range-status">Score window not set.</p>
-      <main id="main" tabindex="-1"></main>
-    </div>
+    <nav class="side" aria-label="Dashboard pages"><ul id="nav"></ul></nav>
+    <main id="main" tabindex="-1"></main>
   </div>
   <footer class="foot">
-    <p>Dalmia Cement · Ariyalur Kiln · historical analytical POC. Plant descriptions are shown as entered text.</p>
-    <p><a href="/methodology">Methodology</a> · <a href="/data-quality">Limitations</a> · <a href="/validation">Validation</a></p>
+    <p>Dalmia Cement · Ariyalur kiln analytical POC · retrospective only. Plant-entered text is shown exactly as entered.</p>
+    <p id="foot-version"></p>
   </footer>
-  <noscript><p class="state state-error">This dashboard needs JavaScript to read the analytical service.</p></noscript>
-  <script type="module" src="js/app.js"></script>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="state state-error">This dashboard needs JavaScript to read the analysis service.</p></noscript>
 </body>
 </html>

@@ -1,0 +1,809 @@
+L01 Event ground truthOpenNo coating, ring, deposit, cleaning, maintenance or stoppage-reason records exist in the supplied data. Detection, risk and early-warning claims cannot be validated against plant events.Source: Phase 1 issue register (CRITICAL); Phase 8 F15
+
+L02 Missing month kiln i septemberOpenKiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.Source: Phase 1 issue register (HIGH)
+
+L03 Kiln iiia april duplicationOpenThe Kiln-IIIA April file repeats May data; April is absent for that dataset.Source: Phase 1 issue register (HIGH)
+
+L04 Frozen windowMasked upstream122 tags are frozen on 2025-05-06 11:50-21:50; masked in Phase 2 and treated as a data-quality window downstream.Source: Phase 1 issue register; Phase 2 masks
+
+L05 Sentinel valuesMasked upstreamSentinel 99999 in 35 columns, -273 degC and text 'Error 6' are masked, not repaired.Source: Phase 1 issue register; Phase 2 masks
+
+L06 Unit review holdsOpen13 columns are held pending plant unit confirmation and are excluded from the score.Source: phase-02-baseline/outputs/column_holds.csv
+
+L07 O2 analyser kiln i xOpenFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: Phase 7 report; Phase 8 F5, F17
+
+L08 Load dependenceOpenThe score is higher at low feed and during load changes; the Phase 8 load-adjusted analysis is INSUFFICIENT_DATA.Source: Phase 7 report; Phase 8 F6
+
+L09 Operating state proxyOpenRUNNING / STOPPED is a POC proxy from Kiln MD and feed; the meaning of Kiln MD and the equipment identity are unconfirmed.Source: Phase 2
+
+L10 Reference dependenceOpenBand levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.Source: Phase 6 robustness; Phase 7 robustness
+
+L11 Censored onsetsOpen6 of the 12 abnormal-period onsets are censored by the look-back cap; the small positive pre-onset estimate comes from them.Source: Phase 8 F18
+
+L12 TimezoneOpenThe historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.Source: Phase 1 plant question 7
+
+L13 High band not rareFor informationThe HIGH reference-relative band covers about half of August operational buckets; it is not a rare-event flag and not an alarm level.Source: Phase 7 report
+
+OpenKiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.See evidence · L02
+
+OpenThe Kiln-IIIA April file repeats May data; April is absent for that dataset.See evidence · L03
+
+OpenFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.See evidence · L07
+
+Open13 columns are held pending plant unit confirmation and are excluded from the score.See evidence · L06
+
+OpenRUNNING / STOPPED is a POC proxy from Kiln MD and feed; the meaning of Kiln MD and the equipment identity are unconfirmed.See evidence · L09
+
+DALMIA CEMENT|Kiln Analytical POC
+
+Ariyalur kiln · Jun–Aug 2025 · historical
+
+Retrospective, not an early warning. Historical analysis of Jun–Aug 2025 only. It does not show live data, raise alarms or detect deposits, rings or coating.
+
+Retrospective, not an early warning. Historical analysis of Jun–Aug 2025 only. It does not show live data, raise alarms or detect deposits, rings or coating.
+
+Read-only hosted copy. It shows exported analysis results and cannot save plant annotations.
+
+Overview
+
+Score history
+
+Abnormal periods
+
+Plant annotations
+
+Validation
+
+Data quality
+
+Methodology
+
+Data quality
+
+Two dataset-months are missing, rows are never filled in, and several plant questions remain open.
+
+Methodology: how this is worked out
+
+Key figures
+
+Missing dataset-months2Kiln-I Sep 2025 · Kiln-IIIA Apr 2025Source: Phase 9 · /metadata/limitations
+
+Open plant questions5questions only the plant can answerSource: Phase 9 · /metadata/data-requirements
+
+Rows with poor data quality1,731of 9,557 operational rows; a row property, not a plant stateSource: Phase 7 · operational_row_quality
+
+Rows with ambient-like O₂1,647kiln-inlet O₂ readings that look like ambient airSource: Phase 7 · operational_row_quality
+
+Coverage
+
+Dataset coverage by month
+
+Source window 2025-04-01..2025-09-30. Each cell names its state in text; pattern marks missing and partial. Select a cell for its detail.
+
+Dataset
+
+Apr 2025
+
+May 2025
+
+Jun 2025
+
+Jul 2025
+
+Aug 2025
+
+Sep 2025
+
+Kiln-I
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Missing
+
+Kiln-IA
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Kiln-II
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Kiln-IIIA
+
+Missing
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Supplied
+
+Operational score (Phase 7)
+
+Reference
+
+Reference
+
+Scored
+
+Scored
+
+Partial
+
+Not scored
+
+Supplied
+
+Missing
+
+Reference
+
+Scored
+
+Partial
+
+Not scored
+
+Missing months from /metadata/limitations · score extent p7-risk-1.1.0 · API p9-api-1.0.0
+
+Cell details
+
+Coverage cell details
+
+Dataset
+
+Month
+
+State
+
+Detail
+
+Kiln-I
+
+Apr 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-I
+
+May 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-I
+
+Jun 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-I
+
+Jul 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-I
+
+Aug 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-I
+
+Sep 2025
+
+Missing
+
+truncated workbook, unreadable; September is not scored
+
+Kiln-IA
+
+Apr 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IA
+
+May 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IA
+
+Jun 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IA
+
+Jul 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IA
+
+Aug 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IA
+
+Sep 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+Apr 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+May 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+Jun 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+Jul 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+Aug 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-II
+
+Sep 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IIIA
+
+Apr 2025
+
+Missing
+
+the April file repeats May data; April is absent
+
+Kiln-IIIA
+
+May 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IIIA
+
+Jun 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IIIA
+
+Jul 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IIIA
+
+Aug 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Kiln-IIIA
+
+Sep 2025
+
+Supplied
+
+No gap recorded by the API for this dataset-month.
+
+Operational score
+
+Apr 2025
+
+Reference
+
+Apr–May reference window: used to build the score, not scored.
+
+Operational score
+
+May 2025
+
+Reference
+
+Apr–May reference window: used to build the score, not scored.
+
+Operational score
+
+Jun 2025
+
+Scored
+
+Operational buckets scored.
+
+Operational score
+
+Jul 2025
+
+Scored
+
+Operational buckets scored.
+
+Operational score
+
+Aug 2025
+
+Partial
+
+Scored to 23 Aug 2025; nothing after that is filled.
+
+Operational score
+
+Sep 2025
+
+Not scored
+
+No operational score for this month.
+
+Recorded limitations
+
+Operational row quality
+
+Operational row quality, as served
+
+Measure
+
+Rows
+
+Data quality: Good
+
+7,826
+
+Data quality: Poor
+
+1,731
+
+Confidence band: Low
+
+1,748
+
+Confidence band: Medium
+
+7,809
+
+Ambient-like kiln-inlet O₂
+
+1,647
+
+All operational rows
+
+9,557
+
+timezone-naive historian export (no timezone supplied; plant question open). Scores are 10-min buckets labelled by bucket end: a row at T covers (T - 10 min, T]. Timestamps are served exactly as stored, never converted, resampled or filled.
+
+Open plant questions
+
+What is the purge / calibration behaviour of the Kiln-I!X O2 analyser?
+
+Which period does the plant regard as normal?
+
+Are feed reductions logged?
+
+What is the historian timezone and export interpolation setting?
+
+Are the Kiln-I / IA / II / III / IIIA / IIIB folders pages of one kiln line?
+
+Artifact integrity
+
+Each file the API serves is hash-checked at start-up. If any differs, the API refuses to answer: The analysis service refused to serve results because a stored file failed its integrity check. Nothing is shown rather than unverified numbers. See /ready on the service.
+
+Served artifacts
+
+Artifact
+
+Version
+
+Status
+
+SHA-256 (first 12)
+
+risk_scores
+
+p7-risk-1.1.0
+
+Empirical poc
+
+28e322b26207
+
+risk_score_components
+
+—
+
+Empirical poc
+
+35439308cee6
+
+risk_score_confidence
+
+—
+
+Empirical poc
+
+9ebcaa244b24
+
+risk_score_reasons
+
+—
+
+Empirical poc
+
+13a8370fd6f2
+
+risk_score_reference
+
+p7-risk-1.1.0/PRIMARY/42768113b86f/2025-04-01..2025-05-31
+
+Frozen reference
+
+6f37617d4186
+
+risk_score_bands
+
+p7-risk-1.1.0/PRIMARY/42768113b86f/2025-04-01..2025-05-31
+
+Frozen reference
+
+c586f7fad5c9
+
+risk_score_feature_inventory
+
+—
+
+Frozen reference
+
+3bee9a3f351d
+
+abnormal_episodes
+
+p6-abn-1.0.0
+
+Kpi derived empirical
+
+b2ded9686bc3
+
+p8_summary
+
+p8-ew-1.0.0
+
+Historical validation
+
+8a415312acd6
+
+p8_horizon
+
+—
+
+Historical validation
+
+8620b7956046
+
+p8_controls
+
+—
+
+Historical validation
+
+114414e99293
+
+p8_negative_controls
+
+—
+
+Historical validation
+
+1225da25c072
+
+p8_o2_sensitivity
+
+—
+
+Historical validation
+
+7c6c30dcbb77
+
+p8_load_sensitivity
+
+—
+
+Historical validation
+
+6b15e26171d6
+
+p8_gates
+
+—
+
+Historical validation
+
+105e7f867641
+
+p8_run_manifest
+
+—
+
+Provenance
+
+4293dfa8b60f
+
+p8_trajectories
+
+—
+
+Historical validation
+
+82872d8bed79
+
+o2_excluded_scores
+
+p7-risk-1.1.0
+
+Sensitivity analysis
+
+d8378ef9087c
+
+analytical_contract
+
+p9-api-1.0.0
+
+Contract
+
+8c907ecc5a8c
+
+What the evidence shows
+
+How to read this
+
+The O₂ analyser may be reading ambient airFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: L07
+
+The O₂ analyser may be reading ambient air
+
+Frequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.
+
+Times have no timezoneThe historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.Source: L12
+
+Times have no timezone
+
+The historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.
+
+The score is reference-relativeBand levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.Source: L10
+
+The score is reference-relative
+
+Band levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.
+
+Recommended next steps — data and review
+
+Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-pointsPriority 3 · Unblocks: scope, state proxy, efficiency familyCopy request
+
+Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-points
+
+Priority 3 · Unblocks: scope, state proxy, efficiency family
+
+Copy request
+
+What is the purge / calibration behaviour of the Kiln-I!X O2 analyser?Open plant questionCopy request
+
+What is the purge / calibration behaviour of the Kiln-I!X O2 analyser?
+
+Open plant question
+
+Copy request
+
+Are the Kiln-I / IA / II / III / IIIA / IIIB folders pages of one kiln line?Open plant questionCopy request
+
+Are the Kiln-I / IA / II / III / IIIA / IIIB folders pages of one kiln line?
+
+Open plant question
+
+Copy request
+
+What is the historian timezone and export interpolation setting?Open plant questionCopy request
+
+What is the historian timezone and export interpolation setting?
+
+Open plant question
+
+Copy request
+
+Add an annotation
+
+Validation
+
+Methodology
+
+Dalmia Cement · Ariyalur kiln analytical POC · retrospective only. Plant-entered text is shown exactly as entered.
+
+Dashboard pages
+
+Kiln-I, Apr 2025: Supplied. Open detail.
+
+Kiln-I, May 2025: Supplied. Open detail.
+
+Kiln-I, Jun 2025: Supplied. Open detail.
+
+Kiln-I, Jul 2025: Supplied. Open detail.
+
+Kiln-I, Aug 2025: Supplied. Open detail.
+
+Kiln-I, Sep 2025: Missing. Open detail.
+
+Kiln-IA, Apr 2025: Supplied. Open detail.
+
+Kiln-IA, May 2025: Supplied. Open detail.
+
+Kiln-IA, Jun 2025: Supplied. Open detail.
+
+Kiln-IA, Jul 2025: Supplied. Open detail.
+
+Kiln-IA, Aug 2025: Supplied. Open detail.
+
+Kiln-IA, Sep 2025: Supplied. Open detail.
+
+Kiln-II, Apr 2025: Supplied. Open detail.
+
+Kiln-II, May 2025: Supplied. Open detail.
+
+Kiln-II, Jun 2025: Supplied. Open detail.
+
+Kiln-II, Jul 2025: Supplied. Open detail.
+
+Kiln-II, Aug 2025: Supplied. Open detail.
+
+Kiln-II, Sep 2025: Supplied. Open detail.
+
+Kiln-IIIA, Apr 2025: Missing. Open detail.
+
+Kiln-IIIA, May 2025: Supplied. Open detail.
+
+Kiln-IIIA, Jun 2025: Supplied. Open detail.
+
+Kiln-IIIA, Jul 2025: Supplied. Open detail.
+
+Kiln-IIIA, Aug 2025: Supplied. Open detail.
+
+Kiln-IIIA, Sep 2025: Supplied. Open detail.
+
+Operational score, Apr 2025: Reference. Open detail.
+
+Operational score, May 2025: Reference. Open detail.
+
+Operational score, Jun 2025: Scored. Open detail.
+
+Operational score, Jul 2025: Scored. Open detail.
+
+Operational score, Aug 2025: Partial. Open detail.
+
+Operational score, Sep 2025: Not scored. Open detail.
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: MASKED_UPSTREAM
+
+API value: MASKED_UPSTREAM
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: INFO
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+API value: OPEN
+
+Actions

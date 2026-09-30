@@ -1,154 +1,87 @@
-import { api, getAll } from "../api.js";
-import { defaultWindow, timeSeriesFigure } from "../chart.js";
+import { trendFigure } from "../chart.js";
+import { MSG, PAGE, PERIOD_LABEL } from "../copy.js";
 import { h } from "../dom.js";
+import { shortStamp } from "../pure/present.js";
 import { toApiTimestamp, toLocalInput } from "../pure/query.js";
 import { addMinutes } from "../pure/series.js";
-import { failure, links, loading, pageHeader, stamp } from "../ui.js";
+import { fmtInt, hero, kpis, loading, section, to } from "../ui.js";
+import { activeEvents, artifactVersion, loadExtent, loadSeries, loadStory, storySections, versions } from "./common.js";
+
+const MONTHS = [["Jun 2025", "2025-06-01T00:00:00", "2025-07-01T00:00:00"], ["Jul 2025", "2025-07-01T00:00:00", "2025-08-01T00:00:00"], ["Aug 2025", "2025-08-01T00:00:00", "2025-09-01T00:00:00"]];
 
 export async function render(root, ctx) {
-  root.replaceChildren(loading("Loading the historical score window…"));
-  try {
-    const probe = await api("/api/v1/risk-scores?limit=1", { signal: ctx.signal });
-    const extent = probe.data_extent;
-    let range = ctx.range || defaultWindow(extent);
-    if (!ctx.range && range) ctx.setRange(range);
-    root.replaceChildren(shell(extent, range, ctx));
-    await draw(root, range, ctx);
-  } catch (err) {
-    if (err?.name === "AbortError") return;
-    root.replaceChildren(failure(err, "Historical score data could not be loaded. Check that the analytical service is available."));
-  }
-}
+  const q = ctx.route.query;
+  root.replaceChildren(hero(PAGE.history), loading(MSG.loadingChart));
+  const [extent, story, series, events] = await Promise.all([loadExtent(), loadStory(), loadSeries(), activeEvents(ctx.signal)]);
+  const fullEnd = addMinutes(extent.last_timestamp, 10);
+  let from = toApiTimestamp(q.from) || extent.first_timestamp;
+  let until = toApiTimestamp(q.to) || fullEnd;
+  const badRange = from >= until;
+  if (badRange) { from = extent.first_timestamp; until = fullEnd; }
+  const overlay = q.overlay === "o2_excluded";
+  const period = story.periods.find((p) => p.period_id === q.period) || null;
+  const nav = (next) => ctx.go(to("/history", { from: next.from ?? from, to: next.to ?? until, period: "period" in next ? next.period : q.period, overlay: ("overlay" in next ? next.overlay : overlay) ? "o2_excluded" : "" }));
 
-function shell(extent, range, ctx) {
-  const form = h("form", { class: "controls", id: "score-controls" },
-    h("div", { class: "field" },
-      h("label", { for: "score-start" }, "Start (inclusive)"),
-      h("input", { id: "score-start", type: "datetime-local", required: true, value: toLocalInput(range.start) })),
-    h("div", { class: "field" },
-      h("label", { for: "score-end" }, "End (exclusive)"),
-      h("input", { id: "score-end", type: "datetime-local", required: true, value: toLocalInput(range.end) })),
+  // Display clip of served rows to the chosen range. No value is changed or derived.
+  const rows = series.rows.filter((r) => r.timestamp >= from && r.timestamp < until);
+  const gaps = series.gaps.filter(([a, b]) => b > from && a < until);
+  const periods = story.periods.filter((p) => p.end_time > from && p.start_time < until);
+  const evs = (events.data || []).filter((e) => e.start_time >= from && e.start_time < until);
+
+  const form = h("form", { class: "controls", "aria-label": "Score history range" },
+    h("div", { class: "field" }, h("label", { for: "h-from" }, "From (plant-local)"), h("input", { id: "h-from", type: "datetime-local", value: toLocalInput(from), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
+    h("div", { class: "field" }, h("label", { for: "h-to" }, "To (end excluded)"), h("input", { id: "h-to", type: "datetime-local", value: toLocalInput(until), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
+    h("button", { type: "submit", class: "btn btn-secondary" }, "Apply range"),
+    h("div", { class: "presets", role: "group", "aria-label": "Quick ranges" },
+      h("button", { type: "button", class: "btn btn-ghost", onclick: () => nav({ from: extent.first_timestamp, to: fullEnd, period: "" }) }, "Full range"),
+      MONTHS.map(([label, a, b]) => h("button", { type: "button", class: "btn btn-ghost", onclick: () => nav({ from: a, to: b < fullEnd ? b : fullEnd }) }, label))),
     h("label", { class: "check" },
-      h("input", { id: "show-o2", type: "checkbox" }),
-      "Show O₂-excluded sensitivity"),
-    h("label", { class: "check" },
-      h("input", { id: "show-periods", type: "checkbox", checked: true }),
-      "Show KPI-derived periods"),
-    h("label", { class: "check" },
-      h("input", { id: "show-events", type: "checkbox" }),
-      "Show plant events"),
-    h("button", { type: "submit" }, "Apply window"),
-    h("button", { type: "button", id: "zoom-recent" }, "Last 14 days"),
-    h("button", { type: "button", id: "zoom-full" }, "Operational window"),
-    h("button", { type: "button", id: "zoom-reset" }, "Reset"),
-    h("p", { id: "range-error", class: "field-error", role: "alert" }));
+      h("input", { type: "checkbox", id: "h-overlay", checked: overlay, onchange: (e) => nav({ overlay: e.target.checked }) }),
+      MSG.o2Toggle),
+    h("p", { class: "field-error", role: "status", id: "h-error" }, badRange ? "That range was not valid, so the full range is shown." : ""));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const next = readForm(form);
-    const err = form.querySelector("#range-error");
-    if (!next) {
-      err.textContent = "Enter a plant-local start and end. End must be later than start. Offsets are not accepted.";
+    const a = toApiTimestamp(form.querySelector("#h-from").value);
+    const b = toApiTimestamp(form.querySelector("#h-to").value);
+    if (!a || !b || a >= b) {
+      form.querySelector("#h-error").textContent = "Enter a plant-local start and end; the end must be later than the start.";
       return;
     }
-    err.textContent = "";
-    ctx.setRange(next);
-    draw(form.closest("main") || document.getElementById("main"), next, ctx);
+    nav({ from: a, to: b });
   });
-  form.querySelector("#zoom-recent").addEventListener("click", () => apply(form, defaultWindow(extent), ctx));
-  form.querySelector("#zoom-full").addEventListener("click", () => apply(form, {
-    start: extent.first_timestamp,
-    end: addMinutes(extent.last_timestamp, 10),
-  }, ctx));
-  form.querySelector("#zoom-reset").addEventListener("click", () => apply(form, defaultWindow(extent), ctx));
-  form.querySelector("#show-o2").addEventListener("change", () => form.requestSubmit());
-  form.querySelector("#show-periods").addEventListener("change", () => form.requestSubmit());
-  form.querySelector("#show-events").addEventListener("change", () => form.requestSubmit());
 
-  return h("div", {},
-    pageHeader("Historical risk", "Empirical POC risk score for operational rows. The line is the historical score magnitude."),
-    h("p", { class: "meta-line" }, `Series extent ${stamp(extent.first_timestamp)} – ${stamp(extent.last_timestamp)} · ${extent.n_rows.toLocaleString("en-GB")} operational rows. ${extent.gap_rule}`),
-    form,
-    h("div", { id: "score-stage" }, loading("Loading scores for this window…")),
-    links());
-}
+  const chart = trendFigure({
+    title: `Primary risk score, ${shortStamp(from, true)} – ${shortStamp(until, true)}${overlay ? ", with the O₂-excluded sensitivity overlay" : ""}`,
+    description: `Served primary score for each operational ten-minute bucket. Hatched bands are ${PERIOD_LABEL}; diamonds are plant annotations; hatched grey is a gap with no operational data, never a zero score.`,
+    start: from,
+    end: until,
+    series: [
+      { name: "Primary risk score", key: "primary_empirical_risk_score", rows },
+      ...(overlay ? [{ name: "O₂-excluded — sensitivity analysis, not preferred", key: "o2_excluded_empirical_risk_score", rows, dash: true }] : []),
+    ],
+    gaps,
+    periods,
+    highlight: period?.period_id,
+    events: evs,
+    periodHref: (id) => to(`/abnormal-periods/${id}`),
+    eventHref: (id) => to(`/events/${id}`),
+    onBrush: (a, b) => nav({ from: a, to: b }),
+    footnote: `Score ${artifactVersion(series.envelope)} · periods ${story.periods[0]?.method_version || "—"} · ${versions(story)}. ${extent.gap_rule}.`,
+  });
 
-function apply(form, range, ctx) {
-  form.querySelector("#score-start").value = toLocalInput(range.start);
-  form.querySelector("#score-end").value = toLocalInput(range.end);
-  ctx.setRange(range);
-  draw(document.getElementById("main"), range, ctx);
-}
-
-function readForm(form) {
-  const start = toApiTimestamp(form.querySelector("#score-start").value);
-  const end = toApiTimestamp(form.querySelector("#score-end").value);
-  if (!start || !end || start >= end) return null;
-  return { start, end };
-}
-
-let drawToken = 0;
-
-async function draw(root, range, ctx) {
-  const token = ++drawToken;
-  const stage = root.querySelector("#score-stage");
-  const form = root.querySelector("#score-controls");
-  if (!stage || !form) return;
-  const showO2 = form.querySelector("#show-o2").checked;
-  const showPeriods = form.querySelector("#show-periods").checked;
-  const showEvents = form.querySelector("#show-events").checked;
-  stage.replaceChildren(loading("Loading scores for this window…"));
-  try {
-    const scoreReq = showO2
-      ? getAll("/api/v1/risk-scores/variant-comparison", range, { signal: ctx.signal })
-      : getAll("/api/v1/risk-scores", { ...range, variant: "primary" }, { signal: ctx.signal });
-    const [scores, periods, events] = await Promise.all([
-      scoreReq,
-      showPeriods ? api(`/api/v1/abnormal-periods?start=${range.start}&end=${range.end}&limit=100`, { signal: ctx.signal }) : null,
-      showEvents ? api(`/api/v1/events?start=${range.start}&end=${range.end}&status=ACTIVE&limit=100`, { signal: ctx.signal }) : null,
-    ]);
-    if (token !== drawToken) return;
-    if (!scores.rows.length) {
-      stage.replaceChildren(h("p", { class: "state", role: "status" }, "No operational analytical data is available for this period."));
-      return;
-    }
-    const variant = scores.envelope.variant || scores.envelope.variants?.primary;
-    const rows = showO2
-      ? scores.rows.map((row) => ({
-        timestamp: row.timestamp,
-        primary_empirical_risk_score: row.primary_empirical_risk_score,
-        o2_excluded_empirical_risk_score: row.o2_excluded_empirical_risk_score,
-      }))
-      : scores.rows;
-    const chart = timeSeriesFigure({
-      title: "Historical empirical risk score",
-      titleId: "score-title",
-      descId: "score-desc",
-      description: `Historical empirical risk score from ${stamp(range.start)} through ${stamp(range.end)}. Gaps indicate unavailable data, not a zero score.`,
-      start: range.start,
-      end: range.end,
-      gaps: scores.gaps,
-      showSensitivity: showO2,
-      periods: showPeriods ? periods.data : null,
-      events: showEvents ? events.data : null,
-      series: showO2
-        ? [
-          { name: "Primary", key: "primary_empirical_risk_score", rows },
-          { name: "O₂-excluded sensitivity", key: "o2_excluded_empirical_risk_score", rows, dash: true },
-        ]
-        : [{ name: "Primary", key: "empirical_risk_score", rows }],
-    });
-    const notes = [
-      h("p", { class: "meta-line" }, `${scores.envelope.disclaimer || ""}`),
-      variant?.preference_note ? h("p", { class: "meta-line" }, `${variant.variant_status || "primary"} · preferred = ${variant.preferred}. ${variant.preference_note}`) : null,
-    ];
-    if (showO2) {
-      const o2 = scores.envelope.variants?.o2_excluded;
-      notes.push(h("p", { class: "callout" }, "O₂-excluded is a sensitivity analysis. The kiln-inlet O₂ analyser behaviour remains an unresolved plant question."),
-        h("p", { class: "meta-line" }, o2 ? `O₂-excluded status ${o2.variant_status}. preferred = ${o2.preferred}.` : ""));
-    }
-    stage.replaceChildren(...notes, chart.figure, chart.table);
-  } catch (err) {
-    if (err?.name === "AbortError") return;
-    stage.replaceChildren(failure(err, "Historical score data could not be loaded. Check that the analytical service is available."));
-  }
+  root.replaceChildren(
+    hero(PAGE.history),
+    kpis([
+      { label: "Buckets in view", value: fmtInt(rows.length), meaning: `of ${fmtInt(extent.total)} served operational buckets`, source: "Phase 7 · /risk-scores/variant-comparison", link: to("/history") },
+      { label: "Gaps in view", value: fmtInt(gaps.length), meaning: "stretches with no operational data, drawn as gaps", source: "Phase 9 · gaps_in_page", link: to("/data-quality") },
+      { label: "Abnormal periods in view", value: String(periods.length), meaning: `of ${story.periods.length} ${PERIOD_LABEL}`, source: "Phase 6 · /abnormal-periods", link: to("/abnormal-periods") },
+      { label: "Plant annotations in view", value: String(evs.length), meaning: "active plant-supplied records", source: "Phase 9 · /events", link: to("/events") },
+    ]),
+    section("Score history", "graph",
+      form,
+      period ? h("p", { class: "callout" }, `Highlighting ${period.period_id} (${shortStamp(period.start_time)} – ${shortStamp(period.end_time)}), shown with 24 hours either side. `, h("a", { href: to(`/abnormal-periods/${period.period_id}`) }, "Back to the period details")) : null,
+      overlay ? h("p", { class: "callout", id: "o2-note" }, MSG.o2Note) : null,
+      chart),
+    ...storySections("history", story, { period }),
+  );
 }

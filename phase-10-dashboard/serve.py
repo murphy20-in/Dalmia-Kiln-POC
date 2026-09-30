@@ -8,6 +8,7 @@ Upstream is fixed (DALMIA_KILN_API_UPSTREAM, default http://127.0.0.1:8009). No 
 from __future__ import annotations
 
 import os
+import re
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -18,6 +19,8 @@ UPSTREAM = os.environ.get("DALMIA_KILN_API_UPSTREAM", "http://127.0.0.1:8009").r
 HOST = os.environ.get("DALMIA_KILN_DASHBOARD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("DALMIA_KILN_DASHBOARD_PORT", "8010"))
 PAGES = {"/", "/history", "/abnormal-periods", "/events", "/validation", "/data-quality", "/methodology"}
+# Deep links the client router owns (public/js/pure/route.js).
+DEEP = re.compile(r"/abnormal-periods/P6-\d{3}|/events/new|/events/[0-9a-f-]{36}(/edit)?")
 PROXY_PREFIXES = ("/api/", "/health", "/ready")
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
          ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png",
@@ -59,7 +62,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith(PROXY_PREFIXES) or path in ("/health", "/ready"):
             self._proxy()
             return
-        if path in PAGES:
+        if path in PAGES or DEEP.fullmatch(path):
             self._file(PUBLIC / "index.html")
             return
         target = _safe_file(path)
