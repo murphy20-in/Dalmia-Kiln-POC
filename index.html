@@ -1,50 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kiln Analytical POC — Dalmia Cement</title>
-  <meta name="description" content="Retrospective analysis of the Ariyalur kiln, Jun–Aug 2025. Not an early warning.">
-  <link rel="icon" href="data:,">
-  <style>html.css-wait body { visibility: hidden; }</style>
-  <script>
-    /* Local routes can be nested (/abnormal-periods/P6-020), so assets are absolute there. The GitHub Pages copy
-       uses hash routes under /Dalmia-Kiln-POC/, so relative paths are right. Inserted here rather than written as
-       tags so the browser never requests them from the wrong directory. */
-    (function () {
-      document.documentElement.classList.add("css-wait");
-      var root = location.hostname.slice(-9) === "github.io" ? "" : "/";
-      var css = document.createElement("link");
-      css.rel = "stylesheet";
-      css.href = root + "css/app.css";
-      css.onload = css.onerror = function () { document.documentElement.classList.remove("css-wait"); };
-      document.head.appendChild(css);
-      var app = document.createElement("script");
-      app.type = "module";
-      app.src = root + "js/app.js";
-      document.head.appendChild(app);
-    })();
-  </script>
-</head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
-  <header class="top">
-    <p class="wordmark"><span class="wm-brand">DALMIA CEMENT</span><span class="wm-sep" aria-hidden="true">|</span><span class="wm-product">Kiln Analytical POC</span></p>
-    <p class="top-tag">Ariyalur kiln · Jun–Aug 2025 · historical</p>
-  </header>
-  <div class="disclaimer" role="note">
-    <p><strong>Retrospective, not an early warning.</strong> Historical analysis of Jun–Aug 2025 only. It does not show live data, raise alarms or detect deposits, rings or coating.</p>
-  </div>
-  <p id="ro-banner" class="ro-banner" hidden>Read-only hosted copy. It shows exported analysis results and cannot save plant annotations.</p>
-  <div class="shell">
-    <nav class="side" aria-label="Dashboard pages"><ul id="nav"></ul></nav>
-    <main id="main" tabindex="-1"></main>
-  </div>
-  <footer class="foot">
-    <p>Dalmia Cement · Ariyalur kiln analytical POC · retrospective only. Plant-entered text is shown exactly as entered.</p>
-    <p id="foot-version"></p>
-  </footer>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <noscript><p class="state state-error">This dashboard needs JavaScript to read the analysis service.</p></noscript>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Kiln efficiency and deposit-risk intelligence for Dalmia Cement, Ariyalur. Built by Astrikos AI." />
+    <meta name="theme-color" content="#2a469c" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a469c'/%3E%3Cpath d='M7 21a9 9 0 0 1 18 0' stroke='%2300a8ce' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M16 21l5-6' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <title>Kiln Intelligence · Dalmia Cement × Astrikos AI</title>
+    <script type="module" crossorigin src="./assets/index-C95bJlMi.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CJ_6kfJP.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
