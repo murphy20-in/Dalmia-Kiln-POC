@@ -2,7 +2,7 @@ F1 Not supported Risk rank elevated in the 60 min before empirical abnormal-peri
 
 F2 Weak Rank elevation at horizons beyond 1 h (2-24 h windows; WEAK uses raw p < 0.10, SUPPORTED needs BH q < 0.05)Evidence: 120 min WEAK (p 0.024, q 0.096, n 8; censored PE +0.089 vs uncensored +0.018); 240 min WEAK (p 0.011, q 0.088, n 8; censored PE +0.095 vs uncensored +0.022); 360 min WEAK (p 0.036, q 0.097, n 8; censored PE +0.085 vs uncensored -0.002); 720 min NOT_SUPPORTED (p 0.235, q 0.268, n 8; censored PE +0.096 vs uncensored -0.040); 1440 min NOT_SUPPORTED (p 0.103, q 0.190, n 7; censored PE +0.092 vs uncensored -0.062); about 0.5 of 5 horizons are expected below raw p 0.10 under the null; the excess is consistent with within-shift persistence of censored onsets
 
-F3 Not supported Five historical warning-rule definitions were each tested against the abnormal periods5 rule definitions, each not supported. Details are withheld under Phase 8 section 26. None of the rules is a live flag.
+F3 Not supported Historical rule definitions (Phase 8 F3) were each tested against the abnormal periods5 rule definitions, each not supported. Details are withheld under Phase 8 section 26. None of these rules is used in this dashboard.
 
 F4 Weak Direction of the point estimate consistent across June / July / August (each month too small to test)Evidence: JUN PE +0.092 (n 3); JUL PE +0.051 (n 4); AUG PE +0.031 (n 3); leave-one-month-out: without JUN +0.034 p 0.253; without JUL +0.057 p 0.118; without AUG +0.068 p 0.194 (per-month n < 6: month-level SUPPORTED impossible by design)Context only: not evidence of an effect.
 
@@ -24,13 +24,13 @@ F12 Not supported 'Lead' before Phase 6 detection (KPI >= P90) as independent ev
 
 F13 Not supported Phase 4 indicator Kiln-I!I|ROC_1H adds pre-onset informationEvidence: active at T0 in 0.40 of periods vs 0.43 of controls, p 0.696
 
-F14 Blocked A deployable early-warning alert thresholdEvidence: thresholds were frozen from independent populations and evaluated, but an alert threshold needs event ground truth (costs of missed / unnecessary alerts); month-holdout and LOEO results are validation diagnostics only
+F14 Blocked A deployable early-warning alert thresholdCannot be tested until plant event records existEvidence: thresholds were frozen from independent populations and evaluated, but an alert threshold needs event ground truth (costs of missed / unnecessary alerts); month-holdout and LOEO results are validation diagnostics only
 
-F15 Blocked Deposit / ring / coating / failure / maintenance early warningEvidence: no plant event ground truth in the supplied data (Phase 1 EVENT GROUND TRUTH NOT FOUND)
+F15 Blocked Deposit / ring / coating / failure / maintenance early warningCannot be tested until plant event records existEvidence: no plant event ground truth in the supplied data (Phase 1 EVENT GROUND TRUTH NOT FOUND)
 
-F16 Blocked Lead time to plant eventsEvidence: no plant event timestamps
+F16 Blocked Lead time to plant eventsCannot be tested until plant event records existEvidence: no plant event timestamps
 
-F17 Blocked Origin of the ambient-like kiln-inlet O2 readingsEvidence: ANALYSER_BEHAVIOUR_REQUIRES_PLANT_CONFIRMATION (purge / calibration behaviour of Kiln-I!X)
+F17 Blocked Origin of the ambient-like kiln-inlet O2 readingsCannot be tested until plant event records existEvidence: ANALYSER_BEHAVIOUR_REQUIRES_PLANT_CONFIRMATION (purge / calibration behaviour of Kiln-I!X)
 
 F18 Insufficient data Pre-onset rank elevation present among uncensored onsets (the shift had not begun before the 6-h look-back)Evidence: uncensored onsets only: PE -0.072 (negative direction), p 0.8011, n 5 (all evaluable: PE +0.051, n 10); censored-only PE +0.082. A censored T0 is the look-back cap, so its window lies inside the KPI shift; an uncensored T0 is the CUSUM zero, a local low - the 60-min endpoint cannot measure precedence for either group
 
@@ -74,7 +74,7 @@ Methodology
 
 Validation
 
-Early-warning validation: not supported. Phase 8 did not show the score rising before the abnormal periods, and the O₂-excluded check is weak and analyser-dependent.
+Early-warning validation: not supported. Phase 8 did not show the score rising before the abnormal periods. The O₂-excluded check is weak and analyser-dependent, and neither variant is preferred.
 
 Methodology: how this is worked out
 
@@ -84,9 +84,9 @@ Early-warning validationNot supportedThe score was not shown to rise before the 
 
 Evaluable periods10 of 12KPI-derived abnormal periods (not plant events) with enough data before onsetSource: Phase 8 · primary_endpoint
 
-O₂-excluded checkWeakAnalyser-dependent sensitivity analysis, not preferredSource: Phase 8 · primary_endpoint
+O₂-excluded checkWeakAnalyser-dependent sensitivity analysis; neither variant is preferredSource: Phase 8 · primary_endpoint
 
-Censored onsets6 of 12onsets cut off by the look-back capSource: Phase 8 · censoring
+Capped start times6 of 12start time capped at 6 h before the period, so the score window already sits inside the KPI shiftSource: Phase 8 · censoring
 
 Pipeline integrity checks43 of 43the analysis ran correctly; this is not a favourable resultSource: Phase 8 · integrity checks
 
@@ -120,15 +120,19 @@ Controls
 
 Method: median rank excess over (T0 - 60 min, T0] vs month-matched ordinary running; T0 = Phase 6 CUSUM onset; randomisation p from month-stratified random pseudo-onsets (NC2).
 
+Neither variant is preferred until the plant explains the Kiln-I!X analyser readings
+
 Why not supported?
 
-Sensitivity analysis — not preferred
+Sensitivity analysis — neither variant preferred
 
 O₂-excluded variant: Weak
 
 Served note: own 12-period event set (post-result amendment, a second test of the same hypothesis, not multiplicity-adjusted); on the primary's own periods p is the like_for_like_p_value; WEAK and analyser-dependent; not preferred.
 
-On the primary's own the primary's 10 evaluable periods, p = 0.062. Comparable to primary: no.
+On the same periods as the primary score (the primary's 10 evaluable periods): p = 0.062. Phase 8 marks this as not directly comparable to the primary result.
+
+Neither variant is preferred until the plant explains the Kiln-I!X analyser readings
 
 Compare variants
 
@@ -136,7 +140,7 @@ Estimates by look-back window
 
 Median rank excess before onset, with 95% bootstrap intervals
 
-Each dot is a served estimate: how far the score rank sat above ordinary running in the window before a period onset. Intervals that cross zero mean no difference was shown. The primary score is the filled dot; the O₂-excluded sensitivity is the hollow dot with a dashed interval.
+Each dot is a served estimate: how far the score rank sat above ordinary running in the window before a period onset. Intervals that cross zero mean no difference was shown. The primary score is the filled dot; the O₂-excluded sensitivity is the hollow dot with a dashed interval. Weak results at 2–6 h use the looser test and come from capped start times whose window already lies inside the KPI shift. They are not evidence that the score rose earlier (Phase 8 F2, F18).
 
 -0.09
 
@@ -168,13 +172,13 @@ Not supported
 
 Weak
 
-1 h window (primary)
+1 h window (main test)
 
-1 h window (primary), Primary score: 0.051 (-0.087 to 0.119), Not supported
+1 h window (main test), Primary score: 0.051 (-0.087 to 0.119), Not supported
 
 Not supported
 
-1 h window (primary), O₂-excluded (sensitivity): 0.088 (-0.057 to 0.147), Weak
+1 h window (main test), O₂-excluded (sensitivity): 0.088 (-0.057 to 0.147), Weak
 
 Weak
 
@@ -266,7 +270,7 @@ Primary score
 
 Not supported
 
-1 h window (primary)
+1 h window (main test)
 
 Primary score
 
@@ -346,7 +350,7 @@ O₂-excluded (sensitivity)
 
 Weak
 
-1 h window (primary)
+1 h window (main test)
 
 O₂-excluded (sensitivity)
 
@@ -408,9 +412,9 @@ Weak
 
 Validation p8-ew-1.0.0 · score p7-risk-1.1.0 · API p9-api-1.0.0
 
-Censored onsets
+Capped start times — Phase 8 censored onsets
 
-6 of 12 onsets are censored. Served meaning: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.
+6 of 12 period start times are capped at the look-back limit (Phase 8 calls these censored onsets). Served meaning: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.
 
 Censored and uncensored slices (table)
 
@@ -822,6 +826,8 @@ Negative controls, as served
 
 Control
 
+Variant
+
 Method
 
 Status
@@ -830,21 +836,27 @@ p
 
 NC1
 
+Primary score
+
 circular shift of the 60-min window statistic by >= 7 days (events / controls fixed)
 
-Degrades to null
+Degrades to null; Observed not distinguishable from null
 
 0.192
 
 NC2
 
+Primary score
+
 month-stratified random pseudo-onsets from eligible controls (the primary p-value)
 
-Degrades to null
+Degrades to null; Observed not distinguishable from null
 
 0.118
 
 NC3
+
+Primary score
 
 backward: window (end, end + 60 min] after each period vs controls (validation test, never a feature; 0 windows clipped at the grid end; not checked for other periods)
 
@@ -854,6 +866,8 @@ Diagnostic: post end association stronger than pre onset (trailing-window persis
 
 NC3b
 
+Primary score
+
 scale reference: window (T0, T0 + 60 min] inside the period
 
 Diagnostic: within period elevation
@@ -861,6 +875,8 @@ Diagnostic: within period elevation
 0.02
 
 NC4
+
+Primary score
 
 mirrored-position relocation: reversed-series window statistic read at the fixed anchors (one deterministic draw, not a null distribution; NC1 is the shift null)
 
@@ -870,6 +886,8 @@ Reported single draw: within null tol
 
 NC5
 
+Primary score
+
 all values after each T0 permuted and rescaled; every pre-T0 metric (8 window statistics, 5 x lead metrics) recomputed
 
 Pass identical
@@ -878,21 +896,27 @@ Pass identical
 
 NC1
 
+O₂-excluded (sensitivity)
+
 circular shift of the 60-min window statistic by >= 7 days (events / controls fixed)
 
-Degrades to null
+Degrades to null; Observed not distinguishable from null
 
 0.062
 
 NC2
 
+O₂-excluded (sensitivity)
+
 month-stratified random pseudo-onsets from eligible controls (the primary p-value)
 
-Degrades to null
+Degrades to null; Observed exceeds null
 
 0.045
 
 NC3
+
+O₂-excluded (sensitivity)
 
 backward: window (end, end + 60 min] after each period vs controls (validation test, never a feature; 0 windows clipped at the grid end; not checked for other periods)
 
@@ -902,6 +926,8 @@ Diagnostic: pre onset association at least as strong as post end
 
 NC3b
 
+O₂-excluded (sensitivity)
+
 scale reference: window (T0, T0 + 60 min] inside the period
 
 Diagnostic: within period elevation
@@ -910,6 +936,8 @@ Diagnostic: within period elevation
 
 NC4
 
+O₂-excluded (sensitivity)
+
 mirrored-position relocation: reversed-series window statistic read at the fixed anchors (one deterministic draw, not a null distribution; NC1 is the shift null)
 
 Reported single draw: outside null tol
@@ -917,6 +945,8 @@ Reported single draw: outside null tol
 —
 
 NC5
+
+O₂-excluded (sensitivity)
 
 all values after each T0 permuted and rescaled; every pre-T0 metric (8 window statistics, 5 x lead metrics) recomputed
 
@@ -932,17 +962,19 @@ What the evidence shows
 
 How to read this
 
-Many onsets are censored6 of 12 onsets are censored by the look-back cap: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.Source: Phase 8 censoring
+Many period start times are capped6 of 12 period start times are capped (start time capped at 6 h before the period, so the score window already sits inside the KPI shift). Served meaning: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.Source: Phase 8 censoring
 
-Many onsets are censored
+Many period start times are capped
 
-6 of 12 onsets are censored by the look-back cap: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.
+6 of 12 period start times are capped (start time capped at 6 h before the period, so the score window already sits inside the KPI shift). Served meaning: a censored onset is the look-back cap, so its window lies inside the KPI shift; the CENSORED slices are not evidence of precedence (Phase 8 F18); the UNCENSORED slices show no pre-onset excess.
 
-The O₂ analyser may be reading ambient airFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: L07
+The O₂ analyser may be reading ambient airFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Neither variant is preferred until the plant explains the Kiln-I!X analyser readingsSource: L07
 
 The O₂ analyser may be reading ambient air
 
 Frequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.
+
+Neither variant is preferred until the plant explains the Kiln-I!X analyser readings
 
 There is no plant ground truthNo coating, ring, deposit, cleaning, maintenance or stoppage-reason records exist in the supplied data. Detection, risk and early-warning claims cannot be validated against plant events.Source: L01
 
@@ -952,19 +984,19 @@ No coating, ring, deposit, cleaning, maintenance or stoppage-reason records exis
 
 Recommended next steps — data and review
 
-Record at least 8 evaluable plant-labelled events so the frozen Phase 8 protocol can be re-runThreshold meaning: the minimum number of evaluable plant-labelled events before the frozen Phase 8 protocol can be re-run and classify anything; reaching it does not validate the score.Add an annotation
+Record at least 8 evaluable plant annotations so the frozen Phase 8 protocol can be re-runThreshold meaning: the minimum number of evaluable plant-labelled events before the frozen Phase 8 protocol can be re-run and classify anything; reaching it does not validate the score.Add an annotation
 
-Record at least 8 evaluable plant-labelled events so the frozen Phase 8 protocol can be re-run
+Record at least 8 evaluable plant annotations so the frozen Phase 8 protocol can be re-run
 
 Threshold meaning: the minimum number of evaluable plant-labelled events before the frozen Phase 8 protocol can be re-run and classify anything; reaching it does not validate the score.
 
 Add an annotation
 
-Kiln-I!X O2 analyser purge / calibration schedulePriority 1 · Unblocks: Phase 8 F5, F17Copy request
+Kiln-I!X O2 analyser purge / calibration schedulePriority 1 · Needed to review: Phase 8 F5, F17Copy request
 
 Kiln-I!X O2 analyser purge / calibration schedule
 
-Priority 1 · Unblocks: Phase 8 F5, F17
+Priority 1 · Needed to review: Phase 8 F5, F17
 
 Copy request
 
@@ -992,7 +1024,11 @@ API value: WEAK
 
 API value: NOT_SUPPORTED
 
+API value: NEITHER_PREFERRED_UNTIL_PLANT_EXPLAINS_KILN_I_X
+
 API value: WEAK
+
+Median rank excess before onset, with 95% bootstrap intervals
 
 API value: NOT_SUPPORTED
 

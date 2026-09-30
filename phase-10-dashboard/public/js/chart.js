@@ -1,5 +1,5 @@
 /** Inline SVG charts. Every mark is a served value; gaps are drawn as gaps; nothing is interpolated. */
-import { h } from "./dom.js";
+import { UNSAFE_URL, h } from "./dom.js";
 import { MSG, TABLE_NOTE } from "./copy.js";
 import { plain, shortDate, shortStamp } from "./pure/present.js";
 import { decimate, flatten, formatTs, parseTs, segments, yDomain } from "./pure/series.js";
@@ -9,7 +9,10 @@ const W = 960;
 
 function el(tag, attrs = {}, ...kids) {
   const node = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) if (v != null && v !== false) node.setAttribute(k, String(v));
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false || k.startsWith("on") || (k === "href" && UNSAFE_URL.test(String(v)))) continue;
+    node.setAttribute(k, String(v));
+  }
   for (const kid of kids.flat()) if (kid != null) node.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
   return node;
 }
@@ -35,7 +38,7 @@ function figure(id, title, description, svg, extras, footnote) {
   return h("figure", { class: "chart-figure", id },
     h("figcaption", { id: `${id}-title`, class: "chart-title" }, title),
     h("p", { id: `${id}-desc`, class: "chart-desc" }, description),
-    h("div", { class: "chart-frame" }, svg),
+    h("div", { class: "chart-frame", tabindex: "0", role: "region", "aria-label": title }, svg),
     ...extras,
     footnote ? h("p", { class: "chart-foot" }, footnote) : null);
 }
@@ -125,13 +128,17 @@ export function trendFigure(spec) {
     const focus = spec.highlight === p.period_id;
     const label = `${p.period_id}: ${plain("severity", p.kpi_severity_class).text} KPI-derived abnormal period, ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}. Open details.`;
     const band = el("rect", { x: x1, y: PAD.t, width: Math.max(4, x2 - x1), height: plotH, class: `band sev-${sev}${focus ? " band-focus" : ""}`, fill: `url(#${id}-${sev})` });
-    const link = el("a", { href: spec.periodHref(p.period_id), class: "band-link", "aria-label": label }, el("title", {}, label), band);
+    const link = el("a", { href: spec.periodHref(p.period_id), class: "band-link" }, el("title", {}, label), band);
     if (focus || (!compact && span < 20 * 86400000)) link.append(el("text", { x: x1 + 2, y: PAD.t - 6, class: `band-label${focus ? " band-label-focus" : ""}` }, p.period_id));
     svg.append(link);
   }
 
   for (const s of prepared) {
     for (const seg of s.segs) {
+      if (seg.length === 1) {
+        svg.append(el("circle", { cx: xOf(seg[0].timestamp), cy: yOf(seg[0].y), r: 2, class: s.dash ? "point point-sensitivity" : "point point-primary" }));
+        continue;
+      }
       const pts = seg.map((p) => `${xOf(p.timestamp).toFixed(1)},${yOf(p.y).toFixed(1)}`).join(" ");
       svg.append(el("polyline", { points: pts, class: s.dash ? "series series-sensitivity" : "series series-primary", "stroke-dasharray": s.dash ? "7 4" : null }));
     }
@@ -141,13 +148,13 @@ export function trendFigure(spec) {
   for (const ev of spec.events || []) {
     const x = clampX(xOf(ev.start_time));
     const y = PAD.t + plotH - 10;
-    const label = `Plant annotation: ${ev.event_type}, ${shortStamp(ev.start_time)}. Open annotation.`;
-    svg.append(el("a", { href: spec.eventHref(ev.event_id), class: "event-link", "aria-label": label }, el("title", {}, label),
+    const label = `Plant annotation: ${plain("x", ev.event_type).text}, ${shortStamp(ev.start_time)}. Open annotation.`;
+    svg.append(el("a", { href: spec.eventHref(ev.event_id), class: "event-link" }, el("title", {}, label),
       el("polygon", { points: `${x},${y - 8} ${x + 7},${y} ${x},${y + 8} ${x - 7},${y}`, class: "event-mark" })));
   }
 
   const points = flatten(prepared[0]?.segs || []);
-  const readout = h("p", { class: "chart-readout", "aria-live": "polite" }, points.length ? MSG.brushHint : "");
+  const readout = h("p", { class: "chart-readout" }, points.length ? MSG.brushHint : "");
   if (points.length) {
     svg.addEventListener("pointermove", (event) => {
       if (drag) return;
@@ -159,9 +166,17 @@ export function trendFigure(spec) {
         const dx = Math.abs(xOf(p.timestamp) - x);
         if (dx < bestDx) { best = p; bestDx = dx; }
       }
-      readout.textContent = best && bestDx < 12 ? `${shortStamp(best.timestamp, true)} · primary score ${fmtScore(best.y)}` : MSG.brushHint;
+      readout.textContent = best && bestDx < 12 ? pointText(best) : MSG.brushHint;
     });
   }
+  const pointText = (p) => `${shortStamp(p.timestamp, true)} · primary score ${fmtScore(p.y)}`;
+  const inspect = points.length ? h("label", { class: "inspect" }, MSG.inspect,
+    h("input", { type: "range", min: "0", max: String(points.length - 1), value: "0", "aria-valuetext": pointText(points[0]),
+      oninput: (event) => {
+        const text = pointText(points[event.target.value]);
+        event.target.setAttribute("aria-valuetext", text);
+        readout.textContent = text;
+      } })) : null;
 
   let drag = null;
   let dragged = false;
@@ -197,9 +212,9 @@ export function trendFigure(spec) {
       shade.setAttribute("visibility", "hidden");
       if (!dragged) return;
       const snap = (x) => formatTs(Math.round((t0 + ((x - PAD.l) / plotW) * span) / 600000) * 600000);
-      spec.onBrush(snap(a), snap(b));
+      if (snap(a) !== snap(b)) spec.onBrush(snap(a), snap(b));
     });
-    svg.addEventListener("pointercancel", () => { drag = null; shade.setAttribute("visibility", "hidden"); });
+    svg.addEventListener("pointercancel", () => { drag = null; dragged = false; shade.setAttribute("visibility", "hidden"); });
     svg.addEventListener("click", (event) => {
       if (!dragged) return;
       dragged = false;
@@ -210,17 +225,24 @@ export function trendFigure(spec) {
 
   const legend = h("ul", { class: "legend" },
     prepared.map((s) => h("li", {}, h("span", { class: `swatch ${s.dash ? "swatch-sensitivity" : "swatch-primary"}`, "aria-hidden": "true" }), s.name)),
-    spec.periods ? h("li", {}, h("span", { class: "swatch swatch-sev", "aria-hidden": "true" }), "KPI-derived abnormal period (hatch density = severity: dense high, medium moderate, sparse low)") : null,
+    spec.periods ? ["HIGH", "MODERATE", "LOW"].map((s) => h("li", {}, h("span", { class: `swatch swatch-${s.toLowerCase()}`, "aria-hidden": "true" }), `KPI-derived abnormal period, ${plain("severity", s).text.toLowerCase()}`)) : null,
     spec.events ? h("li", {}, h("span", { class: "swatch swatch-event", "aria-hidden": "true" }), "Plant annotation") : null,
-    h("li", {}, h("span", { class: "swatch swatch-gap", "aria-hidden": "true" }), MSG.gapLegend));
+    prepared.length ? h("li", {}, h("span", { class: "swatch swatch-gap", "aria-hidden": "true" }), MSG.gapLegend) : null);
 
   const rows = [];
   for (const s of prepared) for (const seg of s.segs) for (const p of seg) rows.push([s.name, shortStamp(p.timestamp, true), fmtScore(p.y)]);
   const shown = rows.length > 40 ? [...rows.slice(0, 20), ...rows.slice(-5)] : rows;
-  const table = tableToggle(spec.title, ["Series", "Bucket end (plant-local)", "Score"], shown,
-    `${rows.length > 40 ? TABLE_NOTE.thinned(shown.length, rows.length) : TABLE_NOTE.all} ${(spec.gaps || []).length} gaps in this range.`);
+  const table = prepared.length ? tableToggle(spec.title, ["Series", "Bucket end (plant-local)", "Score"], shown,
+    `${rows.length > 40 ? TABLE_NOTE.thinned(shown.length, rows.length) : TABLE_NOTE.all} ${(spec.gaps || []).length} gaps in this range.`) : null;
 
-  return figure(id, spec.title, spec.description, svg, [readout, legend, table], spec.footnote);
+  const marks = [
+    ...(spec.periods || []).filter((p) => p.end_time > spec.start && p.start_time < spec.end).map((p) =>
+      h("li", {}, h("a", { href: spec.periodHref(p.period_id) }, `${p.period_id} · ${plain("severity", p.kpi_severity_class).text} · ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}`))),
+    ...(spec.events || []).map((ev) => h("li", {}, h("a", { href: spec.eventHref(ev.event_id) }, `Plant annotation · ${plain("x", ev.event_type).text} · ${shortStamp(ev.start_time)}`))),
+  ];
+  const markList = marks.length ? h("details", { class: "table-toggle" }, h("summary", {}, MSG.marksToggle), h("ul", { class: "mark-links" }, marks)) : null;
+
+  return figure(id, spec.title, spec.description, svg, [readout, inspect, legend, markList, table], spec.footnote);
 }
 
 /** Gantt-style timeline of periods. Severity = hatch density + outline weight + text. */
@@ -246,7 +268,7 @@ export function timelineFigure(spec) {
     const focus = spec.highlight === p.period_id;
     const x1 = xOf(p.start_time);
     const label = `${p.period_id} · ${sevText}, ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}. Open details.`;
-    svg.append(el("a", { href: spec.periodHref(p.period_id), class: "band-link", "aria-label": label, "aria-current": focus ? "true" : null },
+    svg.append(el("a", { href: spec.periodHref(p.period_id), class: "band-link", "aria-current": focus ? "true" : null },
       el("title", {}, label),
       el("rect", { x: 0, y, width: W, height: rowH, class: focus ? "row-focus" : "row-hit" }),
       el("text", { x: 8, y: y + 17, class: `row-label${focus ? " band-label-focus" : ""}` }, `${p.period_id} · ${sevText}`),

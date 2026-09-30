@@ -52,12 +52,20 @@ export function kpis(cards) {
   return section(SECTION.kpis, "kpis", h("div", { class: "kpi-grid", style: `--cols:${cols}` }, cards.map(kpi)));
 }
 
-/** A link to a write route, or a disabled button with the reason on the hosted copy. */
+let roId = 0;
+
+/** Hosted copy: a focusable button that does nothing, with the reason as its description. */
+export function roButton(label, cls, type = "button") {
+  const id = `ro-${++roId}`;
+  return h("span", { class: "ro-wrap" },
+    h("button", { type, class: cls, "aria-disabled": "true", "aria-describedby": id, onclick: (e) => e.preventDefault() }, label),
+    h("span", { class: "ro-reason", id }, READ_ONLY.reason));
+}
+
+/** A link to a write route, or a read-only button with the reason on the hosted copy. */
 export function writeLink(label, path, query = {}, cls = "btn btn-primary") {
   if (!readOnly) return h("a", { class: cls, href: to(path, query) }, label);
-  return h("span", { class: "ro-wrap" },
-    h("button", { type: "button", class: cls, disabled: true }, label),
-    h("span", { class: "ro-reason" }, READ_ONLY.reason));
+  return roButton(label, cls);
 }
 
 export function actionBar(spec) {
@@ -91,6 +99,7 @@ export function facts(pairs) {
 }
 
 export function field(id, label, control, hint) {
+  if (hint) control.setAttribute("aria-describedby", `${id}-hint`);
   return h("div", { class: "field" },
     h("label", { for: id }, label),
     control,
@@ -105,10 +114,11 @@ export function select(id, options, value, extra = {}) {
 export function toast(message) {
   const host = document.getElementById("toast");
   if (!host) return;
-  host.textContent = message;
-  host.hidden = false;
+  // The region stays in the tree; emptying then refilling makes a repeated message announce again.
+  host.textContent = "";
+  requestAnimationFrame(() => { host.textContent = message; });
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => { host.hidden = true; }, 4000);
+  toast.timer = setTimeout(() => { host.textContent = ""; }, 4000);
 }
 
 export function fmtInt(n) {

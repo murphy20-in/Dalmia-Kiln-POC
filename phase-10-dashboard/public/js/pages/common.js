@@ -1,17 +1,19 @@
 /** The insights → advisory → next steps → actions tail every page shares. Text comes from served fields. */
 import { api, getAll, getFrozen } from "../api.js";
-import { ACTIONS, ADVICE, ADVISORY, INSIGHTS, SECTION, STEP_TEXT, STEPS, questionText, requestText } from "../copy.js";
+import { ACTIONS, ADVICE, ADVISORY, INSIGHTS, MSG, SECTION, STEP_TEXT, STEPS, questionText, requestText } from "../copy.js";
 import { h } from "../dom.js";
-import { findingAnchor, shortStamp } from "../pure/present.js";
+import { findingAnchor, plain, shortStamp } from "../pure/present.js";
 import { actionBar, chip, section, to, toast, writeLink } from "../ui.js";
 
 export async function loadStory() {
-  const [findings, limitations, requirements, validation, periods] = await Promise.all([
+  const [findings, limitations, requirements, validation, periods, status, meta] = await Promise.all([
     getFrozen("/api/v1/findings?limit=100"),
     getFrozen("/api/v1/metadata/limitations"),
     getFrozen("/api/v1/metadata/data-requirements"),
     getFrozen("/api/v1/validation/early-warning-historical"),
     getFrozen("/api/v1/abnormal-periods?limit=100"),
+    getFrozen("/api/v1/metadata/status"),
+    getFrozen("/api/v1/metadata"),
   ]);
   return {
     findings: findings.data || [],
@@ -22,6 +24,8 @@ export async function loadStory() {
     validationEnvelope: validation,
     periods: periods.data || [],
     periodsEnvelope: periods,
+    status: status.data,
+    meta: meta.data,
   };
 }
 
@@ -43,6 +47,7 @@ function insight(story, ref) {
   return h("li", { class: "insight" },
     chip("status", row.classification),
     h("p", {}, row.title),
+    row.classification === "BLOCKED" ? h("p", { class: "hint" }, plain("status", "BLOCKED").meaning) : null,
     h("a", { class: "cite", href: to("/validation", {}, findingAnchor(row.finding_id)) }, `See evidence · ${row.finding_id}`));
 }
 
@@ -52,7 +57,7 @@ function advisory(story, key) {
     const c = story.validation.censoring;
     return h("li", {},
       h("h3", {}, item.title),
-      h("p", {}, `${c.n_onset_censored} of ${c.n_periods} onsets are censored by the look-back cap: ${c.meaning}.`),
+      h("p", {}, `${c.n_onset_censored} of ${c.n_periods} period start times are capped (${MSG.cappedMeaning}). Served meaning: ${c.meaning}.`),
       h("a", { class: "cite", href: to("/validation", {}, "censoring") }, "Source: Phase 8 censoring"));
   }
   const lim = limitation(story, item.from);
@@ -60,6 +65,7 @@ function advisory(story, key) {
   return h("li", {},
     h("h3", {}, item.title),
     h("p", {}, lim.detail),
+    key === "o2" ? h("p", { class: "hint" }, plain("preference", story.status.evidence_status.variant_preference).text) : null,
     h("a", { class: "cite", href: to("/data-quality", {}, lim.id) }, `Source: ${lim.id}`));
 }
 
@@ -79,7 +85,7 @@ export function annotateQuery(period) {
   return { start: period.start_time, end: period.end_time, ref: period.period_id };
 }
 
-export function stepItem(story, spec, override) {
+function stepItem(story, spec, override) {
   const [kind, arg] = spec.split(":");
   const reqs = story.requirements;
   if (kind === "req") {
@@ -135,8 +141,7 @@ export function artifactVersion(envelope) {
 
 /** Score rows for a range, from /variant-comparison (3 fields a row). The full range is fetched once per page load. */
 let full = null;
-export function loadSeries(range) {
-  if (range) return getAll("/api/v1/risk-scores/variant-comparison", range);
+export function loadSeries() {
   if (!full) {
     full = getAll("/api/v1/risk-scores/variant-comparison", {}).catch((err) => {
       full = null;

@@ -52,6 +52,14 @@ test("event form blocks a bad window and builds an API body", () => {
   assert.equal(body.equipment, undefined);
   assert.equal(body.severity, "MINOR");
   assert.equal("risk_score" in body, false);
+  const edit = eventPayload({
+    event_type: "COATING", start_time: "2025-08-01T10:00:00", description: "inlet coating", source: "PLANT_LOG",
+    equipment: "", severity: "", annotator_viewed_risk_score: false,
+  }, 3, { equipment: "kiln inlet", severity: null, annotator_viewed_risk_score: true });
+  assert.equal(edit.equipment, null, "a cleared field is sent as null so the PATCH merge clears it");
+  assert.equal("severity" in edit, false, "a field that was never set is not sent");
+  assert.equal(edit.annotator_viewed_risk_score, false);
+  assert.equal(edit.expected_version, 3);
 });
 
 test("withheld figures are not passed through for display", () => {

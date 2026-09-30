@@ -1,4 +1,4 @@
-import { api } from "../api.js";
+import { api, getAll } from "../api.js";
 import { trendFigure } from "../chart.js";
 import { MSG, PAGE, PERIOD_LABEL, READ_ONLY } from "../copy.js";
 import { h } from "../dom.js";
@@ -7,7 +7,7 @@ import { countBy, plain, shortStamp } from "../pure/present.js";
 import { toApiTimestamp, toLocalInput } from "../pure/query.js";
 import { addMinutes } from "../pure/series.js";
 import { readActor, writeActor } from "../state.js";
-import { enumText, facts, failure, field, hero, kpis, loading, readOnly, section, select, table, to, toast, writeLink } from "../ui.js";
+import { enumText, facts, failure, field, hero, kpis, loading, readOnly, roButton, section, select, table, to, toast, writeLink } from "../ui.js";
 import { loadExtent, loadStory, storySections, versions } from "./common.js";
 
 const human = (v) => plain("x", v).text;
@@ -20,9 +20,9 @@ export async function render(root, ctx) {
     loadStory(),
     loadExtent(),
     api("/api/v1/metadata/status", { signal: ctx.signal }),
-    api("/api/v1/events?status=ALL&limit=100", { signal: ctx.signal }),
+    getAll("/api/v1/events", { status: "ALL" }, { signal: ctx.signal, pageLimit: 100 }),
   ]);
-  const rows = list.data || [];
+  const rows = list.rows;
   const one = id ? await loadOne(id, ctx) : null;
   let panel = null;
   if (mode === "new") panel = formPanel(ctx, null);
@@ -39,7 +39,7 @@ export async function render(root, ctx) {
       { label: "Active annotations", value: String(st.get("ACTIVE") || 0), meaning: "plant-supplied records in the annotation store", source: "Phase 9 · /events", link: to("/events", {}, "list") },
       { label: "Withdrawn", value: String(st.get("DELETED") || 0), meaning: "kept readable with their audit trail", source: "Phase 9 · /events", link: to("/events", {}, "list") },
       { label: "Needed to revalidate", value: `≥ ${gt.minimum_recommended_for_revalidation}`, meaning: "evaluable plant-labelled events before Phase 8 can be re-run", source: "Phase 9 · /metadata/status", link: to("/validation", {}, "primary") },
-      { label: "Event ground truth", value: plain("status", status.data.provenance?.ground_truth_status || "NOT_AVAILABLE").text, raw: "NOT_AVAILABLE", meaning: "no plant event records in the supplied data", source: "Phase 9 · /metadata/status", link: to("/data-quality", {}, "L01") },
+      { label: "Event ground truth", value: status.data.provenance?.ground_truth_status ? plain("status", status.data.provenance.ground_truth_status).text : "—", raw: status.data.provenance?.ground_truth_status, meaning: "no plant event records in the supplied data", source: "Phase 9 · /metadata/status", link: to("/data-quality", {}, "L01") },
     ]),
     section("Annotations on the calendar", "graph", trendFigure({
       compact: true,
@@ -52,9 +52,9 @@ export async function render(root, ctx) {
       events: active,
       periodHref: (pid) => to(`/abnormal-periods/${pid}`),
       eventHref: (eid) => to(`/events/${eid}`),
-      footnote: `Annotations: ${list.provenance?.source || "PLANT_SUPPLIED_ANNOTATION"} · periods ${story.periods[0]?.method_version || "—"} · ${versions(story)}`,
+      footnote: `Annotations: ${plain("label", list.envelope?.provenance?.source || "PLANT_SUPPLIED_ANNOTATION").text} · periods ${story.periods[0]?.method_version || "—"} · ${versions(story)}`,
     })),
-    section("All annotations", "list", active.length ? null : emptyState(), rows.length ? annotationTable(rows) : null),
+    section("All annotations", "list", active.length ? null : emptyState(), rows.length ? annotationTable(rows, active.length ? "Plant annotations, newest first as served" : "Withdrawn annotations — kept in the audit trail") : null),
     ...storySections("events", story),
   );
 }
@@ -82,8 +82,8 @@ function emptyState() {
     writeLink(MSG.addFirst, "/events/new"));
 }
 
-function annotationTable(rows) {
-  return table("Plant annotations, newest first as served", ["Annotation", "Type", "Start", "End", "Status", "Recorded by"],
+function annotationTable(rows, caption) {
+  return table(caption, ["Annotation", "Type", "Start", "End", "Status", "Recorded by"],
     rows.map((r) => [
       h("a", { href: to(`/events/${r.event_id}`) }, `Open ${r.event_id.slice(0, 8)}`),
       human(r.event_type),
@@ -101,8 +101,8 @@ async function detailPanel(ctx, ev) {
   if (ev.status === "ACTIVE") {
     actions.append(
       writeLink("Edit", `/events/${ev.event_id}/edit`, {}, "btn btn-primary"),
-      readOnly ? h("span", { class: "ro-wrap" }, h("button", { type: "button", class: "btn btn-secondary", disabled: true }, "Withdraw"), h("span", { class: "ro-reason" }, READ_ONLY.reason))
-        : h("button", { type: "button", class: "btn btn-secondary", onclick: () => withdraw(ctx, ev) }, "Withdraw"));
+      readOnly ? roButton("Withdraw", "btn btn-secondary")
+        : h("button", { type: "button", class: "btn btn-secondary", onclick: (e) => withdraw(ctx, ev, e.currentTarget) }, "Withdraw"));
   }
   actions.append(h("a", { class: "btn btn-ghost", href: to("/history", { from: addMinutes(ev.start_time, -1440), to: addMinutes(ev.end_time || ev.start_time, 1440) }) }, "View on trend"),
     h("a", { class: "btn btn-ghost", href: to("/events") }, "All annotations"));
@@ -136,19 +136,24 @@ async function detailPanel(ctx, ev) {
   return panel;
 }
 
-async function withdraw(ctx, ev) {
-  const actor = readActor();
+async function withdraw(ctx, ev, button) {
+  let actor = readActor();
   if (validateActor(actor)) {
-    ctx.go(to(`/events/${ev.event_id}/edit`));
-    toast("Enter your name or role on the edit form first, then withdraw from there.");
-    return;
+    actor = (window.prompt(MSG.actorPrompt) || "").trim();
+    const problem = validateActor(actor);
+    if (problem) {
+      toast(problem);
+      return;
+    }
+    writeActor(actor);
   }
   if (!window.confirm(MSG.withdrawConfirm(human(ev.event_type), shortStamp(ev.start_time, true)))) return;
+  button.disabled = true;
   try {
-    await api(`/api/v1/events/${ev.event_id}?expected_version=${ev.version}`, { method: "DELETE", actor, signal: ctx.signal });
+    // No route signal: leaving the page must not hide whether a committed write happened.
+    await api(`/api/v1/events/${ev.event_id}?expected_version=${ev.version}`, { method: "DELETE", actor });
     toast(MSG.withdrawn);
   } catch (err) {
-    if (err?.name === "AbortError") return;
     toast(err.status === 409 ? MSG.conflict : err.message);
   }
   ctx.go(to(`/events/${ev.event_id}`), { replace: true });
@@ -160,18 +165,18 @@ function formPanel(ctx, ev) {
   const start = ev?.start_time || toApiTimestamp(q.start) || "";
   const end = ev?.end_time || toApiTimestamp(q.end) || "";
   const viewed = ev ? (ev.annotator_viewed_risk_score == null ? "" : String(ev.annotator_viewed_risk_score)) : (ref ? "true" : "");
-  const status = h("p", { class: "form-status", role: "status", id: "form-status" });
+  const status = h("p", { class: "form-status", role: "alert", id: "form-status" });
   const opt = (list, value) => [["", "—"], ...options(list)];
   const form = h("form", { class: "event-form", novalidate: true },
-    h("fieldset", { disabled: readOnly },
+    h("fieldset", { disabled: readOnly, "aria-describedby": readOnly ? "form-ro" : null },
       h("legend", {}, ev ? `Edit annotation (version ${ev.version})` : "New plant annotation"),
       ref ? h("p", { class: "callout" }, MSG.fromPeriod(ref)) : null,
-      field("actor", "Your name or role", h("input", { id: "actor", maxlength: "100", autocomplete: "name", required: true, value: readActor(), "aria-describedby": "actor-hint" }), MSG.actorHelp),
-      field("event_type", "What the plant records say happened", select("event_type", [["", "Choose a type…"], ...options(EVENT_TYPES)], ev?.event_type || "", { required: true })),
+      field("actor", "Your name or role (required)", h("input", { id: "actor", maxlength: "100", autocomplete: "name", required: true, value: readActor() }), MSG.actorHelp),
+      field("event_type", "What the plant records say happened (required)", select("event_type", [["", "Choose a type…"], ...options(EVENT_TYPES)], ev?.event_type || "", { required: true })),
       h("div", { class: "field-row" },
-        field("start_time", "Start (plant-local, no timezone)", h("input", { id: "start_time", type: "datetime-local", required: true, value: toLocalInput(start) })),
+        field("start_time", "Start (required; plant-local, no timezone)", h("input", { id: "start_time", type: "datetime-local", required: true, value: toLocalInput(start) })),
         field("end_time", "End (optional)", h("input", { id: "end_time", type: "datetime-local", value: toLocalInput(end) }))),
-      field("description", "Description", h("textarea", { id: "description", required: true, maxlength: "2000", rows: "4" }, ev?.description || "")),
+      field("description", "Description (required)", h("textarea", { id: "description", required: true, maxlength: "2000", rows: "4" }, ev?.description || "")),
       h("div", { class: "field-row" },
         field("source", "Source", select("source", options(SOURCES), ev?.source || "PLANT_LOG")),
         field("equipment", "Equipment (optional)", h("input", { id: "equipment", maxlength: "100", value: ev?.equipment || "" }))),
@@ -180,14 +185,14 @@ function formPanel(ctx, ev) {
         h("summary", {}, "More record fields (optional)"),
         field("source_reference", "Source reference", h("input", { id: "source_reference", maxlength: "200", value: ev?.source_reference || "" })),
         field("severity", "Plant severity", select("severity", opt(SEVERITIES), ev?.severity || "")),
-        field("plant_confirmation", "Plant confirmation", select("plant_confirmation", opt(CONFIRMATIONS), ev?.plant_confirmation || "")),
+        field("plant_confirmation", "Plant confirmation", select("plant_confirmation", opt(CONFIRMATIONS), ev?.plant_confirmation || ""), MSG.confirmationHint),
         field("time_precision", "Time precision", select("time_precision", opt(TIME_PRECISIONS), ev?.time_precision || "")),
-        field("time_basis", "Time basis", select("time_basis", opt(TIME_BASES), ev?.time_basis || "")),
-        field("entry_kind", "Entry kind", select("entry_kind", opt(ENTRY_KINDS), ev?.entry_kind || "")))),
+        field("time_basis", "Time basis", select("time_basis", opt(TIME_BASES), ev?.time_basis || ""), MSG.timeBasisHint),
+        field("entry_kind", "Entry kind", select("entry_kind", opt(ENTRY_KINDS), ev?.entry_kind || ""), MSG.entryKindHint))),
     h("div", { class: "action-bar" },
-      h("button", { type: "submit", class: "btn btn-primary", disabled: readOnly }, ev ? "Save changes" : "Save annotation"),
-      h("a", { class: "btn btn-ghost", href: to(ev ? `/events/${ev.event_id}` : "/events") }, "Cancel"),
-      readOnly ? h("span", { class: "ro-reason" }, READ_ONLY.reason) : null),
+      readOnly ? h("span", { class: "ro-wrap" }, h("button", { type: "button", class: "btn btn-primary", "aria-disabled": "true", "aria-describedby": "form-ro" }, ev ? "Save changes" : "Save annotation"), h("span", { class: "ro-reason", id: "form-ro" }, READ_ONLY.reason))
+        : h("button", { type: "submit", class: "btn btn-primary" }, ev ? "Save changes" : "Save annotation"),
+      h("a", { class: "btn btn-ghost", href: to(ev ? `/events/${ev.event_id}` : "/events") }, "Cancel")),
     status);
   form.addEventListener("submit", (event) => submit(event, form, ctx, ev, status));
   return h("section", { class: "detail", id: "detail", tabindex: "-1", "data-focus": "", "aria-labelledby": "detail-h" },
@@ -224,25 +229,47 @@ async function submit(event, form, ctx, ev, status) {
   const actorError = validateActor(actor);
   if (actorError) issues.unshift({ field: "actor", issue: actorError });
   if (issues.length) {
-    status.textContent = issues.map((i) => i.issue).join(" ");
-    form.querySelector(`#${issues[0].field}`)?.focus();
+    showIssues(form, status, issues);
     return;
   }
+  showIssues(form, status, []);
   writeActor(actor);
   status.textContent = "Saving…";
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
   try {
+    // No route signal: leaving the page must not hide whether a committed write happened.
     const body = ev
-      ? await api(`/api/v1/events/${ev.event_id}`, { method: "PATCH", actor, body: eventPayload(input, ev.version), signal: ctx.signal })
-      : await api("/api/v1/events", { method: "POST", actor, body: eventPayload(input), signal: ctx.signal });
+      ? await api(`/api/v1/events/${ev.event_id}`, { method: "PATCH", actor, body: eventPayload(input, ev.version, ev) })
+      : await api("/api/v1/events", { method: "POST", actor, body: eventPayload(input) });
     toast(MSG.saved);
     ctx.go(to(`/events/${body.data.event_id}`), { replace: Boolean(ev) });
   } catch (err) {
-    if (err?.name === "AbortError") return;
+    button.disabled = false;
     if (err.status === 409 && ev) {
       toast(MSG.conflict);
       ctx.go(to(`/events/${ev.event_id}/edit`), { replace: true });
       return;
     }
-    status.textContent = err.message;
+    if (err.details?.length) showIssues(form, status, err.details, true);
+    else status.textContent = err.message;
   }
+}
+
+const FIELD_ID = { annotator_viewed_risk_score: "viewed" };
+
+/** Each invalid control is marked and described by the error line; focus moves to the first. */
+function showIssues(form, status, issues, named = false) {
+  for (const el of form.querySelectorAll("[aria-invalid]")) el.removeAttribute("aria-invalid");
+  status.textContent = issues.map((i) => (named && i.field && i.field !== "*" ? `${i.field.replace(/_/g, " ")}: ${i.issue}` : i.issue)).join(" ");
+  let first = null;
+  for (const i of issues) {
+    const el = form.querySelector(`#${FIELD_ID[i.field] || i.field}`);
+    if (!el) continue;
+    el.setAttribute("aria-invalid", "true");
+    const described = (el.getAttribute("aria-describedby") || "").split(" ").filter(Boolean);
+    if (!described.includes("form-status")) el.setAttribute("aria-describedby", [...described, "form-status"].join(" "));
+    first ||= el;
+  }
+  first?.focus();
 }

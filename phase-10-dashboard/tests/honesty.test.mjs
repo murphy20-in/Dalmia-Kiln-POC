@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { BRAND, DISCLAIMER, READ_ONLY } from "../public/js/copy.js";
 import { FORBIDDEN_UI, lineAllowsForbidden } from "../public/js/pure/present.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,27 @@ test("client copy never makes a forbidden claim (copy.js, pages, components, she
     hits.push(...violations(path.relative(root, file), text.split(/\n+/)));
   }
   assert.deepEqual(hits, []);
+});
+
+test("the static shell carries the copy.js disclaimer, wordmark and read-only banner verbatim", async () => {
+  const html = await readFile(path.join(root, "index.html"), "utf8");
+  for (const s of [DISCLAIMER.strong, DISCLAIMER.text, BRAND.mark, BRAND.product, READ_ONLY.banner]) assert.ok(html.includes(s), s);
+});
+
+test("hosted copy: write actions go through the read-only helpers, which always show the reason", async () => {
+  const ui = await readFile(path.join(root, "js/ui.js"), "utf8");
+  assert.match(ui, /export function roButton[\s\S]*?READ_ONLY\.reason/);
+  assert.match(ui, /export function writeLink[\s\S]*?return roButton\(/);
+  const direct = [];
+  for (const file of await files(path.join(root, "js/pages"), /\.js$/)) {
+    const text = await readFile(file, "utf8");
+    // The Overview annotations KPI card opens the form, which is itself read-only with the reason on the hosted copy.
+    for (const m of text.matchAll(/href: to\(\s*[`"]\/events\/(new|[^`"]*\/edit)/g)) direct.push(`${path.basename(file)}: ${m[0]}`);
+  }
+  assert.deepEqual(direct, []);
+  const events = await readFile(path.join(root, "js/pages/events.js"), "utf8");
+  assert.match(events, /readOnly \? roButton\("Withdraw"/);
+  assert.match(events, /readOnly \?[^\n]*"aria-disabled": "true"[^\n]*READ_ONLY\.reason/);
 });
 
 test("rendered pages never make a forbidden claim (text captured by the browser journeys)", async (t) => {

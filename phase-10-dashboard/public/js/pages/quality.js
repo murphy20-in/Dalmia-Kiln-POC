@@ -85,7 +85,7 @@ export async function render(root, ctx) {
             h("td", { "data-label": "State" }, STATE[c.state][0]), h("td", { "data-label": "Detail" }, c.why)))))),
     section("Recorded limitations", "limitations",
       h("div", { class: "findings" }, (lim.limitations || []).map((l) => h("article", { class: "finding", id: l.id, "aria-labelledby": `${l.id}-h` },
-        h("h3", { id: `${l.id}-h` }, h("span", { class: "fid" }, l.id), " ", plain("x", l.topic).text),
+        h("h3", { id: `${l.id}-h` }, h("span", { class: "fid" }, l.id), " ", plain("limitationTopic", l.topic).text),
         chip("limitation", l.status),
         h("p", {}, l.detail),
         h("p", { class: "hint" }, `Source: ${l.source}`))))),

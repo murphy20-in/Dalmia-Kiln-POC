@@ -42,18 +42,21 @@ export async function snapshotRequest(path, { method = "GET", signal } = {}) {
   if (!file) {
     throw new SnapshotError(404, "This hosted copy does not include that request.");
   }
-  const body = await load(file, signal);
+  const body = await load(file);
   if (name === "/api/v1/abnormal-periods") return sliceRows(body, url, (row) => overlaps(row.start_time, row.end_time, url));
   if (name === "/api/v1/events") return sliceRows(body, url, (row) => eventMatch(row, url));
   if (name === "/api/v1/findings") return sliceRows(body, url, () => true);
   return body;
 }
 
-async function load(file, signal) {
+async function load(file) {
   if (!cache.has(file)) {
-    cache.set(file, fetch(`snapshot/${file}`, { signal }).then(async (response) => {
+    cache.set(file, fetch(`snapshot/${file}`).then(async (response) => {
       if (!response.ok) throw new SnapshotError(503, "Analytical service unavailable. The exported responses could not be loaded.");
       return response.json();
+    }).catch((err) => {
+      cache.delete(file);
+      throw err;
     }));
   }
   return cache.get(file);
@@ -66,7 +69,7 @@ function sliceRows(body, url, keep) {
 }
 
 async function scorePage(file, url, key, signal) {
-  const packed = await load(file, signal);
+  const packed = await load(file);
   let rows = packed.points.map(([timestamp, score]) => ({ timestamp, [key]: score }));
   const start = url.searchParams.get("start");
   const end = url.searchParams.get("end");
@@ -78,7 +81,7 @@ async function scorePage(file, url, key, signal) {
 }
 
 async function comparisonPage(url, signal) {
-  const packed = await load("scores-comparison.json", signal);
+  const packed = await load("scores-comparison.json");
   let rows = packed.points.map(([timestamp, primary, o2]) => ({
     timestamp,
     primary_empirical_risk_score: primary,
@@ -95,7 +98,7 @@ async function comparisonPage(url, signal) {
 
 async function eventOne(name, signal) {
   const id = name.split("/").pop();
-  const body = await load("events.json", signal);
+  const body = await load("events.json");
   const row = (body.data || []).find((event) => event.event_id === id);
   if (!row) throw new SnapshotError(404, "That plant annotation is not in this hosted copy.");
   return { ...body, data: row, pagination: undefined };
@@ -103,10 +106,10 @@ async function eventOne(name, signal) {
 
 async function eventAudit(name, signal) {
   const id = name.split("/")[4];
-  const audits = await load("events-audit.json", signal);
+  const audits = await load("events-audit.json");
   const rows = audits[id];
   if (!rows) throw new SnapshotError(404, "That plant annotation is not in this hosted copy.");
-  const body = await load("events.json", signal);
+  const body = await load("events.json");
   return { ...body, data: rows, pagination: undefined };
 }
 

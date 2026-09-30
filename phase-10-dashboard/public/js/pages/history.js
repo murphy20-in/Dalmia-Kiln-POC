@@ -26,15 +26,15 @@ export async function render(root, ctx) {
   const rows = series.rows.filter((r) => r.timestamp >= from && r.timestamp < until);
   const gaps = series.gaps.filter(([a, b]) => b > from && a < until);
   const periods = story.periods.filter((p) => p.end_time > from && p.start_time < until);
-  const evs = (events.data || []).filter((e) => e.start_time >= from && e.start_time < until);
+  const evs = (events.data || []).filter((e) => (e.end_time || e.start_time) >= from && e.start_time < until);
 
   const form = h("form", { class: "controls", "aria-label": "Score history range" },
-    h("div", { class: "field" }, h("label", { for: "h-from" }, "From (plant-local)"), h("input", { id: "h-from", type: "datetime-local", value: toLocalInput(from), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
-    h("div", { class: "field" }, h("label", { for: "h-to" }, "To (end excluded)"), h("input", { id: "h-to", type: "datetime-local", value: toLocalInput(until), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
-    h("button", { type: "submit", class: "btn btn-secondary" }, "Apply range"),
+    h("div", { class: "field" }, h("label", { for: "h-from" }, "From (plant-local)"), h("input", { id: "h-from", type: "datetime-local", "aria-describedby": "h-error", "aria-invalid": badRange ? "true" : null, value: toLocalInput(from), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
+    h("div", { class: "field" }, h("label", { for: "h-to" }, "To (up to, not including)"), h("input", { id: "h-to", type: "datetime-local", "aria-describedby": "h-error", "aria-invalid": badRange ? "true" : null, value: toLocalInput(until), min: toLocalInput(extent.first_timestamp), max: toLocalInput(fullEnd) })),
+    h("button", { type: "submit", id: "h-apply", class: "btn btn-secondary" }, "Apply range"),
     h("div", { class: "presets", role: "group", "aria-label": "Quick ranges" },
-      h("button", { type: "button", class: "btn btn-ghost", onclick: () => nav({ from: extent.first_timestamp, to: fullEnd, period: "" }) }, "Full range"),
-      MONTHS.map(([label, a, b]) => h("button", { type: "button", class: "btn btn-ghost", onclick: () => nav({ from: a, to: b < fullEnd ? b : fullEnd }) }, label))),
+      h("button", { type: "button", id: "h-full", class: "btn btn-ghost", onclick: () => nav({ from: extent.first_timestamp, to: fullEnd, period: "" }) }, "Full range"),
+      MONTHS.map(([label, a, b]) => h("button", { type: "button", id: `h-${a.slice(0, 7)}`, class: "btn btn-ghost", onclick: () => nav({ from: a, to: b < fullEnd ? b : fullEnd }) }, label))),
     h("label", { class: "check" },
       h("input", { type: "checkbox", id: "h-overlay", checked: overlay, onchange: (e) => nav({ overlay: e.target.checked }) }),
       MSG.o2Toggle),
@@ -44,7 +44,9 @@ export async function render(root, ctx) {
     const a = toApiTimestamp(form.querySelector("#h-from").value);
     const b = toApiTimestamp(form.querySelector("#h-to").value);
     if (!a || !b || a >= b) {
+      for (const id of ["#h-from", "#h-to"]) form.querySelector(id).setAttribute("aria-invalid", "true");
       form.querySelector("#h-error").textContent = "Enter a plant-local start and end; the end must be later than the start.";
+      form.querySelector("#h-from").focus();
       return;
     }
     nav({ from: a, to: b });
@@ -52,7 +54,7 @@ export async function render(root, ctx) {
 
   const chart = trendFigure({
     title: `Primary risk score, ${shortStamp(from, true)} – ${shortStamp(until, true)}${overlay ? ", with the O₂-excluded sensitivity overlay" : ""}`,
-    description: `Served primary score for each operational ten-minute bucket. Hatched bands are ${PERIOD_LABEL}; diamonds are plant annotations; hatched grey is a gap with no operational data, never a zero score.`,
+    description: `Served primary score for each operational ten-minute bucket. Outlined, diagonal-hatched bands are ${PERIOD_LABEL}; diamonds are plant annotations; light grey hatching with no outline is a gap with no operational data, never a zero score.`,
     start: from,
     end: until,
     series: [

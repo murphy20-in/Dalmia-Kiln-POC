@@ -1,17 +1,18 @@
-# Security review
+# Security review (v2)
 
-Checked against the Phase 10 event path and the dashboard server.
+The `security-reviewer` found no HIGH issues, 1 MEDIUM and 5 LOW. All eight required checks pass. The findings are listed in `REVIEW_LOG.md` §3 (S1–S6) and the Python review in §6.
 
 | Check | Result |
 |---|---|
-| Description `<script>alert(1)</script><img src=x onerror=alert(1)>` | Rendered as a text node. Page script count stayed 1. Image count stayed 0 |
-| `innerHTML` assignment | Absent. `dom.js` ignores an `innerHTML` property |
-| Query parameters | Built with `encodeURIComponent`. Unknown API parameters are rejected by Phase 9 |
-| `X-Actor` | Labelled attribution, not authentication. Header is forwarded only to the fixed upstream |
-| CORS | No `Access-Control-Allow-Origin` added. Browser talks only to the dashboard origin |
-| Proxy | Upstream host is the env default `127.0.0.1:8009`. Paths outside `/api`, `/health`, `/ready` are not proxied |
-| Static files | `..` is rejected. Files must stay under `public/` |
-| Error text | Traceback, home path, sqlite, and parquet mentions are replaced before display |
-| Secrets | None in the frontend |
+| Plant text | Rendered as text nodes only. There is no `innerHTML`, `insertAdjacentHTML` or `document.write`. `h()` and chart `el()` drop string `on*` values and refuse `javascript:`, `data:` and `vbscript:` URLs |
+| `X-Actor` | Attribution, not authentication. It is validated on the client and by Phase 9, and forwarded only to the fixed upstream |
+| DNS rebinding | A Host outside `127.0.0.1:8010` or `localhost:8010` gets 421. A write whose `Origin` is not allowed gets 403 |
+| Proxy | Only `/api/…` plus exact `/health` and `/ready` are proxied, to `127.0.0.1:8009`. A malformed `Content-Length` gets 400, over 16 KB gets 413, and the connection is closed |
+| Headers | CSP with the inline script's sha256, `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `nosniff`. The pages render with no CSP violation |
+| CORS | No `Access-Control-*` header is sent |
+| Static files | `..` is rejected, the resolved path must stay under `public/`, and a NUL byte gets 404 |
+| Clipboard | Plain text only |
+| Snapshot | No secrets or absolute paths. Test annotations (`e2e.journey`, `poc.analyst`) are excluded by `export_snapshot.py` |
+| GitHub Pages | Writes are refused with 405 and the controls are `aria-disabled` with their reason. No `<meta>` CSP (accepted, S3) |
 
-The local event store now contains one soft-deleted test annotation from this review. It is gitignored plant data.
+The local, gitignored event store holds withdrawn test annotations from the browser journeys. None of them reaches the snapshot.

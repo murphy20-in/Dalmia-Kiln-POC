@@ -473,22 +473,24 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 **Result:** a seven-page retrospective dashboard on the frozen Phase 9 API. It is not a live monitor, an alarm board, or a prediction view.
 
 - **Branch:** `phase-10-dashboard` (from `phase-09-api`).
-- **Commit:** `182ef71` (dashboard), `649f691` (read-only GitHub Pages copy), plus the v2 rebuild prompt `reports/PHASE_10_REBUILD_PROMPT.md`. Phase 9 remains `d84244e`.
-- **Pushed to GitHub** (`origin/phase-10-dashboard`, https://github.com/murphy20-in/Dalmia-Kiln-POC/tree/phase-10-dashboard). No pull request has been opened.
-- **Stack:** plain HTML, CSS, and ES modules. `phase-10-dashboard/serve.py` (stdlib) serves `public/` and proxies `/api`, `/health`, and `/ready` to Phase 9 at `127.0.0.1:8009`. No npm dependency and no chart library (inline SVG). Phase 9 code and artifacts are unchanged.
-- **Pages:** `/` Overview, `/history` Historical Risk, `/abnormal-periods`, `/events`, `/validation`, `/data-quality`, `/methodology`.
-- **API:** metadata and status, limitations, methodology, data-requirements, provenance, risk-scores, variant-comparison, abnormal-periods, validation/early-warning-historical, findings, events CRUD and audit.
-- **Tests:** `cd phase-10-dashboard && node --test tests/*.mjs` — 9 tests (gaps, form, forbidden wording, live Phase 9 contract). Browser journeys in `phase-10-dashboard/reviews/E2E_LOG.md`. Playwright is not installed.
-- **Accessibility:** semantic shell, focus ring, chart description plus table plus keyboard slider, stacked tables under 720px. No Lighthouse score and no screen-reader session (`reviews/ACCESSIBILITY_REVIEW.md`).
-- **Security:** descriptions are text nodes. XSS payload did not execute. Same-origin proxy; no wildcard CORS (`reviews/SECURITY_REVIEW.md`).
-- **Ponytail:** no critical or high finding (`reviews/PONYTAIL_AUDIT.md`).
-- **Screenshots:** `phase-10-dashboard/screenshots/` (overview, historical-risk, abnormal-periods, plant-events, validation, data-quality, methodology, mobile-overview, mobile-historical-risk).
-- **Known limitations:** no authentication; chart thinning above about 900 points; F16’s API title contains “Lead time” and is shown as BLOCKED with no lead-time number; one soft-deleted test annotation in the local gitignored event store.
-- **Phase 11 handoff:** running dashboard, node tests, browser journey log, screenshots, and the three review notes above. Phase 11 is broader QA. Do not add live monitoring here.
+- **Commits:**
+  - v1: `182ef71` (dashboard) and `649f691` (read-only GitHub Pages copy).
+  - v2 rebuild (`reports/PHASE_10_REBUILD_PROMPT.md`): `602e175` (pages on the Dalmia theme), then the step 9 review fixes and the handoff commit.
+  - Phase 9 remains `d84244e`. Nothing outside `phase-10-dashboard/` and `reports/` changed.
+- **Stack:** plain HTML, CSS and ES modules, with no npm dependency and no chart library (inline SVG). `phase-10-dashboard/serve.py` (stdlib) serves `public/` and proxies `/api/…`, `/health` and `/ready` to Phase 9 at `127.0.0.1:8009`. It adds a Host/Origin guard, body limits, a CSP and anti-framing headers. On `*.github.io` it runs as a read-only snapshot.
+- **Theme:** navy `#2a469c` and cyan `#00a8ce` with Arimo, sampled from dalmiacement.com (`docs/DESIGN_SYSTEM.md`, `screenshots/theme-side-by-side.png`). Brand colours never encode a data state.
+- **Pages:** `/` Overview, `/history` Score history, `/abnormal-periods[/P6-0NN]`, `/events[/new|/<id>|/<id>/edit]`, `/validation`, `/data-quality`, `/methodology`. Each follows hero → KPI cards → graph → insights → advisory → next steps → action bar. Deep links survive reload in path and hash mode.
+- **Tests:** `cd phase-10-dashboard && node --test tests/*.mjs` runs 20 tests (pure logic, honesty wording, click map and URL round-trip, live Phase 9 contract), and all pass. `node tests/e2e/capture.mjs shots|rendered|hosted` uses headless Chrome for screenshots, rendered-text fixtures and the hosted read-only check. Journeys (a)–(e) are in `reviews/E2E_LOG.md`.
+- **Accessibility:** Lighthouse Accessibility, Best practices and SEO are 100 on all seven pages. Focus is restored after re-renders, and nothing is hidden under the sticky disclaimer. Charts have a table, a list of period and annotation links, and a keyboard slider. There is no overflow at 375 or 720 px. No screen-reader session was run.
+- **Reviews (step 9):** JS, a11y, security, analytical honesty, wording against Phase 8 §26, Python and ponytail. They logged 87 items (12 HIGH, 30 MEDIUM). All are fixed or accepted with a reason, and none is open (`phase-10-dashboard/reviews/REVIEW_LOG.md`).
+- **Snapshot:** re-exported. Test actors (`e2e.journey`, `poc.analyst`) are left out, so the hosted copy has 0 annotations. The analytical JSON is unchanged.
+- **Screenshots:** `phase-10-dashboard/screenshots/before/` (v1) and `after/` (v2: 8 desktop, 8 mobile).
+- **Known limitations:** no authentication; drawing is thinned above about 900 points; served Phase 8/9 text keeps some enum names; the local, gitignored event store holds withdrawn test annotations.
+- **Phase 11 handoff:** `phase-10-dashboard/reports/PHASE_10_DASHBOARD_REPORT.md`. Phase 11 is broader QA, including a screen-reader session. Do not add live monitoring here.
 
 ## 16. Next step
 
-Waiting for review of Phase 10. Phase 11 has not been started. Phase 10 is committed and pushed on branch `phase-10-dashboard`.
+Waiting for review of Phase 10 v2. Phase 11 has not been started. Phase 10 v2 is committed on branch `phase-10-dashboard` but not yet pushed.
 
 - To reproduce the dashboard: start Phase 9 (`cd phase-09-api/scripts && ../../.venv/bin/python -B api_app.py`), then `cd phase-10-dashboard && ../.venv/bin/python serve.py`, and open `http://127.0.0.1:8010/`.
 - Phase 9 reproduction is unchanged: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean` (twice).

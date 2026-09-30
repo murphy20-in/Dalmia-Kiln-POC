@@ -8,6 +8,7 @@ export class ApiError extends Error {
     this.status = status;
     this.body = body;
     this.code = body?.error?.code || "";
+    this.details = Array.isArray(body?.error?.details) ? body.error.details : [];
   }
 }
 
@@ -23,7 +24,7 @@ function publicMessage(status, body) {
   return "The analytical service could not complete this request.";
 }
 
-export function logClientError(kind, err) {
+function logClientError(kind, err) {
   const status = err?.status || "";
   const code = err?.code || "";
   console.error("[dashboard]", kind, status, code);
@@ -76,8 +77,9 @@ export async function getAll(path, params, { signal, pageLimit = 5000, maxRows =
     envelope = page;
     rows.push(...(page.data || []));
     gaps.push(...(page.data_extent?.gaps_in_page || []));
-    if (!page.pagination?.has_more) break;
-    offset = page.pagination.next_offset;
+    const next = page.pagination?.next_offset;
+    if (!page.pagination?.has_more || !(next > offset)) break;
+    offset = next;
   }
   return { rows, gaps, envelope };
 }

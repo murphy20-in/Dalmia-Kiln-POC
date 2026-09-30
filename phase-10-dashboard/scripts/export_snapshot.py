@@ -22,6 +22,9 @@ WHOLE = {
     "findings.json": "/api/v1/findings?limit=100",
 }
 
+# Browser-review records in the local store. The hosted copy is read by plant staff, so they are not published.
+TEST_ACTORS = {"e2e.journey", "poc.analyst"}
+
 
 def get(path: str) -> dict:
     with urllib.request.urlopen(BASE + path, timeout=120) as response:
@@ -58,6 +61,13 @@ def main() -> None:
     points = [[row["timestamp"], row["primary_empirical_risk_score"], row["o2_excluded_empirical_risk_score"]] for row in rows]
     (OUT / "scores-comparison.json").write_text(json.dumps({"shell": shell, "points": points}, separators=(",", ":")))
     events = json.loads((OUT / "events.json").read_text())
+    kept = [e for e in events.get("data") or [] if e.get("created_by") not in TEST_ACTORS]
+    if len(kept) != len(events.get("data") or []):
+        print(f"left out {len(events['data']) - len(kept)} annotation(s) by test actors {sorted(TEST_ACTORS)}")
+        events["data"] = kept
+        if isinstance(events.get("pagination"), dict):
+            events["pagination"].update(total=len(kept), returned=len(kept), has_more=False, next_offset=None)
+        (OUT / "events.json").write_text(json.dumps(events, separators=(",", ":")))
     audits = {}
     for event in events.get("data") or []:
         audits[event["event_id"]] = get(f"/api/v1/events/{event['event_id']}/audit")["data"]

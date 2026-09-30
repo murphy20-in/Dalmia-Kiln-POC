@@ -43,7 +43,7 @@ export async function render(root, ctx) {
     stage.replaceChildren(trendFigure({
       compact: true,
       title: `Primary risk score with the ${story.periods.length} ${PERIOD_LABEL}`,
-      description: `Each hatched band is one KPI-derived abnormal period; select a band to open it. Hatched grey is a gap with no operational data. The line is the served primary score, 0–100, relative to Apr–May.`,
+      description: `Each outlined, diagonal-hatched band is one KPI-derived abnormal period; select a band to open it. Light grey hatching with no outline is a gap with no operational data. The line is the served primary score, 0–100, relative to Apr–May.`,
       start: extent.first_timestamp,
       end: addMinutes(extent.last_timestamp, 10),
       series: [{ name: "Primary risk score", key: "primary_empirical_risk_score", rows: series.rows }],

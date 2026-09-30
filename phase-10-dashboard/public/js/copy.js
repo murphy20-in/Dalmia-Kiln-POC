@@ -30,15 +30,15 @@ export const NAV = [
 export const PLAIN = {
   status: {
     NOT_SUPPORTED: ["Not supported", "The score was not shown to rise before the abnormal periods"],
-    WEAK: ["Weak", "A small effect that did not meet the supported rule"],
+    WEAK: ["Weak", "Suggestive, not decision-grade: passed only a looser test (p < 0.10 or interval above zero)"],
     SUPPORTED: ["Supported", "Met the Phase 8 rule for this narrow check only"],
     INSUFFICIENT_DATA: ["Insufficient data", "Too few periods to decide"],
-    BLOCKED: ["Blocked", "Cannot be tested with the supplied data"],
+    BLOCKED: ["Blocked", "Cannot be tested until plant event records exist"],
     NOT_AVAILABLE: ["Not available", "No plant event records exist yet"],
     SENSITIVITY_ANALYSIS: ["Sensitivity analysis", "Not preferred and never a substitute for the primary score"],
   },
   severity: { HIGH: ["High severity"], MODERATE: ["Moderate severity"], LOW: ["Low severity"] },
-  confidence: { MEDIUM: ["Medium confidence (capped)"], LOW: ["Low confidence"] },
+  confidence: { MEDIUM: ["Medium confidence (the highest possible without plant records)"], LOW: ["Low confidence"] },
   load: {
     LOAD_ASSOCIATED: ["Load-associated"],
     UNCERTAIN: ["Load association uncertain"],
@@ -51,7 +51,25 @@ export const PLAIN = {
     STABILITY: ["Stability"],
     DRAFT_PRESSURE: ["Draft and pressure"],
   },
-  limitation: { OPEN: ["Open"], MASKED_UPSTREAM: ["Masked upstream"], INFO: ["For information"] },
+  limitation: { OPEN: ["Open"], MASKED_UPSTREAM: ["Handled in data cleaning"], INFO: ["For information"] },
+  limitationTopic: {
+    EVENT_GROUND_TRUTH: ["No plant event ground truth"],
+    MISSING_MONTH_KILN_I_SEPTEMBER: ["Kiln-I September 2025 missing"],
+    KILN_IIIA_APRIL_DUPLICATION: ["Kiln-IIIA April 2025 duplicated"],
+    FROZEN_WINDOW: ["Frozen (unchanging) sensor window"],
+    SENTINEL_VALUES: ["Sentinel placeholder values"],
+    UNIT_REVIEW_HOLDS: ["Units awaiting review"],
+    O2_ANALYSER_KILN_I_X: ["Kiln-I!X O₂ analyser"],
+    LOAD_DEPENDENCE: ["Score depends on load"],
+    OPERATING_STATE_PROXY: ["Operating state is inferred"],
+    REFERENCE_DEPENDENCE: ["Results depend on the reference period"],
+    CENSORED_ONSETS: ["Capped period start times"],
+    TIMEZONE: ["No timezone on timestamps"],
+    HIGH_BAND_NOT_RARE: ["The high band is common"],
+  },
+  preference: { NEITHER_PREFERRED_UNTIL_PLANT_EXPLAINS_KILN_I_X: ["Neither variant is preferred until the plant explains the Kiln-I!X analyser readings"] },
+  label: { KPI_DERIVED_EMPIRICAL_ABNORMAL_PERIOD: ["KPI-derived label"], PLANT_SUPPLIED_ANNOTATION: ["Plant-supplied"] },
+  band: { VERY_HIGH: ["Very high"] },
   eventStatus: { ACTIVE: ["Active"], DELETED: ["Withdrawn"] },
   context: { NONE: ["None recorded"] },
 };
@@ -69,22 +87,22 @@ export const PAGE = {
   },
   periods: {
     title: "KPI-derived abnormal periods",
-    answer: "Twelve stretches where the POC efficiency KPI reached its frozen training P90 or above. They are analytical labels, not plant events, and most are load-associated.",
+    answer: "Stretches where the POC efficiency KPI was at or above the 90th percentile of its reference period. They are analytical labels, not plant events, and most coincide with load changes.",
     method: "periods",
   },
   events: {
     title: "Plant annotations",
-    answer: "Plant-supplied records of what happened in the kiln. They are the only route to revalidating this analysis, and none have been recorded yet.",
+    answer: "Plant-supplied records of what happened in the kiln, placed on the timeline. With plant logs, they are what this analysis needs to be revalidated.",
     method: "annotations",
   },
   validation: {
     title: "Validation",
-    answer: "Early-warning validation: not supported. Phase 8 did not show the score rising before the abnormal periods, and the O₂-excluded check is weak and analyser-dependent.",
+    answer: "Early-warning validation: not supported. Phase 8 did not show the score rising before the abnormal periods. The O₂-excluded check is weak and analyser-dependent, and neither variant is preferred.",
     method: "validation",
   },
   quality: {
     title: "Data quality",
-    answer: "Two dataset-months are missing, rows are never filled in, and several plant questions remain open.",
+    answer: "Some dataset-months are missing; missing data is shown as a gap and never filled in, and several plant questions remain open.",
     method: "data",
   },
   methodology: {
@@ -118,7 +136,7 @@ export const INSIGHTS = {
 export const ADVISORY = {
   reference: { title: "The score is reference-relative", from: "L10" },
   load: { title: "The score is higher at low feed", from: "L08" },
-  censoring: { title: "Many onsets are censored", from: "censoring" },
+  censoring: { title: "Many period start times are capped", from: "censoring" },
   o2: { title: "The O₂ analyser may be reading ambient air", from: "L07" },
   truth: { title: "There is no plant ground truth", from: "L01" },
   highband: { title: "The high band is common, not rare", from: "L13" },
@@ -149,8 +167,8 @@ export const STEPS = {
 
 export const STEP_TEXT = {
   annotate: (id, when) => `Annotate what happened around period ${id} (${when})`,
-  revalidation: (n) => `Record at least ${n} evaluable plant-labelled events so the frozen Phase 8 protocol can be re-run`,
-  unblocks: (what) => `Unblocks: ${what}`,
+  revalidation: (n) => `Record at least ${n} evaluable plant annotations so the frozen Phase 8 protocol can be re-run`,
+  unblocks: (what) => `Needed to review: ${what}`,
   question: "Open plant question",
   copy: "Copy request",
   start: "Start annotation",
@@ -180,9 +198,9 @@ export const CARD = {
   scored: { label: "Scored history", unit: "ten-minute buckets" },
   periods: { label: "KPI-derived abnormal periods", meaning: "Analytical labels from the efficiency KPI, not plant events" },
   validation: { label: "Early-warning validation" },
-  o2: { label: "O₂-analyser sensitivity", value: "Weak", meaning: "Analyser-dependent and not preferred" },
-  annotations: { label: "Plant annotations", meaning: (n) => `recorded · at least ${n} evaluable labelled events are needed to revalidate` },
-  gaps: { label: "Data gaps and open questions", meaning: (m, q) => `${m} missing dataset-months · ${q} open plant questions` },
+  o2: { label: "O₂-analyser sensitivity", value: "Weak", meaning: "Analyser-dependent; neither variant is preferred" },
+  annotations: { label: "Plant annotations", meaning: (n) => `recorded · at least ${n} evaluable plant annotations are needed before Phase 8 can be re-run` },
+  gaps: { label: "Data gaps and open questions", meaning: () => "missing dataset-months · open plant questions" },
 };
 
 export const ACTIONS = {
@@ -199,8 +217,8 @@ export const MSG = {
   loading: "Loading the analysis…",
   loadingChart: "Loading the score series…",
   notFound: "That page does not exist. Showing the overview.",
-  unavailable: "The analysis service is not responding. Start Phase 9 on port 8009, then reload.",
-  mismatch: "The analysis service refused to serve results because a stored file failed its integrity check. Nothing is shown rather than unverified numbers. See /ready on the service.",
+  unavailable: "The analysis service is not responding (error 503). Try again shortly; if it continues, ask the analytics team to restart it.",
+  mismatch: "The analysis service withheld its results because a stored file failed its integrity check (error 503). Nothing is shown rather than unverified numbers. Ask the analytics team to check the service.",
   failed: "This part of the page could not be loaded.",
   noAnnotations: "No plant annotations yet. Annotations are how this analysis can be revalidated.",
   addFirst: "Add the first annotation",
@@ -212,10 +230,19 @@ export const MSG = {
   fromPeriod: (id) => `Started from ${id}. That period is a KPI-derived label; describe what the plant records say happened, not the label.`,
   viewedScore: "Pre-set to yes because you came from the score analysis. Change it if that is wrong.",
   gapLegend: "Gap: no operational data (not a zero score)",
+  weakCaveat: "Weak results at 2–6 h use the looser test and come from capped start times whose window already lies inside the KPI shift. They are not evidence that the score rose earlier (Phase 8 F2, F18).",
+  cappedOnset: " — capped at the 6-hour look-back; the KPI shift had already begun and may have started earlier",
+  cappedMeaning: "start time capped at 6 h before the period, so the score window already sits inside the KPI shift",
   o2Toggle: "O₂-excluded overlay — sensitivity analysis, not preferred",
-  o2Note: "Dashed grey line: the score rebuilt without the Kiln-I!X O₂ analyser. It is a sensitivity analysis. It is not preferred and does not replace the primary score.",
+  o2Note: "Dashed grey line: the score rebuilt without the Kiln-I!X O₂ analyser. It is a sensitivity analysis and does not replace the primary score. Neither variant is preferred until the plant explains the analyser readings.",
   brushHint: "Drag across the chart to zoom, or set the dates. Select a band to open that period.",
   tableToggle: "View as table",
+  marksToggle: "List the periods and annotations in this chart",
+  inspect: "Step through the plotted scores (arrow keys)",
+  actorPrompt: "Your name or role, recorded with the withdrawal (attribution only, not a login):",
+  confirmationHint: "How sure the plant is that this happened as described.",
+  timeBasisHint: "Whether the start time was seen directly, estimated afterwards, or reported by someone else.",
+  entryKindHint: "Written at the time it happened, or recorded later from memory or logs.",
 };
 
 export const TABLE_NOTE = {
@@ -235,14 +262,14 @@ export const METHOD = {
   boundary: [
     "An empirical proof of concept",
     "not a validated plant-event detector",
-    "not a prediction system",
-    "not an alarm system",
+    "does not anticipate plant events",
+    "does not raise warnings or alarms",
     "not a source of process or set-point advice",
   ],
 };
 
 export const FINDINGS_NOTE = "Each finding keeps its own Phase 8 class. Classes are not added up or scored.";
 export const F3_GROUP = {
-  title: "Five historical warning-rule definitions were each tested against the abnormal periods",
-  note: "Details are withheld under Phase 8 section 26. None of the rules is a live flag.",
+  title: "Historical rule definitions (Phase 8 F3) were each tested against the abnormal periods",
+  note: "Details are withheld under Phase 8 section 26. None of these rules is used in this dashboard.",
 };

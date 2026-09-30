@@ -41,7 +41,7 @@ export function parseLocation(loc, hashMode) {
   };
 }
 
-/** Build an href. Hash mode prefixes "#" so the link resolves against <base>. */
+/** Build an href. Hash mode prefixes "#" so the link stays on the hosted page. */
 export function href(path, query = {}, anchor = "", hashMode = false) {
   const q = buildQuery(query);
   const s = `${path}${q ? `?${q}` : ""}${anchor ? `#${anchor}` : ""}`;

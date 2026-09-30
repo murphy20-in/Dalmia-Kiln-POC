@@ -1,7 +1,8 @@
 import { getFrozen } from "../api.js";
 import { METHOD, PAGE, PERIOD_LABEL } from "../copy.js";
 import { h } from "../dom.js";
-import { hero, loading, section, table, to } from "../ui.js";
+import { enumText, hero, loading, section, table, to } from "../ui.js";
+import { plain } from "../pure/present.js";
 import { loadStory, storySections, versions } from "./common.js";
 
 export async function render(root, ctx) {
@@ -24,7 +25,7 @@ export async function render(root, ctx) {
       h("p", {}, `Reference window ${s.reference_window.join(" to ")} (${s.n_reference_buckets.toLocaleString("en-GB")} buckets). Score version ${s.score_version}.`),
       h("p", {}, `Bands: ${s.band_semantics}. They are shown here as text only and are never painted on a chart as limits.`),
       table("Reference-relative bands, as served", ["Band", "Lower edge", "Reference quantile", "Used", "Served rationale"],
-        s.reference_relative_bands.map((b) => [b.band, String(b.lower_edge), String(b.reference_quantile), b.supported ? "Yes" : `No (merged into ${b.merged_into})`, b.rationale])),
+        s.reference_relative_bands.map((b) => [enumText("band", b.band), String(b.lower_edge), String(b.reference_quantile), b.supported ? "Yes" : `No (merged into ${plain("band", b.merged_into).text})`, b.rationale])),
       h("p", { class: "hint" }, m.disclaimers.risk_score)),
     section(PERIOD_LABEL, "periods",
       h("p", {}, `Definition: ${m.phase6_periods.definition}.`),

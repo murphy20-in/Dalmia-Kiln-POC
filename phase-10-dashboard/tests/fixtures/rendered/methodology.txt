@@ -58,9 +58,9 @@ An empirical proof of concept
 
 not a validated plant-event detector
 
-not a prediction system
+does not anticipate plant events
 
-not an alarm system
+does not raise warnings or alarms
 
 not a source of process or set-point advice
 
@@ -84,7 +84,7 @@ Used
 
 Served rationale
 
-LOW
+Low
 
 0
 
@@ -94,7 +94,7 @@ Yes
 
 below the first supported edge: within the usual Apr-May range
 
-ELEVATED
+Elevated
 
 21.13033
 
@@ -104,7 +104,7 @@ Yes
 
 reference P75 of risk_score (>= Apr-May P75): resemblance relative to the Apr-May reference - NOT a plant limit, alarm or action threshold
 
-HIGH
+High
 
 38.2169
 
@@ -114,13 +114,13 @@ Yes
 
 reference P90 of risk_score (>= Apr-May P90): resemblance relative to the Apr-May reference - NOT a plant limit, alarm or action threshold
 
-VERY_HIGH
+Very high
 
 51.465648
 
 0.95
 
-No (merged into HIGH)
+No (merged into High)
 
 reference P95 of risk_score (>= Apr-May P95): resemblance relative to the Apr-May reference - NOT a plant limit, alarm or action threshold
 
@@ -184,11 +184,11 @@ Open plant question
 
 Copy request
 
-Plant confirmation of a normal operating periodPriority 2 · Unblocks: controls and referenceCopy request
+Plant confirmation of a normal operating periodPriority 2 · Needed to review: controls and referenceCopy request
 
 Plant confirmation of a normal operating period
 
-Priority 2 · Unblocks: controls and reference
+Priority 2 · Needed to review: controls and reference
 
 Copy request
 
@@ -201,6 +201,14 @@ Data quality
 Dalmia Cement · Ariyalur kiln analytical POC · retrospective only. Plant-entered text is shown exactly as entered.
 
 Dashboard pages
+
+API value: LOW
+
+API value: ELEVATED
+
+API value: HIGH
+
+API value: VERY_HIGH
 
 API value: NOT_SUPPORTED
 

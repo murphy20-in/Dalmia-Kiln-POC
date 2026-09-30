@@ -1,6 +1,6 @@
 /** Display helpers for API score rows. No score formula. Gaps stay gaps. */
 
-export const GAP_SECONDS = 600;
+const GAP_SECONDS = 600;
 
 export function parseTs(value) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/.exec(value || "");

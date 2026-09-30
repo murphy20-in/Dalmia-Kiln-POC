@@ -1,22 +1,22 @@
 # Testing
 
-`node --test tests/*.mjs`
+`node --test tests/*.mjs` runs 20 tests. The contract test needs Phase 9 running on port 8009.
 
 | File | What it checks |
 |---|---|
-| `tests/pure.test.mjs` | Gaps vs zero, decimation does not invent points, timestamp rules, event form, withheld evidence |
-| `tests/semantics.test.mjs` | Forbidden words only on lines that deny the claim; CSS has no alarm band classes; no `innerHTML` assignment |
-| `tests/contract.test.mjs` | Live Phase 9 fields: score, variant, provenance, interpretation, `gaps_in_page`, period `label_type`, validation `NOT_SUPPORTED`, event `label` origin via `provenance.source` |
+| `tests/pure.test.mjs` (5) | Gaps stay gaps and a zero score stays a point; thinning keeps segment ends and invents nothing; timestamp rules; the event form, including PATCH sending `null` to clear a field; withheld figures are not passed through |
+| `tests/honesty.test.mjs` (9) | Forbidden wording in client copy and in the rendered pages, allowing denials only; the static shell carries the `copy.js` disclaimer, wordmark and banner; write actions go through the read-only helpers, which show the reason; no client-side statistics; no alarm or brand-accent colour on data states; no HTML assignment of untrusted text; the O₂ overlay is off by default and never styled as primary |
+| `tests/route.test.mjs` (5) | Click map (every in-app link resolves to a route and anchor); deep links, with unknown paths falling back to the overview; URL state round-trips in path and hash mode; enums shown in plain English; warning-rule findings collapse to one F3 row |
+| `tests/contract.test.mjs` (1) | The live Phase 9 fields the dashboard reads are present |
 
-Browser journeys (Cursor browser, desktop 1280 and the layout CSS at 720/900):
+## Browser capture
 
-1. Overview loads disclaimer, `NOT_SUPPORTED`, `NOT_AVAILABLE`, 9,557 rows, 12 periods.
-2. Historical risk draws the series, two gaps in the default 14-day window, `preferred = false`.
-3. O₂ toggle adds `.series-sensitivity` and the sensitivity sentence.
-4. Abnormal periods lists 12 ids and opens P6-020 with the KPI-derived disclaimer.
-5. Plant event create with `<script>alert(1)</script><img…>` renders as text (one page script, zero images), edit saves, stale `expected_version` returns 409 and does not change the text, soft delete shows DELETED.
-6. Validation shows `NOT_SUPPORTED` and the sensitivity label. No AUC or coverage figure in the page text. F16’s title is the Phase 8 finding name.
-7. Data quality shows Kiln-I September, Kiln-IIIA April, and the O₂ question.
-8. Methodology states the boundary in words.
+`node tests/e2e/capture.mjs <mode>` drives the system Google Chrome headless over CDP. It needs no npm package. The local service must be running on port 8010.
 
-Playwright is not installed. These journeys were run in the IDE browser and recorded in `reviews/E2E_LOG.md`.
+| Mode | Output |
+|---|---|
+| `shots` | Full-page desktop (1440) and mobile (375) screenshots of every page into `screenshots/after/`, plus the page-level horizontal overflow of each |
+| `rendered` | Visible text of every page into `tests/fixtures/rendered/*.txt`, which the honesty test scans. Re-run this after any copy change |
+| `hosted` | Maps `kiln.github.io` to a static server of `public/` on port 8011 (`python3 -m http.server 8011 -d public`), so snapshot mode runs, then prints each read-only control and its stated reason |
+
+The journeys (a)–(e), Lighthouse and timings are recorded in `reviews/E2E_LOG.md`.

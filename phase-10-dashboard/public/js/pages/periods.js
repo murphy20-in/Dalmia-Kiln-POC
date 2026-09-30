@@ -1,5 +1,5 @@
 import { barFigure, timelineFigure } from "../chart.js";
-import { PAGE, PERIOD_LABEL, PERIOD_ONE } from "../copy.js";
+import { MSG, PAGE, PERIOD_LABEL, PERIOD_ONE } from "../copy.js";
 import { h } from "../dom.js";
 import { countBy, plain, shortStamp } from "../pure/present.js";
 import { addMinutes } from "../pure/series.js";
@@ -25,9 +25,9 @@ export async function render(root, ctx) {
     kpis([
       { label: "Periods", value: String(periods.length), meaning: PERIOD_LABEL, source: "Phase 6 · /abnormal-periods", link: to("/abnormal-periods", {}, "timeline") },
       { label: "KPI severity", value: `${sev.get("HIGH") || 0} · ${sev.get("MODERATE") || 0} · ${sev.get("LOW") || 0}`, meaning: "high · moderate · low severity (a KPI class, not plant severity)", source: "Phase 6 · kpi_severity_class", link: to("/abnormal-periods", {}, "timeline") },
-      { label: "Confidence", value: `${conf.get("MEDIUM") || 0} · ${conf.get("LOW") || 0}`, meaning: "medium (capped) · low. None can be higher without plant ground truth", source: "Phase 6 · confidence", link: to("/methodology", {}, "periods") },
+      { label: "Confidence", value: `${conf.get("MEDIUM") || 0} · ${conf.get("LOW") || 0}`, meaning: "medium · low. None can be higher without plant records", source: "Phase 6 · confidence", link: to("/methodology", {}, "periods") },
       { label: "Load-associated", value: `${load.get("LOAD_ASSOCIATED") || 0} of ${periods.length}`, meaning: "periods the served load-association field marks as load-associated", source: "Phase 6 · load_association", link: to("/data-quality", {}, "L08") },
-      { label: "Censored onsets", value: `${censored.get(true) || 0} of ${periods.length}`, meaning: "onsets cut off by the look-back cap", source: "Phase 6 · onset_censored", link: to("/validation", {}, "censoring") },
+      { label: "Capped start times", value: `${censored.get(true) || 0} of ${periods.length}`, meaning: MSG.cappedMeaning, source: "Phase 6 · onset_censored", link: to("/validation", {}, "censoring") },
     ]),
     section("Timeline and families", "graph",
       timelineFigure({
@@ -69,20 +69,20 @@ function detail(p, id, periods, story) {
       ["KPI severity class", enumText("severity", p.kpi_severity_class)],
       ["Confidence", enumText("confidence", p.confidence)],
       ["Duration", `${fmtInt(p.duration_minutes)} minutes`],
-      ["Onset", `${shortStamp(p.onset_time, true)}${p.onset_censored ? " — censored by the look-back cap, so the true start is earlier" : ""}`],
+      ["Onset", `${shortStamp(p.onset_time, true)}${p.onset_censored ? MSG.cappedOnset : ""}`],
       ["Dominant family", enumText("family", p.dominant_family)],
       ["Deviating families", (p.deviating_families || []).map((f) => plain("family", f).text).join(", ") || "—"],
       ["Load association", enumText("load", p.load_association)],
-      ["Primary context", enumText("context", p.primary_context)],
+      ["Operating context", enumText("context", p.primary_context)],
       ["Plant event?", p.is_plant_event ? "Yes" : "No — this is a KPI-derived label"],
       ["Ground truth", enumText("status", p.event_ground_truth_status)],
-      ["Label (API)", h("code", {}, p.label_type)],
+      ["Label", enumText("label", p.label_type)],
     ]),
     h("div", { class: "action-bar" },
       writeLink("Annotate this period", "/events/new", annotateQuery(p)),
       h("a", { class: "btn btn-secondary", href: to("/history", trend) }, "View on trend"),
       prev ? h("a", { class: "btn btn-ghost", href: to(`/abnormal-periods/${prev.period_id}`) }, `← ${prev.period_id}`) : null,
       next ? h("a", { class: "btn btn-ghost", href: to(`/abnormal-periods/${next.period_id}`) }, `${next.period_id} →`) : null,
-      h("a", { class: "btn btn-ghost", href: to("/abnormal-periods") }, "Close")),
+      h("a", { class: "btn btn-ghost", href: to("/abnormal-periods", {}, "timeline") }, "Close")),
     h("p", { class: "hint" }, `Source: Phase 6 · ${p.method_version} · ${story.findingsEnvelope.service_version}`));
 }

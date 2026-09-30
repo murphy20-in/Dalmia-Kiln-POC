@@ -1,28 +1,28 @@
-L01 Event ground truthOpenNo coating, ring, deposit, cleaning, maintenance or stoppage-reason records exist in the supplied data. Detection, risk and early-warning claims cannot be validated against plant events.Source: Phase 1 issue register (CRITICAL); Phase 8 F15
+L01 No plant event ground truthOpenNo coating, ring, deposit, cleaning, maintenance or stoppage-reason records exist in the supplied data. Detection, risk and early-warning claims cannot be validated against plant events.Source: Phase 1 issue register (CRITICAL); Phase 8 F15
 
-L02 Missing month kiln i septemberOpenKiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.Source: Phase 1 issue register (HIGH)
+L02 Kiln-I September 2025 missingOpenKiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.Source: Phase 1 issue register (HIGH)
 
-L03 Kiln iiia april duplicationOpenThe Kiln-IIIA April file repeats May data; April is absent for that dataset.Source: Phase 1 issue register (HIGH)
+L03 Kiln-IIIA April 2025 duplicatedOpenThe Kiln-IIIA April file repeats May data; April is absent for that dataset.Source: Phase 1 issue register (HIGH)
 
-L04 Frozen windowMasked upstream122 tags are frozen on 2025-05-06 11:50-21:50; masked in Phase 2 and treated as a data-quality window downstream.Source: Phase 1 issue register; Phase 2 masks
+L04 Frozen (unchanging) sensor windowHandled in data cleaning122 tags are frozen on 2025-05-06 11:50-21:50; masked in Phase 2 and treated as a data-quality window downstream.Source: Phase 1 issue register; Phase 2 masks
 
-L05 Sentinel valuesMasked upstreamSentinel 99999 in 35 columns, -273 degC and text 'Error 6' are masked, not repaired.Source: Phase 1 issue register; Phase 2 masks
+L05 Sentinel placeholder valuesHandled in data cleaningSentinel 99999 in 35 columns, -273 degC and text 'Error 6' are masked, not repaired.Source: Phase 1 issue register; Phase 2 masks
 
-L06 Unit review holdsOpen13 columns are held pending plant unit confirmation and are excluded from the score.Source: phase-02-baseline/outputs/column_holds.csv
+L06 Units awaiting reviewOpen13 columns are held pending plant unit confirmation and are excluded from the score.Source: phase-02-baseline/outputs/column_holds.csv
 
-L07 O2 analyser kiln i xOpenFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: Phase 7 report; Phase 8 F5, F17
+L07 Kiln-I!X O₂ analyserOpenFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: Phase 7 report; Phase 8 F5, F17
 
-L08 Load dependenceOpenThe score is higher at low feed and during load changes; the Phase 8 load-adjusted analysis is INSUFFICIENT_DATA.Source: Phase 7 report; Phase 8 F6
+L08 Score depends on loadOpenThe score is higher at low feed and during load changes; the Phase 8 load-adjusted analysis is INSUFFICIENT_DATA.Source: Phase 7 report; Phase 8 F6
 
-L09 Operating state proxyOpenRUNNING / STOPPED is a POC proxy from Kiln MD and feed; the meaning of Kiln MD and the equipment identity are unconfirmed.Source: Phase 2
+L09 Operating state is inferredOpenRUNNING / STOPPED is a POC proxy from Kiln MD and feed; the meaning of Kiln MD and the equipment identity are unconfirmed.Source: Phase 2
 
-L10 Reference dependenceOpenBand levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.Source: Phase 6 robustness; Phase 7 robustness
+L10 Results depend on the reference periodOpenBand levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.Source: Phase 6 robustness; Phase 7 robustness
 
-L11 Censored onsetsOpen6 of the 12 abnormal-period onsets are censored by the look-back cap; the small positive pre-onset estimate comes from them.Source: Phase 8 F18
+L11 Capped period start timesOpen6 of the 12 abnormal-period onsets are censored by the look-back cap; the small positive pre-onset estimate comes from them.Source: Phase 8 F18
 
-L12 TimezoneOpenThe historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.Source: Phase 1 plant question 7
+L12 No timezone on timestampsOpenThe historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.Source: Phase 1 plant question 7
 
-L13 High band not rareFor informationThe HIGH reference-relative band covers about half of August operational buckets; it is not a rare-event flag and not an alarm level.Source: Phase 7 report
+L13 The high band is commonFor informationThe HIGH reference-relative band covers about half of August operational buckets; it is not a rare-event flag and not an alarm level.Source: Phase 7 report
 
 OpenKiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.See evidence · L02
 
@@ -60,7 +60,7 @@ Methodology
 
 Data quality
 
-Two dataset-months are missing, rows are never filled in, and several plant questions remain open.
+Some dataset-months are missing; missing data is shown as a gap and never filled in, and several plant questions remain open.
 
 Methodology: how this is worked out
 
@@ -480,7 +480,7 @@ Are the Kiln-I / IA / II / III / IIIA / IIIB folders pages of one kiln line?
 
 Artifact integrity
 
-Each file the API serves is hash-checked at start-up. If any differs, the API refuses to answer: The analysis service refused to serve results because a stored file failed its integrity check. Nothing is shown rather than unverified numbers. See /ready on the service.
+Each file the API serves is hash-checked at start-up. If any differs, the API refuses to answer: The analysis service withheld its results because a stored file failed its integrity check (error 503). Nothing is shown rather than unverified numbers. Ask the analytics team to check the service.
 
 Served artifacts
 
@@ -648,11 +648,13 @@ What the evidence shows
 
 How to read this
 
-The O₂ analyser may be reading ambient airFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Source: L07
+The O₂ analyser may be reading ambient airFrequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.Neither variant is preferred until the plant explains the Kiln-I!X analyser readingsSource: L07
 
 The O₂ analyser may be reading ambient air
 
 Frequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.
+
+Neither variant is preferred until the plant explains the Kiln-I!X analyser readings
 
 Times have no timezoneThe historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.Source: L12
 
@@ -668,11 +670,11 @@ Band levels and abnormal-period membership depend on the Apr-May reference; the 
 
 Recommended next steps — data and review
 
-Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-pointsPriority 3 · Unblocks: scope, state proxy, efficiency familyCopy request
+Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-pointsPriority 3 · Needed to review: scope, state proxy, efficiency familyCopy request
 
 Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-points
 
-Priority 3 · Unblocks: scope, state proxy, efficiency family
+Priority 3 · Needed to review: scope, state proxy, efficiency family
 
 Copy request
 
