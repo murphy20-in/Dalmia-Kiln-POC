@@ -1,4 +1,4 @@
-# Builds the static pitch dashboard (dashboard/) and publishes it to GitHub Pages.
+# Builds and tests the static pitch dashboard (dashboard/); publishes to GitHub Pages from main only.
 # The data JSON is committed, so the build needs Node only (no Python, no source data).
 name: Deploy dashboard to Pages
 
@@ -37,8 +37,10 @@ jobs:
         with:
           path: dashboard/dist
 
+  # The github-pages environment only accepts main, so other branches get build + tests only.
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
