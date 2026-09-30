@@ -469,4 +469,8 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
 
 ## 15. Next step
 
-Waiting for review of Phase 9. Phase 9 is committed on branch `phase-09-api` (not pushed). Phase 10 has not been started.
+Waiting for review of Phase 9 and for the Phase 10 prompt. Phase 10 has not been started.
+
+- Branch `phase-09-api` (from `phase-08-early-warning`): Phase 9 implementation `d84244e`, plus BUILD_STATUS updates. **Not pushed yet.**
+- To reproduce: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean`. Run it twice. The final double clean run gave G1–G15 all PASS and 59 of 59 tests passing.
+- Before Phase 10, answer the open plant questions. The priority-1 data requests are the timestamped coating / ring / cleaning / maintenance / stoppage logs and the `Kiln-I!X` purge / calibration schedule (`/api/v1/metadata/data-requirements`). Plant annotations can now be entered through `/api/v1/events`.
