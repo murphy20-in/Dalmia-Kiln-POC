@@ -13,6 +13,8 @@ cd phase-10-dashboard
 
 Open `http://127.0.0.1:8010/`.
 
+The hosted copy is `https://murphy20-in.github.io/Dalmia-Kiln-POC/`. It reads an export of the Phase 9 responses and does not save plant annotations. Regenerate that export with Phase 9 running: `../.venv/bin/python scripts/export_snapshot.py`.
+
 `serve.py` serves `public/` and proxies `/api/`, `/health`, and `/ready` to Phase 9 (`DALMIA_KILN_API_UPSTREAM`). The browser stays same-origin. Phase 9 CORS is unchanged.
 
 ## Pages

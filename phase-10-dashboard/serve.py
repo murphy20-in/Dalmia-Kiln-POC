@@ -21,7 +21,7 @@ PAGES = {"/", "/history", "/abnormal-periods", "/events", "/validation", "/data-
 PROXY_PREFIXES = ("/api/", "/health", "/ready")
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
          ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png",
-         ".webp": "image/webp"}
+         ".webp": "image/webp", ".json": "application/json"}
 HOP = {"host", "content-length", "connection", "transfer-encoding", "keep-alive"}
 
 

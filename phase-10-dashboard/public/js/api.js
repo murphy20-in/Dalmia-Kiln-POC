@@ -1,4 +1,5 @@
 import { buildQuery } from "./pure/query.js";
+import { snapshotRequest, useSnapshot } from "./snapshot.js";
 
 export class ApiError extends Error {
   constructor(status, body) {
@@ -29,6 +30,7 @@ export function logClientError(kind, err) {
 }
 
 export async function api(path, { method = "GET", body, actor, signal } = {}) {
+  if (useSnapshot()) return snapshotRequest(path, { method, signal });
   const headers = { Accept: "application/json" };
   if (body != null) headers["Content-Type"] = "application/json";
   if (actor) headers["X-Actor"] = actor;

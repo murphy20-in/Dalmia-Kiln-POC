@@ -8,6 +8,8 @@ import { render as validation } from "./pages/validation.js";
 import { render as quality } from "./pages/quality.js";
 import { render as methodology } from "./pages/methodology.js";
 
+const STATIC_HOST = location.hostname.endsWith("github.io");
+
 const ROUTES = {
   "/": overview,
   "/history": history,
@@ -21,29 +23,48 @@ const ROUTES = {
 let controller = null;
 
 export function start() {
+  if (STATIC_HOST) {
+    document.querySelectorAll("a[href^='/']").forEach((link) => {
+      const href = link.getAttribute("href");
+      link.setAttribute("href", `#${href}`);
+    });
+    const note = document.getElementById("static-note");
+    if (note) note.hidden = false;
+  }
   document.body.addEventListener("click", (event) => {
     const link = event.target.closest("a");
     if (!link || link.origin !== location.origin || link.target || event.metaKey || event.ctrlKey || event.shiftKey) return;
-    const path = link.pathname;
+    const path = link.hash.startsWith("#/") ? link.hash.slice(1).split("?")[0] : link.pathname;
     if (!ROUTES[path]) return;
     event.preventDefault();
     navigate(path);
   });
-  window.addEventListener("popstate", () => render());
+  window.addEventListener(STATIC_HOST ? "hashchange" : "popstate", () => render());
   render();
 }
 
 function navigate(path) {
+  if (STATIC_HOST) {
+    location.hash = path;
+    return;
+  }
   const url = new URL(location.href);
   url.pathname = path;
   history.pushState({}, "", url);
   render();
 }
 
+function currentPath() {
+  if (!STATIC_HOST) return ROUTES[location.pathname] ? location.pathname : "/";
+  const raw = (location.hash || "#/").slice(1).split("?")[0];
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return ROUTES[path] ? path : "/";
+}
+
 function render() {
   controller?.abort();
   controller = new AbortController();
-  const path = ROUTES[location.pathname] ? location.pathname : "/";
+  const path = currentPath();
   document.querySelectorAll("[data-nav]").forEach((link) => {
     if (link.getAttribute("href") === path) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
