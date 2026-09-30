@@ -1,8 +1,8 @@
 # Dalmia Kiln POC — Build Status
 
-**As of:** 2026-09-29
-**Branch:** `phase-08-early-warning`, created from `phase-07-risk-score` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 `ab1facc`)
-**Current state:** Phases 1–8 are COMPLETE and awaiting review. Phase 9 has not started.
+**As of:** 2026-09-30
+**Branch:** `phase-09-api`, created from `phase-08-early-warning` (Phase 1 `b39d374`, Phase 2 `6e54477`, Phase 3 `a57c1b8`, Phase 4 `8325450`, Phase 5 `da5c932`, Phase 6 `2e3fa53`, Phase 7 `cfacf8e`, Phase 8 `ab1facc`, Phase 9 `d84244e`)
+**Current state:** Phases 1–9 are COMPLETE and awaiting review. Phase 10 has not started.
 
 This file is a handoff: it gives the next phase everything it needs in one place without re-reading the whole Phase 1 report.
 
@@ -20,7 +20,8 @@ This file is a handoff: it gives the next phase everything it needs in one place
 | 6 | Historical Abnormal Events | **COMPLETE, awaiting review — 12 empirical abnormal periods (not plant events)** |
 | 7 | Deposit/Inefficiency Risk Score | **COMPLETE, awaiting review — empirical POC risk score (not deposit-validated)** |
 | 8 | Early Warning Validation | **COMPLETE, awaiting review — primary endpoint NOT_SUPPORTED (no early-warning claim)** |
-| 9–12 | API, Dashboard, QA, Final Report | NOT STARTED |
+| 9 | API / Analytical Service | **COMPLETE, awaiting review — read-only evidence API + plant event annotation store (no alerting, no prediction)** |
+| 10–12 | Dashboard, QA, Final Report | NOT STARTED |
 
 Phase 1 completion checklist (all items verified): full recursive inventory, all workbooks and sheets inspected, column/tag inventory, timestamp structure, date coverage, sampling intervals, missingness, gaps, duplicates, outliers, flatlines, units, process families, equipment coverage, event and AF/RDF availability, readiness assessment, scripts created and rerun from a clean state, master report generated, no source data modified.
 
@@ -411,6 +412,61 @@ Requirements: Python 3, pandas, numpy, openpyxl, markdown-it-py, and `pdftotext`
   - Decision: no alerting in Phase 9; collect plant event labels; re-run this frozen protocol once ≥ 8 evaluable labelled events exist.
 - **Plant data required (priority 1):** timestamped coating / ring / cleaning / maintenance / stoppage logs for Apr–Sep 2025, and the `Kiln-I!X` purge / calibration schedule. The three Phase 7 plant questions remain open.
 
-## 14. Next step
+## 14. Phase 9 — API / Analytical Service (COMPLETE, awaiting review)
 
-Waiting for review of Phase 8 and for the Phase 9 prompt. Phase 9 has not been started. Phase 8 is committed and pushed on branch `phase-08-early-warning`.
+**Result:** a read-only analytical evidence API over the frozen Phase 6–8 artifacts, plus a SQLite plant event annotation store. It is **not** an alerting or prediction service. The machine-readable contract (`config/analytical_contract.json`, served by `/api/v1/metadata/status`) sets `early_warning_supported`, `alerting_enabled`, `prediction_enabled` and `plant_event_ground_truth_available` to false. Every analytical response carries `provenance` and `interpretation` blocks (`is_prediction`, `is_alert` and `is_probability` are all false).
+
+- **Pipeline:** `phase-09-api/scripts/`. Run `../../.venv/bin/python -B run_phase9.py --clean` (about 31 s; run it twice for G11). Serve with `../../.venv/bin/python -B api_app.py` (127.0.0.1:8009).
+  - No framework and no new dependency: stdlib `wsgiref`, `sqlite3` and `json`, plus the pandas / pyarrow already installed.
+  - Config: `DALMIA_KILN_POC_ROOT`, `DALMIA_KILN_SOURCE_ROOT`, `DALMIA_KILN_EVENTS_DB`, `DALMIA_KILN_API_HOST` / `_PORT`.
+  - 59 unittest tests in `tests/`: contract 14, integrity / temporal 13, events 16, safety 7, security 9.
+- **API (`/api/v1`):**
+  - metadata (`/`, `/status`, `/provenance`, `/limitations`, `/methodology`, `/data-requirements`);
+  - `risk-scores` (`variant=primary` default | `o2_excluded`; `operational_only` must be true);
+  - `risk-scores/variant-comparison`;
+  - `abnormal-periods` (`label_type = KPI_DERIVED_EMPIRICAL_ABNORMAL_PERIOD`);
+  - `validation/early-warning-historical` (historical results; primary `NOT_SUPPORTED`);
+  - `findings` (Phase 8 classes, with the F3 coverage figures withheld);
+  - `events` CRUD with soft delete, plus `events/{id}/audit`;
+  - `/health` and `/ready`.
+  - There are no alert, prediction, probability or live-warning routes; all of those return 404.
+- **Artifacts:** `outputs/artifact_manifest.json` records SHA-256, version and schema for 19 artifacts. Every Phase 6/7 input equals the hash Phase 8 validated. The API re-verifies at startup and answers 503 on any mismatch.
+- **O₂-excluded variant:** Phase 8 persisted it only inside its 12 event windows. `build_artifacts.py` ran Phase 8's unchanged `o2_excluded_score` once, offline: a refit and rescore by Phase 8's own code, logged as a declared exception.
+  - It reproduces 1,501 persisted values (max diff 0.0), the rank correlation 0.9393 (diff 0.0) and the June / July / August medians (diff 0.0).
+  - Served as `SENSITIVITY_ANALYSIS`, `preferred = false`, `comparable_to_primary = false` (like-for-like p 0.0625).
+- **Event annotation:**
+  - Fields: `event_type` (COATING / RING / DEPOSIT / CLEANING / MAINTENANCE / STOPPAGE / FEED_REDUCTION / ANALYSER_CALIBRATION / PROCESS_UPSET / OTHER), naive historian-clock start / end, source, and optional precision / onset basis / entry kind / `annotator_viewed_risk_score`.
+  - `label_origin = PLANT_SUPPLIED` and `analytical_label = null`, both enforced by the database.
+  - Enforced by triggers: append-only audit, soft delete only, no REPLACE, immutable identity fields, version + 1.
+  - Writes: `X-Actor` attribution; `expected_version` required on PATCH and DELETE; 409 on a same-type / equipment / source overlap.
+  - The store `phase-09-api/state/events.sqlite3` is gitignored and never deleted by `--clean`.
+- **Gates:** G1–G15 all PASS on the final double clean run.
+  - G1: 610 upstream files and 60 source workbooks unchanged.
+  - G11: 17 files / query digests byte-identical.
+  - Latency: metadata 0.1 ms, a one-day score window 12 ms, 1,000 full score rows 90 ms, event create 1 ms. Startup 1.8 s.
+- **Reviews:** planner, python-reviewer (APPROVE-WITH-CHANGES), mle-reviewer (PASS-WITH-CONDITIONS), cs-product-analyst (CONDITIONAL PASS: two HIGH findings, F3 coverage text and O₂ comparability, both fixed) and database-reviewer (ACCEPT WITH FIXES), plus a Ponytail audit (17 findings, none CRITICAL / HIGH). 57 log rows, none open. See `phase-09-api/reviews/`.
+- **Known limitations:**
+  - no authentication (X-Actor is attribution only; loopback bind);
+  - single-threaded wsgiref;
+  - evaluable-event count stays 0 until the frozen Phase 8 protocol is re-run;
+  - re-run order Phase 7 → 8 → 9;
+  - all Phase 1–8 caveats remain (`/metadata/limitations`, L01–L13).
+- **Phase 10 may consume:**
+  - the historical score;
+  - the O₂-excluded overlay (`variant-comparison`, with `gaps_in_page`);
+  - the KPI-derived periods;
+  - the Phase 8 findings;
+  - plant annotations;
+  - metadata, provenance and data-quality status.
+- **Phase 10 MUST NOT:**
+  - show live W1–W5 flags;
+  - use alarm colours for bands;
+  - show a prediction or probability;
+  - state lead times;
+  - show coverage percentages or the AUC;
+  - present O₂-excluded as preferred;
+  - treat the API as a live alerting source.
+
+## 15. Next step
+
+Waiting for review of Phase 9. Phase 9 is committed on branch `phase-09-api` (not pushed). Phase 10 has not been started.
