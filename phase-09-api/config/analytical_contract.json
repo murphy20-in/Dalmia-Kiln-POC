@@ -1,0 +1,88 @@
+{
+ "contract_version": "p9-api-1.0.0",
+ "project": "Dalmia Cement Ariyalur Kiln POC",
+ "phase": 9,
+ "phase_name": "API / Analytical Service (historical evidence access layer)",
+ "analytical_state": {
+  "early_warning_supported": false,
+  "alerting_enabled": false,
+  "prediction_enabled": false,
+  "probability_outputs_enabled": false,
+  "live_warning_flags_enabled": false,
+  "lead_time_claims_enabled": false,
+  "plant_event_ground_truth_available": false,
+  "control_recommendations_enabled": false
+ },
+ "evidence_status": {
+  "phase7_score": "EMPIRICAL_POC_RISK_SCORE (not a deposit / ring / failure probability, not a plant limit)",
+  "phase6_periods": "KPI_DERIVED_EMPIRICAL_ABNORMAL_PERIODS (not plant events)",
+  "phase8_primary_endpoint": "NOT_SUPPORTED",
+  "phase8_o2_excluded_variant": "WEAK",
+  "phase8_o2_excluded_note": "analyser-dependent (Kiln-I!X); not preferred; the analyser behaviour is an unresolved plant question",
+  "variant_preference": "NEITHER_PREFERRED_UNTIL_PLANT_EXPLAINS_KILN_I_X"
+ },
+ "periods": {
+  "source_period": "2025-04-01..2025-09-30",
+  "reference_period": "2025-04-01..2025-05-31 (Phase 7 frozen reference, in-sample)",
+  "operational_scoring_period": "2025-06-01..2025-08-23",
+  "missing_months": [
+   {"dataset": "Kiln-I", "month": "2025-09", "reason": "truncated workbook, unreadable; September is not scored"},
+   {"dataset": "Kiln-IIIA", "month": "2025-04", "reason": "the April file repeats May data; April is absent"}
+  ],
+  "timestamp_semantics": "timezone-naive historian export (no timezone supplied; plant question open). Scores are 10-min buckets labelled by bucket end: a row at T covers (T - 10 min, T]. Timestamps are served exactly as stored, never converted, resampled or filled."
+ },
+ "revalidation": {
+  "minimum_evaluable_events_for_revalidation": 8,
+  "source": "Phase 8 P8Config.min_events_primary (run_manifest.json) and Phase 8 report section 25",
+  "meaning": "the minimum number of evaluable plant-labelled events before the frozen Phase 8 protocol can be re-run and classify anything; reaching it does not validate the score"
+ },
+ "disclaimers": {
+  "risk_score": "Retrospective empirical POC risk score: resemblance to abnormal process conditions relative to the Apr-May 2025 reference. It is not a prediction, an alert, or a deposit / ring / failure probability, and not an early warning.",
+  "o2_excluded": "Sensitivity analysis only: the Phase 8 O2-excluded validation variant (Kiln-I!X removed). It does not replace the primary score and is not preferred.",
+  "abnormal_periods": "KPI-derived empirical abnormal periods from the Phase 3 POC KPI. They are not plant events, incidents, deposits, rings or failures.",
+  "validation": "Historical validation results only. Phase 8 did not support an early-warning claim against the KPI-derived abnormal periods. Nothing here is a live warning.",
+  "events": "Plant event annotations are plant-supplied ground-truth candidates. They are never generated from the risk score or the KPI-derived periods."
+ },
+ "limitations": [
+  {"id": "L01", "topic": "EVENT_GROUND_TRUTH", "status": "OPEN", "detail": "No coating, ring, deposit, cleaning, maintenance or stoppage-reason records exist in the supplied data. Detection, risk and early-warning claims cannot be validated against plant events.", "source": "Phase 1 issue register (CRITICAL); Phase 8 F15"},
+  {"id": "L02", "topic": "MISSING_MONTH_KILN_I_SEPTEMBER", "status": "OPEN", "detail": "Kiln-I September 2025 workbook is truncated and unreadable, so the score ends 2025-08-23 and September is not scored. Nothing is imputed.", "source": "Phase 1 issue register (HIGH)"},
+  {"id": "L03", "topic": "KILN_IIIA_APRIL_DUPLICATION", "status": "OPEN", "detail": "The Kiln-IIIA April file repeats May data; April is absent for that dataset.", "source": "Phase 1 issue register (HIGH)"},
+  {"id": "L04", "topic": "FROZEN_WINDOW", "status": "MASKED_UPSTREAM", "detail": "122 tags are frozen on 2025-05-06 11:50-21:50; masked in Phase 2 and treated as a data-quality window downstream.", "source": "Phase 1 issue register; Phase 2 masks"},
+  {"id": "L05", "topic": "SENTINEL_VALUES", "status": "MASKED_UPSTREAM", "detail": "Sentinel 99999 in 35 columns, -273 degC and text 'Error 6' are masked, not repaired.", "source": "Phase 1 issue register; Phase 2 masks"},
+  {"id": "L06", "topic": "UNIT_REVIEW_HOLDS", "status": "OPEN", "detail": "13 columns are held pending plant unit confirmation and are excluded from the score.", "source": "phase-02-baseline/outputs/column_holds.csv"},
+  {"id": "L07", "topic": "O2_ANALYSER_KILN_I_X", "status": "OPEN", "detail": "Frequent ambient-air-like kiln-inlet O2 readings; excluding the analyser roughly halves the Jun-Aug score rise and changes the Phase 8 primary result from NOT_SUPPORTED to WEAK. The purge / calibration behaviour needs plant confirmation.", "source": "Phase 7 report; Phase 8 F5, F17"},
+  {"id": "L08", "topic": "LOAD_DEPENDENCE", "status": "OPEN", "detail": "The score is higher at low feed and during load changes; the Phase 8 load-adjusted analysis is INSUFFICIENT_DATA.", "source": "Phase 7 report; Phase 8 F6"},
+  {"id": "L09", "topic": "OPERATING_STATE_PROXY", "status": "OPEN", "detail": "RUNNING / STOPPED is a POC proxy from Kiln MD and feed; the meaning of Kiln MD and the equipment identity are unconfirmed.", "source": "Phase 2"},
+  {"id": "L10", "topic": "REFERENCE_DEPENDENCE", "status": "OPEN", "detail": "Band levels and abnormal-period membership depend on the Apr-May reference; the plant has not confirmed a normal period.", "source": "Phase 6 robustness; Phase 7 robustness"},
+  {"id": "L11", "topic": "CENSORED_ONSETS", "status": "OPEN", "detail": "6 of the 12 abnormal-period onsets are censored by the look-back cap; the small positive pre-onset estimate comes from them.", "source": "Phase 8 F18"},
+  {"id": "L12", "topic": "TIMEZONE", "status": "OPEN", "detail": "The historian export carries no timezone. The API serves naive timestamps unchanged and requires plant annotations to use the same naive plant-local clock.", "source": "Phase 1 plant question 7"},
+  {"id": "L13", "topic": "HIGH_BAND_NOT_RARE", "status": "INFO", "detail": "The HIGH reference-relative band covers about half of August operational buckets; it is not a rare-event flag and not an alarm level.", "source": "Phase 7 report"}
+ ],
+ "plant_data_requirements": [
+  {"priority": 1, "data": "Timestamped coating / ring / deposit observations, cleaning, maintenance and stoppage logs (2025-04-01..2025-09-30)", "unblocks": "Phase 8 F14, F15, F16; circularity"},
+  {"priority": 1, "data": "Kiln-I!X O2 analyser purge / calibration schedule", "unblocks": "Phase 8 F5, F17"},
+  {"priority": 2, "data": "Feed-reduction logs", "unblocks": "Phase 8 F6 (load dependence)"},
+  {"priority": 2, "data": "Plant confirmation of a normal operating period", "unblocks": "controls and reference"},
+  {"priority": 2, "data": "Operator / process-abnormality logs; event severity / impact", "unblocks": "Phase 8 F1 onset anchor"},
+  {"priority": 3, "data": "Clinker quality (lab)", "unblocks": "an outcome independent of the score inputs"},
+  {"priority": 3, "data": "Kiln shell temperature (scanner)", "unblocks": "independent evidence of coating / ring build-up (F15)"},
+  {"priority": 3, "data": "Fuel laboratory data (CV, moisture, AFR split)", "unblocks": "load / fuel context"},
+  {"priority": 3, "data": "Kiln-I September 2025 re-export; meaning of Kiln MD; Sp.Heat F / G formulas; which tags are set-points", "unblocks": "scope, state proxy, efficiency family"}
+ ],
+ "plant_questions_open": [
+  "What is the purge / calibration behaviour of the Kiln-I!X O2 analyser?",
+  "Which period does the plant regard as normal?",
+  "Are feed reductions logged?",
+  "What is the historian timezone and export interpolation setting?",
+  "Are the Kiln-I / IA / II / III / IIIA / IIIB folders pages of one kiln line?"
+ ],
+ "prohibited_uses": [
+  "live alerting, alarms or notifications",
+  "live W1-W5 warning flags",
+  "reference-relative bands styled or used as alarm levels",
+  "lead-time or coverage figures presented as performance",
+  "never: prediction, forecast or probability of deposit / ring / failure",
+  "control or set-point recommendations",
+  "Phase 7 AUC 0.868 presented as accuracy (it is circular coverage)"
+ ]
+}

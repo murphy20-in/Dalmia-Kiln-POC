@@ -24,3 +24,6 @@ phase-*/reports/*
 reports/generated/*
 
 phase-*/cache/
+
+# Phase 9 plant event annotation store (plant data; never committed)
+phase-*/state/
