@@ -28,3 +28,6 @@ phase-*/cache/
 
 # Phase 9 plant event annotation store (plant data; never committed)
 phase-*/state/
+
+# Playwright MCP browser-test artefacts (screenshots, console logs)
+.playwright-mcp/
