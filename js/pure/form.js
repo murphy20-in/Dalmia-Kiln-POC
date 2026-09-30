@@ -35,20 +35,21 @@ export function validateEvent(input) {
   return issues;
 }
 
-/** Body sent to the API. Empty optional fields are omitted. */
-export function eventPayload(input, expectedVersion) {
+const OPTIONAL = ["end_time", "equipment", "source_reference", "severity", "plant_confirmation", "time_precision", "time_basis", "entry_kind", "annotator_viewed_risk_score"];
+
+/** Body sent to the API. Empty optional fields are omitted on create. Phase 9 merges a PATCH onto the stored
+ *  record, so on edit a field that was set and is now empty is sent as null to clear it. */
+export function eventPayload(input, expectedVersion, previous) {
   const body = {
     event_type: input.event_type,
     start_time: input.start_time,
     description: input.description,
     source: input.source,
   };
-  if (input.end_time) body.end_time = input.end_time;
-  for (const key of ["equipment", "source_reference", "severity", "plant_confirmation", "time_precision", "time_basis", "entry_kind"]) {
-    if (input[key]) body[key] = input[key];
-  }
-  if (input.annotator_viewed_risk_score === true || input.annotator_viewed_risk_score === false) {
-    body.annotator_viewed_risk_score = input.annotator_viewed_risk_score;
+  for (const key of OPTIONAL) {
+    const value = input[key];
+    if (value != null && value !== "") body[key] = value;
+    else if (previous && previous[key] != null) body[key] = null;
   }
   if (expectedVersion != null) body.expected_version = expectedVersion;
   return body;

@@ -1,223 +1,349 @@
-import { h } from "./dom.js";
-import { addMinutes, decimate, flatten, parseTs, segments, yDomain } from "./pure/series.js";
+/** Inline SVG charts. Every mark is a served value; gaps are drawn as gaps; nothing is interpolated. */
+import { UNSAFE_URL, h } from "./dom.js";
+import { MSG, TABLE_NOTE } from "./copy.js";
+import { plain, shortDate, shortStamp } from "./pure/present.js";
+import { decimate, flatten, formatTs, parseTs, segments, yDomain } from "./pure/series.js";
 
-const VB_W = 860;
-const VB_H = 360;
-const PAD = { l: 52, r: 16, t: 28, b: 36 };
+const NS = "http://www.w3.org/2000/svg";
+const W = 960;
 
-export function timeSeriesFigure(spec) {
-  const start = spec.start;
-  const end = spec.end;
-  const prepared = spec.series.map((series) => {
-    const segs = decimate(segments(series.rows, series.key, spec.gaps), spec.maxPoints || 900);
-    return { ...series, segs };
-  });
-  const domain = yDomain(prepared.flatMap((s) => s.segs));
-  const plotW = VB_W - PAD.l - PAD.r;
-  const plotH = VB_H - PAD.t - PAD.b;
-  const t0 = parseTs(start);
-  const t1 = parseTs(end);
-  const xOf = (ts) => {
-    const t = parseTs(ts);
-    if (t0 == null || t1 == null || t1 === t0 || t == null) return PAD.l;
-    return PAD.l + ((t - t0) / (t1 - t0)) * plotW;
-  };
-  const yOf = (y) => {
-    const [lo, hi] = domain;
-    return PAD.t + (1 - (y - lo) / (hi - lo || 1)) * plotH;
-  };
-  const points = flatten(prepared[0]?.segs || []);
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", `0 0 ${VB_W} ${VB_H}`);
-  svg.setAttribute("class", "chart");
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-labelledby", spec.titleId);
-  svg.setAttribute("aria-describedby", spec.descId);
-
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  defs.append(pattern());
-  svg.append(defs);
-  svg.append(rect(0, 0, VB_W, VB_H, "chart-bg"));
-
-  for (const gap of spec.gaps || []) {
-    const x1 = xOf(gap[0]);
-    const x2 = xOf(gap[1]);
-    if (x2 > x1) svg.append(rect(x1, PAD.t, x2 - x1, plotH, "chart-gap"));
+function el(tag, attrs = {}, ...kids) {
+  const node = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false || k.startsWith("on") || (k === "href" && UNSAFE_URL.test(String(v)))) continue;
+    node.setAttribute(k, String(v));
   }
-  for (const period of spec.periods || []) {
-    const x1 = xOf(period.start_time);
-    const x2 = xOf(period.end_time);
-    if (x2 > x1) svg.append(rect(x1, PAD.t, Math.max(2, x2 - x1), plotH, "chart-period"));
-  }
-
-  axis(svg, domain, yOf, plotH);
-  for (const series of prepared) {
-    for (const seg of series.segs) {
-      const pl = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-      pl.setAttribute("points", seg.map((p) => `${xOf(p.timestamp).toFixed(1)},${yOf(p.y).toFixed(1)}`).join(" "));
-      pl.setAttribute("class", series.dash ? "series series-sensitivity" : "series series-primary");
-      if (series.dash) pl.setAttribute("stroke-dasharray", "6 4");
-      svg.append(pl);
-    }
-  }
-  for (const event of spec.events || []) {
-    const x = xOf(event.start_time);
-    svg.append(diamond(x, PAD.t + 8));
-  }
-
-  const readout = h("p", { class: "chart-readout", "aria-live": "polite" }, "Move along the series to read a score.");
-  const slider = h("input", {
-    type: "range",
-    min: "0",
-    max: String(Math.max(points.length - 1, 0)),
-    value: "0",
-    "aria-label": "Inspect a point on the historical score series",
-    oninput: () => announce(points, slider, readout),
-  });
-  if (!points.length) slider.disabled = true;
-
-  const tip = h("p", { class: "chart-tip" }, "Hover the chart to read a timestamp and score.");
-  svg.addEventListener("pointermove", (event) => {
-    const nearest = nearestPoint(event, svg, points, xOf);
-    tip.textContent = nearest
-      ? `${nearest.timestamp.replace("T", " ")} · score ${formatScore(nearest.y)}`
-      : "No plotted point at this position.";
-  });
-
-  const figure = h("figure", { class: "chart-figure" },
-    h("figcaption", { id: spec.titleId, class: "chart-title" }, spec.title),
-    h("p", { id: spec.descId, class: "chart-desc" }, spec.description),
-    svg,
-    tip,
-    points.length ? h("label", { class: "inspect" }, "Keyboard inspect", slider) : null,
-    readout,
-    legend(spec),
-  );
-  return { figure, table: fallbackTable(prepared, spec.gaps || []), points };
+  for (const kid of kids.flat()) if (kid != null) node.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return node;
 }
 
-function announce(points, slider, readout) {
-  const point = points[Number(slider.value)];
-  readout.textContent = point
-    ? `${point.timestamp.replace("T", " ")} · empirical risk score ${formatScore(point.y)}`
-    : "No plotted point.";
+function svgRoot(height, labelId, descId, cls = "chart") {
+  return el("svg", { viewBox: `0 0 ${W} ${height}`, class: cls, role: "group", "aria-labelledby": labelId, "aria-describedby": descId, style: `aspect-ratio:${W}/${height}` });
 }
 
-function nearestPoint(event, svg, points, xOf) {
-  if (!points.length) return null;
-  const box = svg.getBoundingClientRect();
-  const x = ((event.clientX - box.left) / box.width) * VB_W;
-  let best = null;
-  let bestDx = Infinity;
-  for (const point of points) {
-    const dx = Math.abs(xOf(point.timestamp) - x);
-    if (dx < bestDx) {
-      best = point;
-      bestDx = dx;
-    }
-  }
-  return bestDx < 18 ? best : null;
+/** Hatch patterns: severity and gaps are told apart by pattern and weight, never by hue. */
+function defs(prefix) {
+  const hatch = (id, gap, width, cls) => el("pattern", { id: `${prefix}-${id}`, width: gap, height: gap, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
+    el("line", { x1: 0, y1: 0, x2: 0, y2: gap, class: cls, "stroke-width": width }));
+  return el("defs", {},
+    hatch("gap", 6, 1, "hatch-gap"),
+    hatch("high", 4, 2.2, "hatch-sev"),
+    hatch("moderate", 6, 1.4, "hatch-sev"),
+    hatch("low", 9, 0.8, "hatch-sev"));
 }
 
-function legend(spec) {
-  const items = [h("li", {}, h("span", { class: "swatch swatch-primary" }), "Empirical risk score (primary)")];
-  if (spec.showSensitivity) items.push(h("li", {}, h("span", { class: "swatch swatch-sensitivity" }), "O₂-excluded sensitivity"));
-  if (spec.periods) items.push(h("li", {}, h("span", { class: "swatch swatch-period" }), "KPI-derived abnormal period"));
-  if (spec.events) items.push(h("li", {}, h("span", { class: "swatch swatch-event" }), "Plant-supplied event"));
-  items.push(h("li", {}, h("span", { class: "swatch swatch-gap" }), "Gap (no data, not a zero score)"));
-  return h("ul", { class: "legend" }, items);
+let uid = 0;
+
+function figure(id, title, description, svg, extras, footnote) {
+  return h("figure", { class: "chart-figure", id },
+    h("figcaption", { id: `${id}-title`, class: "chart-title" }, title),
+    h("p", { id: `${id}-desc`, class: "chart-desc" }, description),
+    h("div", { class: "chart-frame", tabindex: "0", role: "region", "aria-label": title }, svg),
+    ...extras,
+    footnote ? h("p", { class: "chart-foot" }, footnote) : null);
 }
 
-function fallbackTable(prepared, gaps) {
-  const rows = [];
-  for (const series of prepared) {
-    for (const seg of series.segs) {
-      for (const point of seg) rows.push([series.name, point.timestamp, formatScore(point.y)]);
-    }
-  }
-  const shown = rows.length > 40 ? [...rows.slice(0, 20), ...rows.slice(-5)] : rows;
-  return h("details", { class: "table-fallback" },
-    h("summary", {}, "Data table for this chart"),
-    h("p", {}, rows.length > 40
-      ? `Showing 25 of ${rows.length} plotted points (first 20 and last 5). Plotted points are API values; a long window is thinned for drawing without filling gaps.`
-      : "Every plotted point. Values come from the analytical service."),
-    h("p", {}, gaps.length ? `${gaps.length} gap${gaps.length === 1 ? "" : "s"} in this response.` : "No gaps in this response."),
+function tableToggle(caption, headers, rows, note) {
+  return h("details", { class: "table-toggle" },
+    h("summary", {}, MSG.tableToggle),
+    note ? h("p", { class: "hint" }, note) : null,
     h("div", { class: "table-wrap" },
-      h("table", {},
-        h("caption", { class: "sr-only" }, "Plotted historical scores"),
-        h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Series"), h("th", { scope: "col" }, "Timestamp"), h("th", { scope: "col" }, "Score"))),
-        h("tbody", {}, shown.map(([name, ts, score]) => h("tr", {},
-          h("td", { "data-label": "Series" }, name),
-          h("td", { "data-label": "Timestamp" }, ts.replace("T", " ")),
-          h("td", { "data-label": "Score" }, score)))))),
-  );
+      h("table", { class: "resp" },
+        h("caption", {}, caption),
+        h("thead", {}, h("tr", {}, headers.map((x) => h("th", { scope: "col" }, x)))),
+        h("tbody", {}, rows.map((r) => h("tr", {}, r.map((c, i) => h("td", { "data-label": headers[i] }, c))))))));
 }
 
-function axis(svg, domain, yOf, plotH) {
-  const [lo, hi] = domain;
-  for (const tick of [lo, (lo + hi) / 2, hi]) {
-    const y = yOf(tick);
-    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    label.setAttribute("x", "46");
-    label.setAttribute("y", String(y + 4));
-    label.setAttribute("class", "tick");
-    label.setAttribute("text-anchor", "end");
-    label.textContent = String(Math.round(tick));
-    svg.append(label);
+/** Month (or day) ticks between t0 and t1 (ms, UTC-as-naive). */
+function timeTicks(t0, t1) {
+  const day = 86400000;
+  const out = [];
+  const span = (t1 - t0) / day;
+  if (span > 40) {
+    const d = new Date(t0);
+    let y = d.getUTCFullYear();
+    let m = d.getUTCMonth();
+    for (;;) {
+      const t = Date.UTC(y, m, 1);
+      if (t > t1) break;
+      if (t >= t0) out.push([t, shortDate(formatTs(t))]);
+      m += 1;
+      if (m > 11) { m = 0; y += 1; }
+    }
+    return out;
   }
-  svg.append(line(PAD.l, PAD.t + plotH, VB_W - PAD.r, PAD.t + plotH));
+  const step = [1, 2, 7, 14].find((s) => span / s <= 8) || 14;
+  let t = Math.ceil(t0 / day) * day;
+  for (; t <= t1; t += step * day) out.push([t, shortDate(formatTs(t))]);
+  return out;
 }
 
-function pattern() {
-  const p = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
-  p.setAttribute("id", "periodHatch");
-  p.setAttribute("width", "6");
-  p.setAttribute("height", "6");
-  p.setAttribute("patternUnits", "userSpaceOnUse");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M0 6 L6 0");
-  path.setAttribute("class", "hatch");
-  p.append(path);
-  return p;
+/**
+ * Score trend with period bands, event diamonds, hatched gaps and optional drag-to-zoom.
+ * spec: { title, description, start, end, series: [{name, key, rows, dash}], gaps, periods, highlight,
+ *         events, compact, periodHref(id), eventHref(id), onBrush(from, to), footnote, inspect }
+ */
+export function trendFigure(spec) {
+  const id = `chart-${++uid}`;
+  const compact = Boolean(spec.compact);
+  const H = compact ? 190 : 380;
+  const PAD = { l: 44, r: 12, t: compact ? 26 : 34, b: 28 };
+  const plotW = W - PAD.l - PAD.r;
+  const plotH = H - PAD.t - PAD.b;
+  const t0 = parseTs(spec.start);
+  const t1 = parseTs(spec.end);
+  const span = Math.max(1, t1 - t0);
+  const xOfT = (t) => PAD.l + ((t - t0) / span) * plotW;
+  const xOf = (ts) => xOfT(parseTs(ts) ?? t0);
+  const clampX = (x) => Math.min(PAD.l + plotW, Math.max(PAD.l, x));
+  const prepared = (spec.series || []).map((s) => ({ ...s, segs: decimate(segments(s.rows, s.key, spec.gaps), spec.maxPoints || 900) }));
+  const domain = yDomain(prepared.flatMap((s) => s.segs));
+  const yOf = (y) => PAD.t + (1 - (y - domain[0]) / (domain[1] - domain[0] || 1)) * plotH;
+
+  const svg = svgRoot(H, `${id}-title`, `${id}-desc`);
+  svg.append(defs(id), el("rect", { x: 0, y: 0, width: W, height: H, class: "chart-bg" }));
+
+  for (const [y, label] of [[domain[0], String(Math.round(domain[0]))], [(domain[0] + domain[1]) / 2, String(Math.round((domain[0] + domain[1]) / 2))], [domain[1], String(Math.round(domain[1]))]]) {
+    if (!prepared.length) break;
+    svg.append(el("line", { x1: PAD.l, x2: PAD.l + plotW, y1: yOf(y), y2: yOf(y), class: "grid" }),
+      el("text", { x: PAD.l - 6, y: yOf(y) + 4, class: "tick", "text-anchor": "end" }, label));
+  }
+  for (const [t, label] of timeTicks(t0, t1)) {
+    if (xOfT(t) > W - PAD.r - 40) continue;
+    svg.append(el("line", { x1: xOfT(t), x2: xOfT(t), y1: PAD.t + plotH, y2: PAD.t + plotH + 5, class: "axis" }),
+      el("text", { x: xOfT(t) + 3, y: H - 8, class: "tick" }, label));
+  }
+
+  for (const [a, b] of spec.gaps || []) {
+    const x1 = clampX(xOf(a));
+    const x2 = clampX(xOf(b));
+    if (x2 - x1 > 0.5) svg.append(el("rect", { x: x1, y: PAD.t, width: x2 - x1, height: plotH, class: "chart-gap", fill: `url(#${id}-gap)` }));
+  }
+
+  for (const p of spec.periods || []) {
+    const x1 = clampX(xOf(p.start_time));
+    const x2 = clampX(xOf(p.end_time));
+    if (x2 <= PAD.l || x1 >= PAD.l + plotW) continue;
+    const sev = String(p.kpi_severity_class || "LOW").toLowerCase();
+    const focus = spec.highlight === p.period_id;
+    const label = `${p.period_id}: ${plain("severity", p.kpi_severity_class).text} KPI-derived abnormal period, ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}. Open details.`;
+    const band = el("rect", { x: x1, y: PAD.t, width: Math.max(4, x2 - x1), height: plotH, class: `band sev-${sev}${focus ? " band-focus" : ""}`, fill: `url(#${id}-${sev})` });
+    const link = el("a", { href: spec.periodHref(p.period_id), class: "band-link" }, el("title", {}, label), band);
+    if (focus || (!compact && span < 20 * 86400000)) link.append(el("text", { x: x1 + 2, y: PAD.t - 6, class: `band-label${focus ? " band-label-focus" : ""}` }, p.period_id));
+    svg.append(link);
+  }
+
+  for (const s of prepared) {
+    for (const seg of s.segs) {
+      if (seg.length === 1) {
+        svg.append(el("circle", { cx: xOf(seg[0].timestamp), cy: yOf(seg[0].y), r: 2, class: s.dash ? "point point-sensitivity" : "point point-primary" }));
+        continue;
+      }
+      const pts = seg.map((p) => `${xOf(p.timestamp).toFixed(1)},${yOf(p.y).toFixed(1)}`).join(" ");
+      svg.append(el("polyline", { points: pts, class: s.dash ? "series series-sensitivity" : "series series-primary", "stroke-dasharray": s.dash ? "7 4" : null }));
+    }
+  }
+  svg.append(el("line", { x1: PAD.l, x2: PAD.l + plotW, y1: PAD.t + plotH, y2: PAD.t + plotH, class: "axis" }));
+
+  for (const ev of spec.events || []) {
+    const x = clampX(xOf(ev.start_time));
+    const y = PAD.t + plotH - 10;
+    const label = `Plant annotation: ${plain("x", ev.event_type).text}, ${shortStamp(ev.start_time)}. Open annotation.`;
+    svg.append(el("a", { href: spec.eventHref(ev.event_id), class: "event-link" }, el("title", {}, label),
+      el("polygon", { points: `${x},${y - 8} ${x + 7},${y} ${x},${y + 8} ${x - 7},${y}`, class: "event-mark" })));
+  }
+
+  const points = flatten(prepared[0]?.segs || []);
+  const readout = h("p", { class: "chart-readout" }, points.length ? MSG.brushHint : "");
+  if (points.length) {
+    svg.addEventListener("pointermove", (event) => {
+      if (drag) return;
+      const box = svg.getBoundingClientRect();
+      const x = ((event.clientX - box.left) / box.width) * W;
+      let best = null;
+      let bestDx = Infinity;
+      for (const p of points) {
+        const dx = Math.abs(xOf(p.timestamp) - x);
+        if (dx < bestDx) { best = p; bestDx = dx; }
+      }
+      readout.textContent = best && bestDx < 12 ? pointText(best) : MSG.brushHint;
+    });
+  }
+  const pointText = (p) => `${shortStamp(p.timestamp, true)} · primary score ${fmtScore(p.y)}`;
+  const inspect = points.length ? h("label", { class: "inspect" }, MSG.inspect,
+    h("input", { type: "range", min: "0", max: String(points.length - 1), value: "0", "aria-valuetext": pointText(points[0]),
+      oninput: (event) => {
+        const text = pointText(points[event.target.value]);
+        event.target.setAttribute("aria-valuetext", text);
+        readout.textContent = text;
+      } })) : null;
+
+  let drag = null;
+  let dragged = false;
+  if (spec.onBrush) {
+    const shade = el("rect", { y: PAD.t, height: plotH, width: 0, class: "brush", visibility: "hidden" });
+    svg.append(shade);
+    const toX = (event) => {
+      const box = svg.getBoundingClientRect();
+      return clampX(((event.clientX - box.left) / box.width) * W);
+    };
+    svg.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      drag = { x: toX(event), id: event.pointerId };
+      dragged = false;
+    });
+    svg.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const x = toX(event);
+      if (Math.abs(x - drag.x) > 6 && !dragged) {
+        dragged = true;
+        svg.setPointerCapture(drag.id);
+      }
+      if (!dragged) return;
+      shade.setAttribute("x", String(Math.min(x, drag.x)));
+      shade.setAttribute("width", String(Math.abs(x - drag.x)));
+      shade.setAttribute("visibility", "visible");
+    });
+    svg.addEventListener("pointerup", (event) => {
+      if (!drag) return;
+      const a = Math.min(drag.x, toX(event));
+      const b = Math.max(drag.x, toX(event));
+      drag = null;
+      shade.setAttribute("visibility", "hidden");
+      if (!dragged) return;
+      const snap = (x) => formatTs(Math.round((t0 + ((x - PAD.l) / plotW) * span) / 600000) * 600000);
+      if (snap(a) !== snap(b)) spec.onBrush(snap(a), snap(b));
+    });
+    svg.addEventListener("pointercancel", () => { drag = null; dragged = false; shade.setAttribute("visibility", "hidden"); });
+    svg.addEventListener("click", (event) => {
+      if (!dragged) return;
+      dragged = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+  }
+
+  const legend = h("ul", { class: "legend" },
+    prepared.map((s) => h("li", {}, h("span", { class: `swatch ${s.dash ? "swatch-sensitivity" : "swatch-primary"}`, "aria-hidden": "true" }), s.name)),
+    spec.periods ? ["HIGH", "MODERATE", "LOW"].map((s) => h("li", {}, h("span", { class: `swatch swatch-${s.toLowerCase()}`, "aria-hidden": "true" }), `KPI-derived abnormal period, ${plain("severity", s).text.toLowerCase()}`)) : null,
+    spec.events ? h("li", {}, h("span", { class: "swatch swatch-event", "aria-hidden": "true" }), "Plant annotation") : null,
+    prepared.length ? h("li", {}, h("span", { class: "swatch swatch-gap", "aria-hidden": "true" }), MSG.gapLegend) : null);
+
+  const rows = [];
+  for (const s of prepared) for (const seg of s.segs) for (const p of seg) rows.push([s.name, shortStamp(p.timestamp, true), fmtScore(p.y)]);
+  const shown = rows.length > 40 ? [...rows.slice(0, 20), ...rows.slice(-5)] : rows;
+  const table = prepared.length ? tableToggle(spec.title, ["Series", "Bucket end (plant-local)", "Score"], shown,
+    `${rows.length > 40 ? TABLE_NOTE.thinned(shown.length, rows.length) : TABLE_NOTE.all} ${(spec.gaps || []).length} gaps in this range.`) : null;
+
+  const marks = [
+    ...(spec.periods || []).filter((p) => p.end_time > spec.start && p.start_time < spec.end).map((p) =>
+      h("li", {}, h("a", { href: spec.periodHref(p.period_id) }, `${p.period_id} · ${plain("severity", p.kpi_severity_class).text} · ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}`))),
+    ...(spec.events || []).map((ev) => h("li", {}, h("a", { href: spec.eventHref(ev.event_id) }, `Plant annotation · ${plain("x", ev.event_type).text} · ${shortStamp(ev.start_time)}`))),
+  ];
+  const markList = marks.length ? h("details", { class: "table-toggle" }, h("summary", {}, MSG.marksToggle), h("ul", { class: "mark-links" }, marks)) : null;
+
+  return figure(id, spec.title, spec.description, svg, [readout, inspect, legend, markList, table], spec.footnote);
 }
 
-function rect(x, y, w, hgt, cls) {
-  const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-  el.setAttribute("x", String(x));
-  el.setAttribute("y", String(y));
-  el.setAttribute("width", String(Math.max(0, w)));
-  el.setAttribute("height", String(Math.max(0, hgt)));
-  el.setAttribute("class", cls);
-  return el;
+/** Gantt-style timeline of periods. Severity = hatch density + outline weight + text. */
+export function timelineFigure(spec) {
+  const id = spec.id || `chart-${++uid}`;
+  const rowH = 26;
+  const PAD = { l: 250, r: 12, t: 10, b: 28 };
+  const H = PAD.t + spec.periods.length * rowH + PAD.b;
+  const plotW = W - PAD.l - PAD.r;
+  const t0 = parseTs(spec.start);
+  const t1 = parseTs(spec.end);
+  const xOf = (ts) => PAD.l + ((parseTs(ts) - t0) / Math.max(1, t1 - t0)) * plotW;
+  const svg = svgRoot(H, `${id}-title`, `${id}-desc`);
+  svg.append(defs(id), el("rect", { x: 0, y: 0, width: W, height: H, class: "chart-bg" }));
+  for (const [t, label] of timeTicks(t0, t1)) {
+    const x = PAD.l + ((t - t0) / Math.max(1, t1 - t0)) * plotW;
+    svg.append(el("line", { x1: x, x2: x, y1: PAD.t, y2: H - PAD.b, class: "grid" }), el("text", { x: x + 3, y: H - 8, class: "tick" }, label));
+  }
+  spec.periods.forEach((p, i) => {
+    const y = PAD.t + i * rowH;
+    const sev = String(p.kpi_severity_class || "LOW").toLowerCase();
+    const sevText = plain("severity", p.kpi_severity_class).text;
+    const focus = spec.highlight === p.period_id;
+    const x1 = xOf(p.start_time);
+    const label = `${p.period_id} · ${sevText}, ${shortStamp(p.start_time)} to ${shortStamp(p.end_time)}. Open details.`;
+    svg.append(el("a", { href: spec.periodHref(p.period_id), class: "band-link", "aria-current": focus ? "true" : null },
+      el("title", {}, label),
+      el("rect", { x: 0, y, width: W, height: rowH, class: focus ? "row-focus" : "row-hit" }),
+      el("text", { x: 8, y: y + 17, class: `row-label${focus ? " band-label-focus" : ""}` }, `${p.period_id} · ${sevText}`),
+      el("rect", { x: x1, y: y + 5, width: Math.max(6, xOf(p.end_time) - x1), height: rowH - 10, class: `band sev-${sev}${focus ? " band-focus" : ""}`, fill: `url(#${id}-${sev})` })));
+  });
+  const legend = h("ul", { class: "legend" },
+    ["HIGH", "MODERATE", "LOW"].map((s) => h("li", {}, h("span", { class: `swatch swatch-${s.toLowerCase()}`, "aria-hidden": "true" }), plain("severity", s).text)));
+  const table = tableToggle(spec.title, ["Period", "KPI severity", "Start", "End", "Dominant family"],
+    spec.periods.map((p) => [p.period_id, plain("severity", p.kpi_severity_class).text, shortStamp(p.start_time, true), shortStamp(p.end_time, true), plain("family", p.dominant_family).text]));
+  return figure(id, spec.title, spec.description, svg, [legend, table], spec.footnote);
 }
 
-function line(x1, y1, x2, y2) {
-  const el = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  el.setAttribute("x1", String(x1));
-  el.setAttribute("y1", String(y1));
-  el.setAttribute("x2", String(x2));
-  el.setAttribute("y2", String(y2));
-  el.setAttribute("class", "axis");
-  return el;
+/** Horizontal bars of served-row counts. */
+export function barFigure(spec) {
+  const id = `chart-${++uid}`;
+  const rowH = 30;
+  const PAD = { l: 170, r: 40, t: 8, b: 8 };
+  const H = PAD.t + spec.entries.length * rowH + PAD.b;
+  const top = Math.max(1, ...spec.entries.map(([, n]) => n));
+  const svg = svgRoot(H, `${id}-title`, `${id}-desc`, "chart chart-small");
+  svg.append(el("rect", { x: 0, y: 0, width: W, height: H, class: "chart-bg" }));
+  spec.entries.forEach(([label, n], i) => {
+    const y = PAD.t + i * rowH;
+    const w = ((W - PAD.l - PAD.r) * n) / top;
+    svg.append(el("text", { x: PAD.l - 10, y: y + 20, class: "row-label", "text-anchor": "end" }, label),
+      el("rect", { x: PAD.l, y: y + 6, width: w, height: rowH - 12, class: "bar" }),
+      el("text", { x: PAD.l + w + 6, y: y + 20, class: "row-label" }, String(n)));
+  });
+  const table = tableToggle(spec.title, [spec.labelHeader, "Periods"], spec.entries.map(([l, n]) => [l, String(n)]));
+  return figure(id, spec.title, spec.description, svg, [table], spec.footnote);
 }
 
-function diamond(x, y) {
-  const el = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-  el.setAttribute("points", `${x},${y - 6} ${x + 5},${y} ${x},${y + 6} ${x - 5},${y}`);
-  el.setAttribute("class", "event-mark");
-  return el;
+/**
+ * Dot-and-interval plot of served estimates with a zero reference.
+ * spec.rows: [{ group, series: "primary"|"sensitivity", value, lo, hi, status }]
+ */
+export function dotFigure(spec) {
+  const id = `chart-${++uid}`;
+  const groups = [...new Set(spec.rows.map((r) => r.group))];
+  const rowH = 40;
+  const PAD = { l: 190, r: 130, t: 30, b: 34 };
+  const H = PAD.t + groups.length * rowH + PAD.b;
+  const plotW = W - PAD.l - PAD.r;
+  let lo = 0;
+  let hi = 0;
+  for (const r of spec.rows) { lo = Math.min(lo, r.lo ?? r.value); hi = Math.max(hi, r.hi ?? r.value); }
+  const padX = (hi - lo) * 0.08 || 0.05;
+  lo -= padX;
+  hi += padX;
+  const xOf = (v) => PAD.l + ((v - lo) / (hi - lo)) * plotW;
+  const svg = svgRoot(H, `${id}-title`, `${id}-desc`);
+  svg.append(el("rect", { x: 0, y: 0, width: W, height: H, class: "chart-bg" }));
+  for (const v of [lo + padX, 0, hi - padX]) {
+    svg.append(el("text", { x: xOf(v), y: H - 10, class: "tick", "text-anchor": "middle" }, fmtScore(v, 2)));
+  }
+  svg.append(el("line", { x1: xOf(0), x2: xOf(0), y1: PAD.t - 8, y2: H - PAD.b, class: "zero" }),
+    el("text", { x: xOf(0) + 4, y: PAD.t - 12, class: "tick" }, spec.zeroLabel));
+  groups.forEach((g, i) => {
+    const y = PAD.t + i * rowH + rowH / 2;
+    svg.append(el("text", { x: PAD.l - 12, y: y + 4, class: "row-label", "text-anchor": "end" }, g));
+    if (i === 0) svg.append(el("text", { x: PAD.l - 12, y: PAD.t - 12, class: "tick", "text-anchor": "end" }, spec.rowTitle || ""));
+    spec.rows.filter((r) => r.group === g).forEach((r) => {
+      const dy = r.series === "primary" ? -7 : 7;
+      const cls = r.series === "primary" ? "dot-primary" : "dot-sensitivity";
+      if (r.lo != null && r.hi != null) svg.append(el("line", { x1: xOf(r.lo), x2: xOf(r.hi), y1: y + dy, y2: y + dy, class: `ci ${cls}`, "stroke-dasharray": r.series === "primary" ? null : "5 3" }));
+      svg.append(el("circle", { cx: xOf(r.value), cy: y + dy, r: 5, class: cls }, el("title", {}, `${g}, ${r.name}: ${fmtScore(r.value, 3)} (${fmtScore(r.lo, 3)} to ${fmtScore(r.hi, 3)}), ${plain("status", r.status).text}`)));
+      svg.append(el("text", { x: W - PAD.r + 10, y: y + dy + 4, class: `row-status ${cls}-text` }, plain("status", r.status).text));
+    });
+  });
+  const legend = h("ul", { class: "legend" }, spec.legend.map(([cls, text]) => h("li", {}, h("span", { class: `swatch ${cls}`, "aria-hidden": "true" }), text)));
+  const table = tableToggle(spec.title, spec.tableHeaders, spec.rows.map((r) => [r.group, r.name, fmtScore(r.value, 3), `${fmtScore(r.lo, 3)} to ${fmtScore(r.hi, 3)}`, plain("status", r.status).text]));
+  return figure(id, spec.title, spec.description, svg, [legend, table], spec.footnote);
 }
 
-function formatScore(y) {
-  return Number(y).toLocaleString("en-GB", { maximumFractionDigits: 2 });
-}
-
-export function defaultWindow(extent) {
-  if (!extent?.first_timestamp || !extent?.last_timestamp) return null;
-  const start = addMinutes(extent.last_timestamp, -14 * 24 * 60);
-  return {
-    start: start && start > extent.first_timestamp ? start : extent.first_timestamp,
-    end: addMinutes(extent.last_timestamp, 10) || extent.last_timestamp,
-  };
+function fmtScore(y, digits = 2) {
+  if (typeof y !== "number" || !Number.isFinite(y)) return "—";
+  return y.toLocaleString("en-GB", { maximumFractionDigits: digits, minimumFractionDigits: digits > 2 ? digits : 0 });
 }

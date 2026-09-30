@@ -1,18 +1,18 @@
-import { h, text } from "./dom.js";
-import { readRange, writeRange } from "./state.js";
+import { MSG, NAV } from "./copy.js";
+import { h } from "./dom.js";
+import { linkTarget, parseLocation } from "./pure/route.js";
+import { failure, readOnly, to } from "./ui.js";
 import { render as overview } from "./pages/overview.js";
-import { render as history } from "./pages/history.js";
+import { render as historyPage } from "./pages/history.js";
 import { render as periods } from "./pages/periods.js";
 import { render as events } from "./pages/events.js";
 import { render as validation } from "./pages/validation.js";
 import { render as quality } from "./pages/quality.js";
 import { render as methodology } from "./pages/methodology.js";
 
-const STATIC_HOST = location.hostname.endsWith("github.io");
-
-const ROUTES = {
+const PAGES = {
   "/": overview,
-  "/history": history,
+  "/history": historyPage,
   "/abnormal-periods": periods,
   "/events": events,
   "/validation": validation,
@@ -21,71 +21,96 @@ const ROUTES = {
 };
 
 let controller = null;
+let lastPage = null;
 
-export function start() {
-  if (STATIC_HOST) {
-    document.querySelectorAll("a[href^='/']").forEach((link) => {
-      const href = link.getAttribute("href");
-      link.setAttribute("href", `#${href}`);
-    });
-    const note = document.getElementById("static-note");
-    if (note) note.hidden = false;
-  }
+function current() {
+  return parseLocation(location, readOnly);
+}
+
+/** Navigate inside the app. Path mode and hash mode both use the History API so back/forward work. */
+export function go(target, { replace = false } = {}) {
+  const url = readOnly ? `${location.pathname}${target}` : target;
+  history[replace ? "replaceState" : "pushState"]({}, "", url);
+  render();
+}
+
+function start() {
+  document.getElementById("nav").replaceChildren(...NAV.map(([path, label]) =>
+    h("li", {}, h("a", { href: to(path), "data-nav": path }, label))));
+  if (readOnly) document.getElementById("ro-banner").hidden = false;
+  const bar = document.querySelector(".disclaimer");
+  new ResizeObserver(() => document.documentElement.style.setProperty("--sticky", `${bar.offsetHeight}px`)).observe(bar);
   document.body.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = event.target.closest("a");
-    if (!link || link.origin !== location.origin || link.target || event.metaKey || event.ctrlKey || event.shiftKey) return;
-    const path = link.hash.startsWith("#/") ? link.hash.slice(1).split("?")[0] : link.pathname;
-    if (!ROUTES[path]) return;
+    if (!link || link.target) return;
+    const raw = link.getAttribute("href");
+    if (raw === "#main") {
+      event.preventDefault();
+      document.getElementById("main").focus();
+      return;
+    }
+    if (!linkTarget(raw, readOnly)) return;
     event.preventDefault();
-    navigate(path);
+    go(raw);
   });
-  window.addEventListener(STATIC_HOST ? "hashchange" : "popstate", () => render());
+  window.addEventListener("popstate", render);
   render();
-}
-
-function navigate(path) {
-  if (STATIC_HOST) {
-    location.hash = path;
-    return;
-  }
-  const url = new URL(location.href);
-  url.pathname = path;
-  history.pushState({}, "", url);
-  render();
-}
-
-function currentPath() {
-  if (!STATIC_HOST) return ROUTES[location.pathname] ? location.pathname : "/";
-  const raw = (location.hash || "#/").slice(1).split("?")[0];
-  const path = raw.startsWith("/") ? raw : `/${raw}`;
-  return ROUTES[path] ? path : "/";
 }
 
 function render() {
   controller?.abort();
   controller = new AbortController();
-  const path = currentPath();
-  document.querySelectorAll("[data-nav]").forEach((link) => {
-    if (link.getAttribute("href") === path) link.setAttribute("aria-current", "page");
-    else link.removeAttribute("aria-current");
+  const signal = controller.signal;
+  const route = current();
+  const page = PAGES[route.page];
+  document.querySelectorAll("[data-nav]").forEach((a) => {
+    if (a.dataset.nav === route.page) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
   });
-  const range = readRange();
-  const label = document.getElementById("range-status");
-  text(label, range ? `Score window ${range.start.replace("T", " ")} – ${range.end.replace("T", " ")} (end exclusive).` : "Score window not set. Historical Risk will open the latest 14 days of the operational series.");
   const main = document.getElementById("main");
-  const page = ROUTES[path];
-  page(main, {
-    signal: controller.signal,
-    range,
-    setRange(next) {
-      const saved = writeRange(next);
-      text(label, saved ? `Score window ${saved.start.replace("T", " ")} – ${saved.end.replace("T", " ")} (end exclusive).` : label.textContent);
-    },
+  const key = `${route.page}|${route.id || ""}|${route.mode || ""}`;
+  const samePage = lastPage === key;
+  lastPage = key;
+  const keep = samePage ? document.activeElement?.id || "" : "";
+  // Pages only call root.replaceChildren; a superseded render must not overwrite the page the reader moved to.
+  const root = { replaceChildren: (...nodes) => { if (!signal.aborted) main.replaceChildren(...nodes); } };
+  Promise.resolve(page(root, { signal, route, go })).then(() => {
+    if (signal.aborted) return;
+    if (!route.known) main.querySelector(".hero")?.after(h("p", { class: "callout", role: "status" }, MSG.notFound));
+    const title = main.querySelector("h1");
+    document.title = `${title ? title.textContent : "Overview"} — Kiln Analytical POC — Dalmia Cement`;
+    focusTarget(main, route, samePage, keep);
   }).catch((err) => {
-    if (err?.name === "AbortError") return;
-    console.error("[dashboard]", "route", path);
-    main.replaceChildren(h("p", { class: "state state-error", role: "alert" }, "This page could not be loaded."));
+    if (err?.name === "AbortError" || signal.aborted) return;
+    console.error("[dashboard] route", route.page, err?.status || "", err?.code || "");
+    main.replaceChildren(failure(err));
   });
 }
 
-start();
+/** Anchor target gets scroll + focus; otherwise a new page focuses its h1 so screen readers hear it. */
+function focusTarget(main, route, samePage, keep) {
+  const target = route.anchor ? document.getElementById(route.anchor) : null;
+  if (target) {
+    for (let d = target.closest("details"); d; d = d.parentElement?.closest("details")) d.open = true;
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.scrollIntoView({ block: "start" });
+    target.focus({ preventScroll: true });
+    return;
+  }
+  const panel = main.querySelector("[data-focus]");
+  if (panel) {
+    panel.scrollIntoView({ block: "start" });
+    panel.focus({ preventScroll: true });
+    return;
+  }
+  if (samePage) {
+    if (keep) document.getElementById(keep)?.focus({ preventScroll: true });
+    return;
+  }
+  window.scrollTo(0, 0);
+  main.querySelector("h1")?.focus({ preventScroll: true });
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
+else start();
