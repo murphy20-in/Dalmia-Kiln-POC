@@ -1,33 +1,24 @@
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { History, PanelLeftClose, PanelLeftOpen, Presentation, X } from "lucide-react";
-import { brandLine, context, footer, labels, nav } from "../copy";
+import { brandLine, context, labels, nav } from "../copy";
 import { pages } from "../routes";
-import { brand } from "../theme";
+import { BrandFooter, BrandLockup, ProductLine } from "./Brand";
 
 const isTyping = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName));
 
-/** Product mark: a kiln-gauge arc. Same drawing as the favicon. */
-const Mark = () => (
-  <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden>
-    <rect width="32" height="32" rx="7" fill={brand.navy} />
-    <path d="M7 21a9 9 0 0 1 18 0" stroke={brand.cyan} strokeWidth="3" fill="none" strokeLinecap="round" />
-    <path d="M16 21l5-6" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-  </svg>
-);
-
 export default function Shell({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 768); // icon rail on phones
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024); // icon rail below 1024 px
   const [params] = useSearchParams();
   // Accept ?present=1 in the page URL (before #) or in the hash route query.
   const [present, setPresent] = useState(params.get("present") === "1" || new URLSearchParams(window.location.search).get("present") === "1");
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // Phones and narrow windows (incl. rotation / resize) fall back to the icon rail.
+  // Narrow windows (incl. rotation / resize) fall back to the icon rail.
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
+    const mq = window.matchMedia("(max-width: 1023px)");
     const on = () => setCollapsed(mq.matches);
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
@@ -35,7 +26,15 @@ export default function Shell({ children }: { children: ReactNode }) {
   useEffect(() => { document.documentElement.classList.toggle("present", present); }, [present]);
   const section = pathname.split("/")[1] ?? "";
   useEffect(() => { window.scrollTo(0, 0); }, [section]);
+  useEffect(() => { if (window.innerWidth < 768) setCollapsed(true); }, [pathname]); // the overlay menu closes after a choice
   const current = pages.find((p) => p.path === "/" + section) ?? pages[0];
+  // A route change is announced: the tab title names the page and focus moves to <main> (not on first load).
+  const firstRoute = useRef(true);
+  useEffect(() => {
+    document.title = `${current.label} · ${brandLine.product} · ${brandLine.short}`;
+    if (firstRoute.current) { firstRoute.current = false; return; }
+    document.getElementById("main")?.focus({ preventScroll: true });
+  }, [current]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -54,69 +53,71 @@ export default function Shell({ children }: { children: ReactNode }) {
   }, [present, current, navigate]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }} className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn-navy">{labels.skip}</a>
-      {!present && (
-        <aside className={`no-print sticky top-0 flex h-screen shrink-0 flex-col border-r border-line bg-white transition-[width] ${collapsed ? "w-16" : "w-60 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:shadow-drawer"}`}>
-          <div className={`flex h-14 items-center gap-2.5 border-b border-line ${collapsed ? "justify-center" : "px-4"}`}>
-            <Mark />
-            {!collapsed && (
-              <div className="min-w-0 leading-tight">
-                <div className="truncate text-label font-bold text-navy-ink">{brandLine.product}</div>
-                <div className="truncate text-caption text-ink-muted">{brandLine.stage}</div>
-              </div>
-            )}
+
+      {/* One brand moment, top-left: the co-brand lockup. The sidebar and footer carry text only. */}
+      <header className="no-print on-dark sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-haze/15 bg-night px-4 sm:px-6">
+        <BrandLockup />
+        <ProductLine />
+        <div className="ml-auto flex shrink-0 items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <History size={16} className="text-sky" aria-hidden />
+            <div className="hidden text-right leading-none md:block">
+              <div className="font-mono text-eyebrow font-medium uppercase text-white">{context.plantShort}</div>
+              <div className="mt-1.5 font-mono text-eyebrow uppercase text-haze">{context.statusShort}</div>
+            </div>
+            <span className="sr-only">{context.status}, {context.period}. {context.statusHint}</span>
           </div>
-          <nav aria-label={labels.pages} className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-            {pages.map(({ path, label, icon: Icon, group }, i) => (
-              <Fragment key={path}>
-                {group !== pages[i - 1]?.group && (collapsed
-                  ? i > 0 && <hr className="mx-2 my-2 border-line" />
-                  : <div className={`px-3 pb-1 text-caption font-semibold text-ink-muted ${i > 0 ? "pt-4" : "pt-1"}`}>{nav.groups[group]}</div>)}
-                <NavLink to={path} end={path === "/"} title={collapsed ? label : undefined}
-                  className={({ isActive }) =>
-                    `relative flex h-9 items-center gap-3 rounded-panel px-3 text-label font-medium transition-colors ${collapsed ? "justify-center" : ""} ${
-                      isActive ? "bg-navy-tint font-semibold text-navy-ink" : "text-ink-body hover:bg-page hover:text-navy-ink"}`}>
-                  {({ isActive }) => (
-                    <>
-                      {isActive && <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-cyan" aria-hidden />}
-                      <Icon size={18} aria-hidden className={`shrink-0 ${isActive ? "text-navy" : "text-ink-muted"}`} />
-                      {!collapsed ? <span className="truncate">{label}</span> : <span className="sr-only">{label}</span>}
-                    </>
-                  )}
-                </NavLink>
-              </Fragment>
-            ))}
-          </nav>
-          <div className={`flex items-center border-t border-line p-2 ${collapsed ? "justify-center" : "justify-between pl-4"}`}>
-            {!collapsed && <span className="truncate text-caption text-ink-muted">{brandLine.builtBy}</span>}
-            <button className="rounded-panel p-2 text-ink-muted transition-colors hover:bg-page hover:text-navy" onClick={() => setCollapsed((c) => !c)}
-              aria-label={collapsed ? nav.expand : nav.collapse} title={collapsed ? nav.expand : nav.collapse}>
-              {collapsed ? <PanelLeftOpen size={18} aria-hidden /> : <PanelLeftClose size={18} aria-hidden />}
-            </button>
+          <button className="btn-ghost btn-sm" onClick={() => setPresent((v) => !v)} title={nav.presentHint}>
+            {present ? <X size={14} aria-hidden /> : <Presentation size={14} aria-hidden />}
+            <span className="sr-only sm:not-sr-only">{present ? nav.exitPresent : nav.present}</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="flex flex-1">
+        {!present && (
+          <div className={`no-print on-dark sticky top-16 flex h-[calc(100vh-4rem)] shrink-0 flex-col self-start border-r border-haze/15 bg-sidebar transition-[width] ${collapsed ? "w-16" : "w-60 max-md:fixed max-md:left-0 max-md:z-30 max-md:shadow-drawer"}`}>
+            <nav aria-label={labels.pages} className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2.5 pt-3">
+              {pages.map(({ path, label, icon: Icon, group }, i) => (
+                <Fragment key={path}>
+                  {group !== pages[i - 1]?.group && (collapsed
+                    ? i > 0 && <hr className="mx-2 my-2.5 border-haze/20" />
+                    : <div className={`px-3 pb-1.5 font-mono text-eyebrow font-medium uppercase text-haze ${i > 0 ? "pt-5" : "pt-1"}`}>{nav.groups[group]}</div>)}
+                  <NavLink to={path} end={path === "/"} title={collapsed ? label : undefined}
+                    className={({ isActive }) =>
+                      `group relative flex h-10 items-center gap-3 rounded-panel px-3 text-label font-medium transition-colors duration-fast ${collapsed ? "justify-center" : ""} ${
+                        isActive ? "bg-white/[0.07] font-semibold text-white" : "text-mist hover:bg-white/[0.05] hover:text-white"}`}>
+                    {({ isActive }) => (
+                      <>
+                        {isActive && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-sky shadow-glow" aria-hidden />}
+                        <Icon size={18} aria-hidden className={`shrink-0 transition-colors duration-fast ${isActive ? "text-sky" : "text-haze group-hover:text-mist"}`} />
+                        {!collapsed ? <span className="truncate">{label}</span> : <span className="sr-only">{label}</span>}
+                      </>
+                    )}
+                  </NavLink>
+                </Fragment>
+              ))}
+            </nav>
+            <div className={`flex items-center border-t border-haze/15 p-2.5 ${collapsed ? "justify-center" : "justify-between pl-4"}`}>
+              {!collapsed && (
+                <div className="min-w-0 leading-none">
+                  <div className="truncate font-mono text-eyebrow font-medium uppercase text-mist">{brandLine.short}</div>
+                  <div className="mt-1.5 truncate text-caption text-haze">{brandLine.stage}</div>
+                </div>
+              )}
+              <button className="rounded-panel p-2 text-haze transition-colors duration-fast hover:bg-white/10 hover:text-white" onClick={() => setCollapsed((c) => !c)}
+                aria-label={collapsed ? nav.expand : nav.collapse} title={collapsed ? nav.expand : nav.collapse}>
+                {collapsed ? <PanelLeftOpen size={18} aria-hidden /> : <PanelLeftClose size={18} aria-hidden />}
+              </button>
+            </div>
           </div>
-        </aside>
-      )}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 text-label">
-            <span className="hidden text-ink-muted sm:inline">{nav.groups[current.group]}</span>
-            <span className="hidden text-line-strong sm:inline" aria-hidden>/</span>
-            <span className="truncate font-semibold text-navy-ink">{current.label}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden text-caption text-ink-muted lg:inline">{context.plant} · {context.period}</span>
-            <span className="inline-flex items-center gap-1.5 rounded-panel border border-navy-line bg-navy-tint px-2 py-1 text-caption font-semibold uppercase tracking-wide text-navy-ink md:px-2.5" title={context.statusHint}>
-              <History size={13} aria-hidden /> <span className="sr-only md:not-sr-only">{context.status}</span><span className="sr-only">. {context.statusHint}</span>
-            </span>
-            <button className="btn-outline btn-sm" onClick={() => setPresent((v) => !v)} title={nav.presentHint}>
-              {present ? <X size={14} aria-hidden /> : <Presentation size={14} aria-hidden />}
-              <span className="sr-only sm:not-sr-only">{present ? nav.exitPresent : nav.present}</span>
-            </button>
-          </div>
-        </header>
-        <main id="main" tabIndex={-1} className="mx-auto min-h-[calc(100vh-3.5rem)] w-full max-w-page flex-1 px-4 py-6 outline-none sm:px-8">{children}</main>
-        <footer className="no-print border-t border-line px-8 py-4 text-center text-caption text-ink-muted">{footer}</footer>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main id="main" key={section} tabIndex={-1} className="anim-page min-h-[calc(100vh-4rem)] flex-1 outline-none">{children}</main>
+          <BrandFooter />
+        </div>
       </div>
     </div>
   );

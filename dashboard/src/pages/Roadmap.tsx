@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Check, CheckCircle2, Printer, RotateCcw } from "lucide-react";
-import { Badge, HeroBand, PageHeader } from "../components/ui";
-import { ask, roadmap as t, value as v } from "../copy";
+import { Check, CheckCircle2, Lock, Printer, RotateCcw } from "lucide-react";
+import { Badge, HeroBand, NumberDot, Page, SectionHeader, Stepper } from "../components/ui";
+import { ask, nav, roadmap as t, summary, value as v } from "../copy";
 import { computeValue, type ValueInputs } from "../lib/value";
 import { fmtInt, fmtRupees } from "../lib/format";
 
@@ -20,16 +20,17 @@ const clamp = (k: keyof ValueInputs, n: number) => Math.max(0, v.inputs[k].unit 
 
 type Stage = (typeof t.stages)[number];
 
+/** Demonstrated stage = solid card with a check. Everything else = dashed outline with a lock: it is not operational. */
 function StageCard({ s, i }: { s: Stage; i: number }) {
   const done = i === 0;
   const next = i === 1;
   return (
-    <li className={`card flex flex-col gap-3 !p-5 ${done ? "shadow-[inset_0_3px_0_theme(colors.normal.DEFAULT)]" : next ? "shadow-[inset_0_3px_0_theme(colors.navy.DEFAULT)]" : ""}`}>
+    <li className={`flex flex-col gap-3 p-5 ${done ? "card !p-5 shadow-[inset_0_3px_0_theme(colors.normal.DEFAULT)]" : "rounded-card border border-dashed border-line-strong bg-white/60"}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="t-label">{s.tag}</span>
-        <Badge tone={done ? "positive" : next ? "navy" : "outline"} icon={done ? CheckCircle2 : undefined}>{s.when}</Badge>
+        <span className="eyebrow">{s.tag}</span>
+        <Badge tone={done ? "positive" : next ? "navy" : "outline"} icon={done ? CheckCircle2 : Lock}>{s.when}</Badge>
       </div>
-      <h3 className="text-section font-bold text-navy-ink">{s.title}</h3>
+      <h3 className="text-section font-semibold text-navy-ink">{s.title}</h3>
       <div>
         <h4 className="t-caption font-semibold">{t.youGet}</h4>
         <ul className="mt-1.5 flex flex-col gap-1">
@@ -49,23 +50,28 @@ export default function Roadmap() {
   const out = useMemo(() => computeValue(inputs), [inputs]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader title={t.title} question={t.question} />
+    <Page eyebrow={nav.groups.roadmap} title={t.title} question={t.question} gap="gap-10">
+      <section aria-labelledby="journey">
+        <SectionHeader id="journey" title={summary.journeyTitle} />
+        <Stepper steps={summary.journey} />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
         <section aria-labelledby="demonstrated">
-          <h2 id="demonstrated" className="mb-3 flex items-center gap-2 text-label font-semibold text-normal-ink"><CheckCircle2 size={15} aria-hidden />{t.demonstrated}</h2>
+          <h2 id="demonstrated" className="mb-3 flex min-h-9 items-center gap-2 text-label font-semibold text-normal-ink"><CheckCircle2 size={15} aria-hidden />{t.demonstrated}</h2>
           <ol className="grid"><StageCard s={t.stages[0]} i={0} /></ol>
         </section>
         <section aria-labelledby="requires">
-          <h2 id="requires" className="mb-3 text-label font-semibold text-ink-muted">{t.requires}</h2>
+          <h2 id="requires" className="mb-3 flex min-h-9 items-center gap-2 text-label font-semibold text-ink-muted"><Lock size={14} aria-hidden />{t.requires}</h2>
           <ol className="grid gap-4 md:grid-cols-3" start={2}>{t.stages.slice(1).map((s, i) => <StageCard key={s.tag} s={s} i={i + 1} />)}</ol>
         </section>
       </div>
 
-      <section className="card" aria-labelledby="value">
+      {/* Illustrative: a dashed frame and the label keep this from reading as a validated business case. */}
+      <section className="card border-dashed !border-line-strong" aria-labelledby="value">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
+            <p className="eyebrow mb-1">{v.short}</p>
             <h2 id="value" className="t-section">{v.title}</h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge tone="caveat" className="!whitespace-normal">{v.label}</Badge>
@@ -83,7 +89,7 @@ export default function Roadmap() {
                   <label key={k} className="flex flex-col gap-1 text-label">
                     <span className="font-medium text-ink">{v.inputs[k].label} <span className="text-ink-muted">({v.inputs[k].unit})</span></span>
                     <input type="number" min={0} max={v.inputs[k].unit === "%" ? 100 : undefined} inputMode="decimal"
-                      className={`rounded-panel border border-line-strong px-3 py-2 num transition-colors hover:border-navy focus:border-navy ${inputs[k] === PLACEHOLDERS[k] ? "text-ink-muted" : "font-semibold text-navy-ink"}`}
+                      className={`rounded-panel border border-line-strong px-3 py-2 num transition-colors duration-fast hover:border-navy focus:border-navy ${inputs[k] === PLACEHOLDERS[k] ? "text-ink-muted" : "font-semibold text-navy-ink"}`}
                       value={inputs[k]} onChange={(e) => setInputs((s) => ({ ...s, [k]: clamp(k, Number(e.target.value) || 0) }))} />
                   </label>
                 ))}
@@ -96,12 +102,12 @@ export default function Roadmap() {
               <Out label={v.out.production} value={`${fmtRupees(out.productionProtected)} ${v.perYear}`} />
               <Out label={v.out.fuel} value={`${fmtRupees(out.fuelSaving)} ${v.perYear}`} />
             </dl>
-            <div className="rounded-card bg-navy-ink p-5 text-white">
+            <div className="surface-dark border-dashed p-5">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-label font-semibold text-white/80">{v.out.total}</span>
+                <span className="text-label font-semibold text-mist">{v.out.total}</span>
                 <span className="rounded-full border border-watch/60 px-2 py-0.5 text-caption font-semibold text-watch">{v.short}</span>
               </div>
-              <div className="mt-1 text-kpi font-bold num" aria-live="polite" aria-atomic="true">{fmtRupees(out.total)} <span className="text-card font-medium text-white/80">{v.perYear}</span></div>
+              <div className="mt-1 text-kpi font-semibold text-white num" aria-live="polite" aria-atomic="true">{fmtRupees(out.total)} <span className="text-card font-medium text-mist">{v.perYear}</span></div>
             </div>
             <p className="text-label font-semibold text-watch-ink">{v.label}</p>
             <p className="text-label text-ink-muted">{t.investment}</p>
@@ -110,12 +116,12 @@ export default function Roadmap() {
       </section>
 
       <HeroBand>
-        <section id="ask" className="p-8 pl-9" aria-labelledby="ask-title">
-          <h2 id="ask-title" className="text-title font-bold text-white">{ask.title}</h2>
+        <section id="ask" className="p-7 sm:p-9" aria-labelledby="ask-title">
+          <h2 id="ask-title" className="text-title font-semibold">{ask.title}</h2>
           <ol className="mt-5 grid gap-3 md:grid-cols-2">
             {ask.items.map((a, i) => (
-              <li key={a} className="flex items-start gap-3 rounded-panel bg-white/[0.06] p-4 text-label text-white/90">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan text-caption font-bold text-navy-ink">{i + 1}</span>
+              <li key={a} className="surface-glass flex items-start gap-3 p-4 text-label text-white/90">
+                <NumberDot n={i + 1} tone="sky" />
                 <span>{a}</span>
               </li>
             ))}
@@ -123,7 +129,7 @@ export default function Roadmap() {
           <button className="btn-primary no-print mt-6" onClick={() => window.print()}><Printer size={16} aria-hidden /> {ask.print}</button>
         </section>
       </HeroBand>
-    </div>
+    </Page>
   );
 }
 

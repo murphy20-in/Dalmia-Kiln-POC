@@ -8,21 +8,68 @@ import { heatmap } from "../charts/heatmap";
 import { zoneLine } from "../charts/zoneLine";
 import ChartCard from "../components/ChartCard";
 import Drawer, { DrawerSection } from "../components/Drawer";
-import { Badge, KpiTile, Loading, PageHeader, PeriodEvidence, SectionHeader } from "../components/ui";
-import { evidence, healthIndex, labels, periods as t, severityName, systemName } from "../copy";
+import { Badge, KpiTile, Loading, Page, PeriodEvidence } from "../components/ui";
+import { evidence, healthIndex, labels, nav, periods as t, severityName, systemName } from "../copy";
 import { useData, type Family, type Period, type Severity } from "../data";
-import { fmtDateTime, fmtDuration, fmtPct, fmtSigned, toMs } from "../lib/format";
-import { brand, severityColor, systemColor } from "../theme";
+import { fmtDateTime, fmtDuration, fmtPct, fmtSigned, fmtStamp, toMs } from "../lib/format";
+import { brand, chart, severityColor, systemColor } from "../theme";
 
 const FAMILIES: Family[] = ["EFFICIENCY", "COMBUSTION", "THERMAL", "DRAFT_PRESSURE", "STABILITY"];
 const SEVERITIES: Severity[] = ["HIGH", "MODERATE", "LOW"];
+const monthName = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "long", year: "numeric" });
 
-/** Severity as a word with a magnitude swatch (navy ramp): never colour alone. */
-const SeverityTag = ({ s }: { s: Severity }) => (
-  <span className="inline-flex items-center gap-1.5 text-label font-medium text-ink">
-    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: severityColor[s] }} aria-hidden />{severityName[s]}
-  </span>
-);
+/** The vertical timeline: navy base, blue markers, amber only for high severity. Each item is a link to its evidence drawer. */
+function Timeline({ periods, openId }: { periods: Period[]; openId?: string }) {
+  const groups = useMemo(() => {
+    const out: { month: string; items: Period[] }[] = [];
+    for (const p of periods) {
+      const month = monthName.format(toMs(p.start));
+      const last = out[out.length - 1];
+      if (last?.month === month) last.items.push(p); else out.push({ month, items: [p] });
+    }
+    return out;
+  }, [periods]);
+  return (
+    <section className="surface-dark p-5 sm:p-6 lg:col-span-5" aria-labelledby="timeline">
+      <p className="eyebrow-dark">{t.indexTitle}</p>
+      <h2 id="timeline" className="mt-1 text-section font-semibold">{t.timelineTitle}</h2>
+      <p className="mt-1 text-label text-mist">{t.indexSub}</p>
+      <p className="mt-1 flex items-center gap-1.5 text-caption text-haze"><span aria-hidden className="h-2 w-2 rounded-full bg-dalmia-orange" />{t.timelineNote}</p>
+      <div className="mt-5 flex flex-col gap-6">
+        {groups.map((g) => (
+          <div key={g.month}>
+            <h3 className="font-mono !text-eyebrow font-medium uppercase !text-haze">{g.month}</h3>
+            <ol className="relative ml-[7px] mt-3 border-l border-steel">
+              {g.items.map((p) => {
+                const high = p.severity === "HIGH";
+                const open = p.id === openId;
+                return (
+                  <li key={p.id} className="relative pb-3 pl-5 last:pb-0">
+                    <span aria-hidden className={`absolute -left-[7px] top-4 h-3.5 w-3.5 rounded-full border-2 border-midnight ${high ? "bg-dalmia-orange" : "bg-sky"} ${open ? "ring-2 ring-white" : ""}`} />
+                    <Link to={`/periods/${p.id}`} aria-current={open ? "page" : undefined}
+                      className={`block rounded-panel px-3 py-2.5 transition-colors duration-fast hover:bg-white/[0.07] ${open ? "bg-white/[0.09]" : ""}`}>
+                      <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span className="text-card font-semibold text-white">{t.label(p.n)}</span>
+                        <span className="num font-mono text-caption text-haze">{fmtStamp(p.onset)}</span>
+                      </span>
+                      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-label text-mist">
+                        <span className={high ? "font-semibold text-dalmia-orange" : ""}>{severityName[p.severity]} {labels.severity.toLowerCase()}</span>
+                        <span>{systemName[p.dominant]}</span>
+                        <span className="num">{fmtDuration(p.durationMin)}</span>
+                        <span className="num">{t.systemsCount(p.systems.length)}</span>
+                      </span>
+                      <span className="mt-1 block text-caption text-haze">{evidence.kpiDerived} · {evidence.notValidated}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function Periods() {
   const d = useData("periods");
@@ -63,9 +110,7 @@ export default function Periods() {
   const sevLegend = SEVERITIES.map((k) => ({ name: labels.severityLegend(severityName[k]), color: severityColor[k] }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={t.title} question={t.question} badges={<PeriodEvidence plural />} />
-
+    <Page eyebrow={nav.groups.intelligence} title={t.title} question={t.question} badges={<PeriodEvidence plural dark />}>
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label={labels.headline}>
         <KpiTile label={t.tiles.total} value={s.periods.total} evidence={evidence.kpiDerivedPlural} />
         <KpiTile label={t.tiles.high} value={s.periods.high} evidence={t.tiles.highNote} />
@@ -73,57 +118,28 @@ export default function Periods() {
         <KpiTile label={t.tiles.longest} value={<span className="text-title sm:whitespace-nowrap">{fmtDuration(longest.durationMin)}</span>} evidence={`${t.label(longest.n)} · ${fmtDateTime(longest.start)}`} />
       </section>
 
-      <ChartCard title={t.ganttTitle} sub={`${t.subtitle} ${t.ganttSub}`} legend={sevLegend} source={t.source}
-        table={{ columns: [labels.period, labels.start, labels.end, labels.duration, labels.severity, labels.mainSystem], rows: d.periods.map((p) => [t.label(p.n), fmtDateTime(p.start), fmtDateTime(p.end), fmtDuration(p.durationMin), severityName[p.severity], systemName[p.dominant]]) }}>
-        <Chart option={ganttOption} height={340} label={t.ganttTitle} onEvents={onBar} />
-      </ChartCard>
-
-      <section className="card !p-0" aria-labelledby="index">
-          <div className="px-6 pt-5"><SectionHeader id="index" title={t.indexTitle} sub={t.indexSub} /></div>
-          <div className="overflow-x-auto px-3 pb-3">
-            <table className="data-table">
-              <caption className="sr-only">{t.indexTitle}. {evidence.kpiDerivedPlural}; {evidence.notValidatedPlural.toLowerCase()}.</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className="pl-3">{labels.period}</th>
-                  <th scope="col">{t.drawer.onset}</th>
-                  <th scope="col" className="text-right">{labels.duration}</th>
-                  <th scope="col">{labels.severity}</th>
-                  <th scope="col">{labels.mainSystem}</th>
-                  <th scope="col" className="text-right">{t.drawer.systems}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.periods.map((p) => (
-                  <tr key={p.id} className={`cursor-pointer ${p.id === id ? "!bg-navy-tint" : ""}`} onClick={() => navigate(`/periods/${p.id}`)}>
-                    <td className="whitespace-nowrap pl-3"><Link to={`/periods/${p.id}`} className="font-semibold text-navy hover:underline" aria-current={p.id === id ? "true" : undefined} onClick={(e) => e.stopPropagation()}>{t.label(p.n)}</Link></td>
-                    <td className="num whitespace-nowrap">{fmtDateTime(p.onset)}</td>
-                    <td className="num whitespace-nowrap text-right">{fmtDuration(p.durationMin)}</td>
-                    <td><SeverityTag s={p.severity} /></td>
-                    <td className="whitespace-nowrap">
-                      <span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: systemColor[p.dominant] }} aria-hidden />{systemName[p.dominant]}
-                    </td>
-                    <td className="num text-right">{t.systemsCount(p.systems.length)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-      </section>
-
-      <ChartCard title={t.heatTitle} sub={t.heatSub}
-          table={{ columns: [labels.period, ...FAMILIES.map((f) => systemName[f])], rows: d.periods.map((p) => [t.label(p.n), ...FAMILIES.map((f) => p.deviation[f].toFixed(2))]) }}>
-        <Chart option={heatOption} height={430} label={t.heatTitle} onEvents={onCell} />
-      </ChartCard>
+      <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+        <Timeline periods={d.periods} openId={id} />
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
+          <ChartCard title={t.ganttTitle} sub={`${t.subtitle} ${t.ganttSub}`} legend={sevLegend} source={t.source}
+            table={{ columns: [labels.period, labels.start, labels.end, labels.duration, labels.severity, labels.mainSystem], rows: d.periods.map((p) => [t.label(p.n), fmtDateTime(p.start), fmtDateTime(p.end), fmtDuration(p.durationMin), severityName[p.severity], systemName[p.dominant]]) }}>
+            <Chart option={ganttOption} height={340} label={t.ganttTitle} onEvents={onBar} />
+          </ChartCard>
+          <ChartCard title={t.heatTitle} sub={t.heatSub}
+            table={{ columns: [labels.period, ...FAMILIES.map((f) => systemName[f])], rows: d.periods.map((p) => [t.label(p.n), ...FAMILIES.map((f) => p.deviation[f].toFixed(2))]) }}>
+            <Chart option={heatOption} height={430} label={t.heatTitle} onEvents={onCell} />
+          </ChartCard>
+        </div>
+      </div>
 
       {open && <PeriodDrawer p={open} edges={d.bandEdges} onClose={close} />}
-    </div>
+    </Page>
   );
 }
 
 function PeriodDrawer({ p, edges, onClose }: { p: Period; edges: { watch: number; warning: number }; onClose: () => void }) {
   const context = useMemo(() => zoneLine({
-    series: [{ name: healthIndex.name, data: p.series.map(([ts, v]) => [toMs(ts), v]), color: brand.navyInk }],
+    series: [{ name: healthIndex.name, data: p.series.map(([ts, v]) => [toMs(ts), v]), color: chart.primary }],
     edges, periods: [{ from: toMs(p.start), to: toMs(p.end), label: t.label(p.n) }], note: `${evidence.kpiDerived} shaded`,
   }), [p, edges]);
   const systems = useMemo(() => hbars({
@@ -143,7 +159,7 @@ function PeriodDrawer({ p, edges, onClose }: { p: Period; edges: { watch: number
     [t.drawer.load, t.loadText(p.load, fmtSigned(p.feedChange))],
   ];
   return (
-    <Drawer title={t.label(p.n)} onClose={onClose}
+    <Drawer title={t.label(p.n)} eyebrow={t.drawer.eyebrow(fmtStamp(p.onset))} onClose={onClose}
       meta={<><Badge tone="navy">{severityName[p.severity]} {labels.severity.toLowerCase()}</Badge><PeriodEvidence /></>}>
       <DrawerSection title={t.drawer.factsTitle}><Facts rows={facts} /></DrawerSection>
       <DrawerSection title={t.drawer.changedTitle}><Facts rows={changed} /></DrawerSection>

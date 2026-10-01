@@ -8,6 +8,8 @@ A static, eight-page product demo for Dalmia Cement, Ariyalur. The navigation is
 
 Everything shown is a historical analysis of June–August 2025 data. Nothing is connected to the plant.
 
+The look is a co-brand: Astrikos AI's intelligence layer in a Dalmia Cement visual environment (navy shell, one co-brand lockup, restrained Dalmia accents). See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
 Stack: Vite + React 18 + TypeScript, Tailwind CSS 3, Apache ECharts (`echarts/core`), HashRouter. There is no backend. The browser only formats, filters and draws the JSON in `public/data/`.
 
 ## Run
@@ -25,7 +27,7 @@ Presentation mode: press `Shift+P` or open `/?present=1#/`. Use ← → to step 
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md): tokens, type scale, card hierarchy, components, chart and motion rules.
 - [UI_UX_AUDIT.md](UI_UX_AUDIT.md): per-page scores (before → after), stakeholder read, gate results.
 - [REVIEW_LOG.md](REVIEW_LOG.md): every review finding and its disposition.
-- `screenshots/`: final 1280×720 captures of every page and the period drawer.
+- `screenshots/`: final captures of every page and the period drawer at 1280×720 and 1440×900 (`<page>-<w>x<h>.png`).
 
 ## Regenerate the data
 
@@ -38,7 +40,7 @@ cd dashboard && npm run data     # = ../.venv/bin/python -B dashboard/scripts/ex
 ## Test and build
 
 ```bash
-npm test             # vitest: data contract, wording scan, value model
+npm test             # vitest: data contract, wording scan, colour-token scan, value model
 npm run typecheck
 npm run build        # dist/, base "./" (works from any sub-path)
 npm run preview      # serve dist/ locally
@@ -56,9 +58,10 @@ npm run preview      # serve dist/ locally
 scripts/export_data.py   frozen outputs → public/data/*.json
 src/copy.ts              every user-facing string
 src/data.ts              typed loaders for each JSON file
-src/theme.ts             the only colour source (Tailwind imports it), status and system palettes, ECharts theme
+src/theme.ts             the only source of colour, gradient, elevation, motion and font (Tailwind and index.css read it), plus the ECharts theme
+src/assets/brand/        the supplied Astrikos and Dalmia logos (Dalmia: viewBox cropped, paths unchanged)
 src/lib/                 format.ts (dates, ₹), value.ts (ROI model)
-src/components/          Shell, ui blocks (KpiTile, Badge, Lead, …), ChartCard, StatusGauge, Drawer
+src/components/          Shell, Brand (co-brand lockup, process lines, footer), ui blocks (Page, KpiTile, Badge, Lead, …), ChartCard, StatusGauge, Drawer
 src/charts/              Chart wrapper, tooltip.ts (escaped tooltip layout), option builders (zone line, bars, Gantt, heatmap)
 src/pages/               one file per page
 tests/                   vitest suites

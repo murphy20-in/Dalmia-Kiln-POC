@@ -3,11 +3,11 @@ import Chart from "../charts/Chart";
 import { stackedColumns } from "../charts/bars";
 import { zoneLine, type LineSeries } from "../charts/zoneLine";
 import ChartCard from "../components/ChartCard";
-import { Callout, Lead, Loading, PageHeader } from "../components/ui";
-import { efficiency as t, labels, systemName, zoneName } from "../copy";
+import { Callout, Lead, Loading, Page } from "../components/ui";
+import { efficiency as t, labels, nav, systemName, zoneName } from "../copy";
 import { useData } from "../data";
 import { fmt1, fmtDate, fmtMonth, fmtPct, toMs } from "../lib/format";
-import { brand, status, systemColor } from "../theme";
+import { brand, chart, status, systemColor } from "../theme";
 
 const DAY = 86_400_000;
 const FAM = ["efficiency", "combustion", "thermal", "draft_pressure", "stability"] as const;
@@ -34,8 +34,8 @@ export default function Efficiency() {
 
   const series = useMemo<LineSeries[]>(() => {
     if (!daily) return [];
-    const out: LineSeries[] = [{ name: t.primaryLegend, data: daily.s, color: brand.navyInk, width: 2.5 }];
-    if (o2) out.push({ name: t.o2Legend, data: daily.x, color: systemColor.COMBUSTION, dashed: true });
+    const out: LineSeries[] = [{ name: t.primaryLegend, data: daily.s, color: chart.primary, width: 2.5 }];
+    if (o2) out.push({ name: t.o2Legend, data: daily.x, color: chart.compare, dashed: true });
     return out;
   }, [daily, o2]);
 
@@ -63,11 +63,10 @@ export default function Efficiency() {
   const i2 = t.insights.eff(fmt1(e.kpiMonthly[0].median), fmt1(e.kpiMonthly[2].median));
   const lineLegend = [
     ...series.map((x) => ({ name: x.name, color: x.color, dashed: x.dashed })),
-    { name: t.markerLegend, color: brand.navyInk, dashed: true },
+    { name: t.markerLegend, color: chart.annotation, dashed: true },
   ];
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={t.title} question={t.question} />
+    <Page eyebrow={nav.groups.intelligence} title={t.title} question={t.question}>
       <Lead sub={t.heroSub}>{t.hero(fmtPct(jun.warning), fmtPct(aug.warning))}</Lead>
 
       {/* What changed, and when */}
@@ -98,7 +97,7 @@ export default function Efficiency() {
         <section className="card lg:col-span-7" aria-labelledby="interpret">
           <h2 id="interpret" className="t-section">{t.interpretTitle}</h2>
           <div className="mt-4 flex flex-col divide-y divide-line">
-            {[{ ...i1, tone: brand.navy }, { ...i2, tone: systemColor.EFFICIENCY }, { ...t.insights.o2, tone: brand.cyan }].map((x) => (
+            {[{ ...i1, tone: brand.navy }, { ...i2, tone: systemColor.EFFICIENCY }, { ...t.insights.o2, tone: chart.annotation }].map((x) => (
               <article key={x.title} className="flex gap-4 py-4 first:pt-0 last:pb-0">
                 <span className="mt-1 w-1 shrink-0 self-stretch rounded-full" style={{ background: x.tone }} aria-hidden />
                 <div>
@@ -110,6 +109,6 @@ export default function Efficiency() {
           </div>
         </section>
       </div>
-    </div>
+    </Page>
   );
 }

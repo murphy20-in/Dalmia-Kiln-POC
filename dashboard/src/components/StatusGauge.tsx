@@ -1,12 +1,13 @@
+import { memo } from "react";
 import { Lock } from "lucide-react";
 import Chart from "../charts/Chart";
 import { consoleCopy, healthIndex, zoneName } from "../copy";
 import type { Edges } from "../data";
-import { brand, status, type Zone } from "../theme";
+import { brand, font, status, type Zone } from "../theme";
 
 /** 0–100 Health Index gauge. Critical is drawn as a greyed, locked outer arc over Warning:
  *  it has no edge until it is calibrated on the plant's event logs. */
-export default function StatusGauge({ value, zone, edges }: { value: number | null; zone: Zone | null; edges: Edges }) {
+export default memo(function StatusGauge({ value, zone, edges }: { value: number | null; zone: Zone | null; edges: Edges }) {
   const w = edges.watch / 100;
   const a = edges.warning / 100;
   const common = { type: "gauge", startAngle: 210, endAngle: -30, min: 0, max: 100, center: ["50%", "58%"], splitNumber: 1 };
@@ -24,7 +25,7 @@ export default function StatusGauge({ value, zone, edges }: { value: number | nu
         title: { show: false },
         detail: {
           valueAnimation: true, offsetCenter: [0, "38%"], fontSize: 40, fontWeight: 700, color: brand.navyInk,
-          fontFamily: "Inter", formatter: () => (value == null ? "–" : value.toFixed(1)),
+          fontFamily: font.sans, formatter: () => (value == null ? "–" : value.toFixed(1)),
         },
         data: [{ value: value ?? 0 }],
         animationDurationUpdate: 300,
@@ -33,7 +34,7 @@ export default function StatusGauge({ value, zone, edges }: { value: number | nu
       {
         ...common,
         radius: "99%",
-        axisLine: { lineStyle: { width: 5, color: [[a, "rgba(0,0,0,0)"], [1, status.C.fill]] } },
+        axisLine: { lineStyle: { width: 5, color: [[a, brand.clear], [1, status.C.fill]] } },
         pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false },
         data: [{ value: 0 }], silent: true,
       },
@@ -54,6 +55,6 @@ export default function StatusGauge({ value, zone, edges }: { value: number | nu
       </p>
     </div>
   );
-}
+});
 
 const Swatch = ({ c }: { c: string }) => <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm align-middle" style={{ background: c }} aria-hidden />;

@@ -3,59 +3,92 @@
 @tailwind utilities;
 
 @layer base {
-  :root { --header-h: 3.5rem; }
+  :root { --header-h: 4rem; }
   html { font-size: 16px; -webkit-font-smoothing: antialiased; }
   html.present { font-size: 18.4px; } /* 1.15 × for presentation mode */
-  body { @apply bg-page text-ink-body font-sans text-body; font-feature-settings: "cv11", "ss01"; }
+  body { @apply bg-page text-ink-body font-sans text-body; font-feature-settings: "cv11", "ss01"; background-image: theme('backgroundImage.canvas'); background-repeat: no-repeat; }
   .num, table td, table th { font-variant-numeric: tabular-nums; }
-  :focus-visible { outline: 2px solid #2a469c; outline-offset: 2px; border-radius: 4px; }
-  .bg-navy-ink :focus-visible, .bg-navy :focus-visible, .btn-navy:focus-visible { outline-color: #fff; box-shadow: 0 0 0 4px #1b2c63; }
+  :focus-visible { outline: 2px solid theme('colors.navy.DEFAULT'); outline-offset: 2px; border-radius: 4px; }
+  /* Dark surfaces (top bar, sidebar, hero, console deck) flip the ring to sky with a night halo. Filled navy buttons get a white ring. */
+  .on-dark :focus-visible, .on-dark:focus-visible { outline-color: theme('colors.sky.DEFAULT'); box-shadow: 0 0 0 4px theme('colors.night'); }
+  .btn-navy:focus-visible { outline-color: theme('colors.white'); box-shadow: 0 0 0 4px theme('colors.navy.ink'); }
   html { scroll-padding-top: calc(var(--header-h) + 1rem); }
   h1, h2, h3 { @apply text-navy-ink; }
+  .on-dark h1, .on-dark h2, .on-dark h3 { @apply text-white; }
 }
 
 @layer components {
-  /* Card tiers (DESIGN_SYSTEM.md): card = primary analytical surface, panel = supporting, inset = nested. */
-  .card { @apply min-w-0 bg-white rounded-card border border-line shadow-card p-6; } /* min-w-0: grid items must shrink so charts can resize */
+  /* Surfaces (DESIGN_SYSTEM.md): canvas (body) → surface (.card) → elevated (drawer, tooltip) → dark (.surface-dark, .atmosphere). */
+  .on-dark { @apply text-mist; }
+  .card { @apply min-w-0 rounded-card border border-line bg-white p-6 shadow-card; } /* min-w-0: grid items must shrink so charts can resize */
   .card-dashed { @apply rounded-card border border-dashed border-line-strong bg-white/60 p-5; }
   .panel { @apply rounded-panel bg-navy-tint p-5; }
-  .inset { @apply rounded-panel border border-line bg-page p-4; }
+  .inset { @apply rounded-panel border border-line bg-subtle p-4; }
+  .surface-dark { @apply on-dark relative min-w-0 overflow-hidden rounded-card border border-steel/70 shadow-dark; background-image: theme('backgroundImage.sidebar'); }
+  .surface-glass { @apply rounded-panel border border-haze/20 bg-white/[0.05]; } /* only on dark: a raised pane inside a hero */
 
-  /* Type roles */
+  /* Atmosphere: deep navy with one cool light and a fine technical grid. The grid fades out; it never sits under body text at full strength. */
+  .atmosphere { @apply on-dark relative isolate overflow-hidden; background-image: theme('backgroundImage.hero'); }
+  .atmosphere::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(theme('colors.haze / 9%') 1px, transparent 1px), linear-gradient(90deg, theme('colors.haze / 9%') 1px, transparent 1px);
+    background-size: 44px 44px; background-position: -1px -1px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.night') 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.night') 0%, transparent 72%);
+  }
+  .hatch { background-image: repeating-linear-gradient(135deg, theme('colors.slate / 30%') 0 1px, transparent 1px 7px); } /* "no data": drawn as an intentional gap, never as a line */
+
+  /* Type roles. Eyebrow = technical metadata (mono, caps); the rest are Inter. */
   .t-section { @apply text-section font-semibold text-navy-ink; }
   .t-card { @apply text-card font-semibold text-navy-ink; }
   .t-label { @apply text-label font-semibold text-ink-muted; }
   .t-caption { @apply text-caption text-ink-muted; }
-  .eyebrow { @apply text-label font-semibold text-ink-muted; }
+  .eyebrow { @apply font-mono text-eyebrow font-medium uppercase text-ink-muted; }
+  .eyebrow-dark { @apply font-mono text-eyebrow font-medium uppercase text-sky-soft; }
 
-  .btn { @apply inline-flex items-center gap-2 rounded-panel px-4 py-2.5 text-label font-semibold transition-colors active:translate-y-px; }
+  .btn { @apply inline-flex items-center gap-2 rounded-panel px-4 py-2.5 text-label font-semibold transition-colors duration-fast active:translate-y-px; }
   .btn-primary { @apply btn bg-white text-navy-ink hover:bg-navy-tint; }
   .btn-navy { @apply btn bg-navy text-white hover:bg-navy-deep; }
   .btn-outline { @apply btn border border-line-strong bg-white text-navy hover:border-navy hover:bg-navy-tint; }
+  .btn-ghost { @apply btn border border-haze/30 text-white hover:border-haze/60 hover:bg-white/10; }
   .btn-sm { @apply px-3 py-1.5 text-caption; }
 
-  .chip { @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-2.5 py-0.5 text-caption font-semibold text-ink; }
-  .chip-btn { @apply chip px-3 py-1 transition-colors hover:border-navy hover:bg-navy-tint hover:text-navy; }
+  .chip-dark { @apply inline-flex items-center gap-1.5 rounded-full border border-haze/25 bg-white/[0.04] px-3 py-1 text-caption font-semibold text-mist transition-colors duration-fast hover:border-sky/60 hover:bg-white/10 hover:text-white; }
 
   .data-table { @apply w-full text-label; }
-  .data-table th { @apply sticky top-0 z-[1] bg-white text-left text-caption font-semibold text-ink-muted border-b border-line-strong py-2.5 pr-4; }
+  .data-table th { @apply sticky top-0 z-[1] border-b border-line-strong bg-white py-2.5 pr-4 text-left text-caption font-semibold text-ink-muted; }
   .data-table td { @apply border-b border-line py-2 pr-4 text-ink-body; }
-  .data-table tbody tr { @apply transition-colors; }
-  .data-table tbody tr:hover { @apply bg-page; }
+  .data-table tbody tr { @apply transition-colors duration-fast; }
+  .data-table tbody tr:hover { @apply bg-subtle; }
 }
 
+/* Motion: 120 / 180 / 240 ms (theme.ts → motion). Opacity and a few px of travel only. */
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-.anim-drawer { animation: drawer-in 200ms cubic-bezier(.2,.8,.2,1); }
-.anim-fade { animation: fade-in 180ms ease-out; }
+.anim-page { animation: page-in theme('transitionDuration.normal') theme('transitionTimingFunction.DEFAULT') both; }
+.anim-drawer { animation: drawer-in theme('transitionDuration.slow') theme('transitionTimingFunction.DEFAULT'); }
+.anim-fade { animation: fade-in theme('transitionDuration.normal') ease-out; }
+
+/* The Console deck sticks only on large, tall windows, and scroll-padding then clears it so a focused control is never hidden (WCAG 2.4.11). */
+@media (min-width: 1024px) and (min-height: 800px) {
+  .deck-sticky { position: sticky; top: calc(var(--header-h) + 0.5rem); }
+  html.has-deck { scroll-padding-top: calc(var(--header-h) + 20rem); }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Windows High Contrast: hatching and fills are dropped, so gaps and ticks get a visible dashed edge instead. */
+@media (forced-colors: active) {
+  .hatch { background-image: none; border: 1px dashed CanvasText; }
 }
 
 @media print {
   aside, header, .no-print { display: none !important; }
-  body { background: #fff; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } /* dark surfaces, swatches and bars keep their colour in the PDF */
+  body { background-image: none; }
   .card { box-shadow: none; break-inside: avoid; }
   main { padding: 0 !important; }
 }

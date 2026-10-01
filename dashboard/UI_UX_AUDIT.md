@@ -123,3 +123,60 @@ Scores of 4 rather than 5 are deliberate. The remaining gaps are:
 | G12 Ponytail | PASS | No critical or high findings; 4 cuts applied |
 | G13 Screenshots | PASS | `screenshots/*.png`, all at 1280×720 |
 | G14 Human review | PASS | Section 3 |
+
+## 5. Brand fusion pass (Astrikos AI × Dalmia)
+
+**Scope:** presentation only. Branding, a navy atmosphere system, the shell, the Executive Summary, the Console deck, the Periods timeline, the Validation hero, the Roadmap journey, and the chart environment. No data file, score, period definition, validation statistic, `_sources` map, value model or analytical conclusion changed (see the gate table below).
+
+**What changed**
+- **Co-brand lockup:** one capsule, top-left, with the Astrikos mark on a dark panel and the Dalmia Bharat mark on a white panel. Neither logo is recoloured, stretched or overlapped. It steps from 44 px down to 32 px by viewport, and appears once. The sidebar and footer are text only.
+- **Environment:** a deep-navy top bar, sidebar and page bands (fine fading grid, one cool light, abstract kiln arcs and flow lines), a cool canvas, and white analytical surfaces. Dalmia orange is the sparing accent.
+- **Shell:** the cyan dot is gone. The status reads "Ariyalur · Historical · Jun–Aug 2025" with a history icon. The active nav item has a thin sky rule and a faint glow, not a solid block.
+- **Executive Summary:** a hero with a "Core finding" panel (25% → 53%, 12 KPI-derived periods, not validated plant events), KPI tiles rising out of it with micro charts built only from existing fields, findings as an open layout, and the ask as a closing band.
+- **Console:** a dark "historical kiln console" deck with a large stamp, the index and its state word, and a replay timeline where stopped / no-data spans are hatched and labelled.
+- **Periods:** a vertical timeline (navy base, blue markers, amber for high severity). Every entry states "KPI-derived abnormal period · Not a validated plant event".
+- **Validation:** a dark hero with "Not supported" as the largest element, then Result, Interpretation, Limitations, Method, Evidence.
+- **Roadmap:** a journey spine (solid where demonstrated, dashed where it needs plant data); future stages are dashed with a lock; the value calculator keeps its dashed frame and "Illustrative" label.
+- **Charts:** one blue primary, slate comparison, navy-slate axes, a dark tooltip with a sky rule, Dalmia orange only for period-start annotations.
+
+**Before → after (the questions in the brief)**
+
+| Question | Answer |
+|---|---|
+| Does Astrikos × Dalmia feel intentional? | Yes. One lockup, one product line, no repeats. Before: a generic gauge icon and "Kiln Intelligence" text. |
+| Does the background create depth without distraction? | Yes. The grid fades out before the copy and the arcs sit at 25% opacity behind the right-hand edge. |
+| Is the palette unified? | Yes. Every colour is a `theme.ts` token (enforced by `tests/tokens.test.ts`); about 70% navy / white / grey. |
+| Is the product more premium? | Yes. A larger display statement, mono kickers for metadata, tabular numerals. |
+| Does the shell feel like one product? | Yes. The top bar, sidebar and page bands are one navy frame around the light canvas. |
+| Do charts belong? | Yes. They share the axis, grid, primary-blue and tooltip system. |
+| Is information easier to scan? | Page bands name the question first; findings are open columns; the Periods timeline groups by month. |
+| Does it feel appropriate for cement manufacturing? | Abstract kiln arcs and flow lines, no stock imagery, no neon. |
+| Credible on a large screen in a Dalmia meeting? | Yes at 1280×720 and 1440×900: the hero, the Console deck and the Validation verdict read from a distance. |
+
+**Known limits**
+- The Console's native date picker still follows the browser locale (12-hour in en-US browsers). The large stamp is the primary readout.
+- Efficiency period markers #2/#3 sit close together and their labels overlap.
+- The lockup needs two panels because the supplied logos cannot be recoloured: Astrikos is light grey and Dalmia is dark blue.
+- Font sizes are fixed px, as before.
+- This was reviewed by the builder and by automated and agent reviewers. It has not been tested with real Dalmia or Astrikos viewers.
+
+**Gate results**
+
+| Gate | Result | Evidence |
+|---|---|---|
+| G1 Brand | PASS | Both logos render as supplied (Astrikos byte-identical; Dalmia differs only in its `viewBox` crop) |
+| G2 Seamless lockup | PASS | One capsule, equal panels, shown once |
+| G3 Visual system | PASS | `tests/tokens.test.ts`: no hex/rgba/hsl literal outside `theme.ts` |
+| G4 Background | PASS | Decorative layers are `aria-hidden`, low-opacity, and clear of the copy |
+| G5 UX | PASS | Journeys J1–J12 pass |
+| G6 Analytical integrity | PASS | sha256 of all 7 `public/data/*.json` unchanged; no diff in `scripts/` or `src/lib/value.ts` |
+| G7 Claims | PASS | `wording.test.ts` passes; claims audit: 0 blockers, 0 majors |
+| G8 Accessibility | PASS | Lighthouse accessibility 100 on all 8 routes |
+| G9 Performance | PASS | Lighthouse desktop 99–100 on all 8 routes; mobile (home) 93; Console 4× playback 59.8 fps vs 60.1 before, 0 long tasks |
+| G10 Responsive | PASS | No horizontal overflow at 375 / 768 / 1024 / 1280 / 1440 / 1920 on all routes and the drawer |
+| G11 Browser | PASS | 12/12 journeys |
+| G12 Build | PASS | `npm test` (10/10), `npm run typecheck`, `npm run build` |
+| G13 Security | PASS | No critical, high or medium findings |
+| G14 Ponytail | PASS | No critical or high findings |
+| G15 Screenshots | PASS | `screenshots/`: 9 views × 2 sizes |
+| G16 Persona walk-through | PASS (builder's own) | Plant Head: the hero finding and ask read in 10 s. Process Engineer: the Console deck shows the stamp, state and gaps. Digital Transformation Lead: the shell and journey spine separate demonstrated from future. Astrikos leadership: one lockup, tokenised system. Technical reviewer: the Validation page opens on the negative result. |

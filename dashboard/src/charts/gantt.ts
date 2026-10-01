@@ -1,6 +1,6 @@
 // Timeline of periods: one row per period, a bar from start to end on a Jun–Aug time axis.
 import { fmtDate, fromMs } from "../lib/format";
-import { brand } from "../theme";
+import { brand, chart, font } from "../theme";
 import type { Option } from "./Chart";
 import { tip, type TipRow } from "./tooltip";
 
@@ -10,7 +10,7 @@ export function gantt({ items, min, max }: { items: GanttItem[]; min: number; ma
   return {
     grid: { left: 72, right: 132, top: 8, bottom: 28 },
     tooltip: { trigger: "item", formatter: (p: { dataIndex: number }) => tip(items[p.dataIndex].tip) },
-    xAxis: { type: "time", min, max, axisLabel: { formatter: (v: number) => fmtDate(fromMs(v)), hideOverlap: true }, splitLine: { show: true, lineStyle: { color: brand.grid } } },
+    xAxis: { type: "time", min, max, splitNumber: 5, axisLabel: { formatter: (v: number) => fmtDate(fromMs(v)), hideOverlap: true }, splitLine: { show: true, lineStyle: { color: brand.grid } } },
     yAxis: { type: "category", inverse: true, data: items.map((d) => d.label), axisLine: { show: false }, axisLabel: { color: brand.ink, fontSize: 12 } },
     series: [{
       type: "custom",
@@ -28,8 +28,8 @@ export function gantt({ items, min, max }: { items: GanttItem[]; min: number; ma
           type: "group",
           children: [
             { type: "rect", shape: { x: x0, y: y - h / 2, width: w, height: h, r: 2 }, style: { fill: d.color }, cursor: "pointer",
-              emphasis: { style: { stroke: brand.cyan, lineWidth: 2 } } },
-            { type: "text", x: x0 + w + 6, y, style: { text: d.text, fill: brand.muted, fontSize: 11, fontFamily: "Inter", verticalAlign: "middle" }, silent: true },
+              emphasis: { style: { stroke: chart.annotation, lineWidth: 2 } } },
+            { type: "text", x: x0 + w + 6, y, style: { text: d.text, fill: chart.axis, fontSize: 11, fontFamily: font.sans, verticalAlign: "middle" }, silent: true },
           ],
         };
       },

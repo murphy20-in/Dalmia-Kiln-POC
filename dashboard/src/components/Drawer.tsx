@@ -5,7 +5,7 @@ import { common } from "../copy";
 
 /** Right-side modal drawer, portalled to <body>. The app behind it is made inert (no Tab escape),
  *  Escape closes, and focus returns to where it was (or the main landmark) on close. */
-export default function Drawer({ title, meta, onClose, children }: { title: string; meta?: ReactNode; onClose: () => void; children: ReactNode }) {
+export default function Drawer({ title, eyebrow, meta, onClose, children }: { title: string; eyebrow?: string; meta?: ReactNode; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -24,13 +24,15 @@ export default function Drawer({ title, meta, onClose, children }: { title: stri
     };
   }, []);
   return createPortal(
-    <div className="fixed inset-0 z-40 flex justify-end">
-      <div aria-hidden className="anim-fade absolute inset-0 bg-navy-ink/30" onClick={() => close.current()} />
+    <div className="no-print fixed inset-0 z-40 flex justify-end">
+      <div aria-hidden className="anim-fade absolute inset-0 bg-night/55" onClick={() => close.current()} />
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}
         className="anim-drawer relative flex h-full w-full max-w-xl flex-col bg-white shadow-drawer outline-none">
-        <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
+        <div className="relative flex items-start justify-between gap-4 border-b border-line bg-surface px-6 py-5">
+          <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-navy" />
           <div className="min-w-0">
-            <h2 id={id} className="text-title font-bold text-navy-ink">{title}</h2>
+            {eyebrow && <p className="eyebrow mb-1.5">{eyebrow}</p>}
+            <h2 id={id} className="text-title font-semibold text-navy-ink">{title}</h2>
             {meta && <div className="mt-2 flex flex-wrap gap-2">{meta}</div>}
           </div>
           <button onClick={() => close.current()} className="rounded-panel p-2 text-ink-muted transition-colors hover:bg-page hover:text-navy" aria-label={common.close}><X size={20} aria-hidden /></button>

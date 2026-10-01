@@ -2,11 +2,11 @@ import { BadgeCheck, CircleDashed, FlaskConical } from "lucide-react";
 import Chart from "../charts/Chart";
 import { monthBars } from "../charts/bars";
 import ChartCard from "../components/ChartCard";
-import { Badge, Lead, Loading, NumberDot, PageHeader, SectionHeader } from "../components/ui";
-import { fuel as t, labels } from "../copy";
+import { Badge, Lead, Loading, NumberDot, Page, SectionHeader } from "../components/ui";
+import { fuel as t, labels, nav } from "../copy";
 import { useData, type AfrCard } from "../data";
 import { fmtMonth, fmtSigned } from "../lib/format";
-import { brand, systemColor } from "../theme";
+import { chart } from "../theme";
 
 const strengthTone: Record<AfrCard["strength"], "navy" | "tint" | "outline"> = {
   Consistent: "navy",
@@ -20,8 +20,7 @@ export default function AltFuel() {
   const months = d.monthly.map((m) => fmtMonth(m.month));
   const effect = (c: AfrCard) => (c.metric === "rho" ? fmtSigned(c.effect, 2) : fmtSigned(c.effect, c.unit === "TPH" ? 0 : 1));
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={t.title} question={t.question} />
+    <Page eyebrow={nav.groups.intelligence} title={t.title} question={t.question}>
       <Lead sub={t.heroSub(d.associated, d.augustConfirmed)}>{t.hero}</Lead>
 
       {/* The sequence seen in the data: three linked steps, not proven causes */}
@@ -44,11 +43,11 @@ export default function AltFuel() {
         <div className="grid gap-6 md:grid-cols-2">
           <div>
             <h3 className="t-label">{t.afrPanel}</h3>
-            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.afr), color: brand.navy, unit: t.afrPanel })} height={210} label={t.afrPanel} />
+            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.afr), color: chart.primary, unit: t.afrPanel })} height={210} label={t.afrPanel} />
           </div>
           <div>
             <h3 className="t-label">{t.feedPanel}</h3>
-            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.feed), color: systemColor.COMBUSTION, unit: t.feedPanel })} height={210} label={t.feedPanel} />
+            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.feed), color: chart.compare, unit: t.feedPanel })} height={210} label={t.feedPanel} />
           </div>
         </div>
       </ChartCard>
@@ -78,6 +77,6 @@ export default function AltFuel() {
           <p className="mt-3 text-label font-semibold text-navy">{t.deeperUnlocks}</p>
         </div>
       </section>
-    </div>
+    </Page>
   );
 }

@@ -1,5 +1,5 @@
 // Category × category heatmap with a single-hue sequential scale and value labels.
-import { brand } from "../theme";
+import { brand, chart } from "../theme";
 import type { Option } from "./Chart";
 import { tip } from "./tooltip";
 
@@ -24,13 +24,13 @@ export function heatmap({ x, y, cells, max, ramp, format, leftWidth = 88, darkLo
     series: [{
       type: "heatmap",
       // Dark cells get white labels so text stays readable on the ramp.
-      data: cells.map(([a, b, v]) => ({ value: [a, b, v ?? "-"], label: { color: v != null && (darkLow ? v < max * 0.45 : v > max * 0.55) ? "#fff" : brand.ink } })),
-      itemStyle: { borderColor: "#fff", borderWidth: 2, borderRadius: 3 },
+      data: cells.map(([a, b, v]) => ({ value: [a, b, v ?? "-"], label: { color: v != null && (darkLow ? v < max * 0.45 : v > max * 0.55) ? brand.white : brand.ink } })),
+      itemStyle: { borderColor: brand.white, borderWidth: 2, borderRadius: 3 },
       label: {
         show: true, fontSize: 11,
         formatter: (p: { value: [number, number, number | string] }) => (typeof p.value[2] === "number" ? format(p.value[2]) : "–"),
       },
-      emphasis: { itemStyle: { borderColor: brand.cyan, borderWidth: 2 } },
+      emphasis: { itemStyle: { borderColor: chart.primary, borderWidth: 2 } },
     }],
   };
 }

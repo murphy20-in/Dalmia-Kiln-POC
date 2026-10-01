@@ -5,11 +5,11 @@ import Chart from "../charts/Chart";
 import { hbars } from "../charts/bars";
 import { zoneLine } from "../charts/zoneLine";
 import StatusGauge from "../components/StatusGauge";
-import { Badge, Loading, NumberDot, PageHeader, Ribbon, SectionHeader, StatusPill } from "../components/ui";
-import { common, consoleCopy as t, effIndex, evidence, healthIndex, flagText, periods as pc, reasonText, systemName, zoneMeaning, zoneName } from "../copy";
+import { Badge, Loading, NumberDot, PageBand, Ribbon, SectionHeader, StatusPill } from "../components/ui";
+import { common, consoleCopy as t, effIndex, evidence, healthIndex, flagText, nav, periods as pc, reasonText, systemName, zoneMeaning, zoneName } from "../copy";
 import { useData, type ConsoleData, type ConsoleRow, type Period } from "../data";
-import { fmt1, fmtDateTime, fmtDuration, fmtMonth, fromMs, toMs } from "../lib/format";
-import { brand, systemColor } from "../theme";
+import { fmt1, fmtDateTime, fmtDuration, fmtMonth, fmtStamp, fromMs, toMs } from "../lib/format";
+import { chart, systemColor } from "../theme";
 
 const STEP = 10 * 60_000;
 const HOUR = 60 * 60_000;
@@ -82,6 +82,8 @@ function ConsoleView({ data, periods, ix }: { data: ConsoleData; periods: Period
   }, [playing, speed, ix]);
   useEffect(() => { if (playing && ms >= ix.end) setPlaying(false); }, [playing, ms, ix.end]);
 
+  useEffect(() => { document.documentElement.classList.add("has-deck"); return () => document.documentElement.classList.remove("has-deck"); }, []);
+
   const go = useCallback((next: number) => { setPlaying(false); setMs(snap(next, ix)); }, [ix]);
 
   const i = ix.byTime.get(ms);
@@ -114,7 +116,7 @@ function ConsoleView({ data, periods, ix }: { data: ConsoleData; periods: Period
     .map((p) => ({ from: Math.max(toMs(p.start), ms - 24 * HOUR), to: Math.min(toMs(p.end), ms), label: pc.label(p.n) })), [periods, ms]);
 
   const trendOption = useMemo(() => zoneLine({
-    series: [{ name: healthIndex.name, data: window24.s, color: brand.navyInk, width: 2.5 }],
+    series: [{ name: healthIndex.name, data: window24.s, color: chart.primary, width: 2.5 }],
     edges: data.bandEdges, periods: shaded, now: ms, note: shaded.length ? `${evidence.kpiDerived} shaded · ${evidence.notValidated}` : undefined,
   }), [window24, data.bandEdges, shaded, ms]);
 
@@ -127,7 +129,7 @@ function ConsoleView({ data, periods, ix }: { data: ConsoleData; periods: Period
     max: Math.max(40, ...row[4]),
   }) : null, [row, data.families]);
 
-  const stamp = fmtDateTime(fromMs(ms));
+  const stamp = fmtStamp(fromMs(ms));
   // Text alternative for the 24-h chart: current value and the range shown (formatting only).
   const trendLabel = useMemo(() => {
     const vals = window24.s.flatMap(([, v]) => (v == null ? [] : [v]));
@@ -137,138 +139,149 @@ function ConsoleView({ data, periods, ix }: { data: ConsoleData; periods: Period
   const high = useMemo(() => periods.filter((p) => p.severity === "HIGH"), [periods]);
 
   return (
-    <div className="flex flex-col gap-5">
-      <ConsoleHeader />
-      {/* One polite announcement, only when not playing, so screen readers are not flooded during playback. */}
-      <p className="sr-only" role="status">{playing ? "" : `${stamp}: ${row ? `${zoneName[row[2]]}, ${healthIndex.name} ${row[1].toFixed(1)}` : t.gapTitle}`}</p>
+    <>
+      <ConsoleBand />
+      <div className="mx-auto flex w-full max-w-page flex-col gap-5 px-4 py-6 sm:px-8">
+        {/* One polite announcement, only when not playing, so screen readers are not flooded during playback. */}
+        <p className="sr-only" role="status">{playing ? "" : `${stamp}: ${row ? `${zoneName[row[2]]}, ${healthIndex.name} ${row[1].toFixed(1)}` : t.gapTitle}`}</p>
 
-      {/* Replay controls: the selected moment is the anchor of the page */}
-      <section aria-label={t.replay.time} className="card z-10 lg:sticky lg:top-[calc(var(--header-h)+0.5rem)] flex flex-col gap-3 !px-5 !py-4 shadow-raised">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <div className="flex items-center gap-2">
-            <button className="btn-navy w-[6.5rem] justify-center" onClick={() => { if (!playing && ms >= ix.end) setMs(ix.start); setPlaying((p) => !p); }}>
+        {/* The console deck: the selected moment is the anchor of the page. Dark environment, light analytics beneath. */}
+        <section aria-label={t.replay.time} className="surface-dark deck-sticky z-10 flex flex-col gap-4 p-5">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div aria-hidden className="min-w-[14rem]">
+              <p className="eyebrow-dark">{t.deckEyebrow}</p>
+              <p className="num mt-1 text-[1.75rem] font-semibold uppercase leading-8 tracking-tight text-white">{stamp}</p>
+            </div>
+            <div aria-hidden className="surface-glass flex min-w-[10.5rem] flex-col gap-1 px-4 py-2.5">
+              <p className="eyebrow-dark">{healthIndex.name}</p>
+              {row ? (
+                <div className="flex items-center gap-3">
+                  <span className="num text-[1.75rem] font-semibold leading-8 text-white">{row[1].toFixed(1)}</span>
+                  <StatusPill zone={row[2]} />
+                </div>
+              ) : (
+                <span className="hatch rounded px-2 py-1 font-mono text-eyebrow font-medium uppercase text-mist">{t.noData}</span>
+              )}
+            </div>
+            <JumpChips high={high} onJump={go} />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <button className="btn-primary w-[6.5rem] justify-center" onClick={() => { if (!playing && ms >= ix.end) setMs(ix.start); setPlaying((p) => !p); }}>
               {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />} {playing ? t.replay.pause : t.replay.play}
             </button>
-            <div role="group" aria-label={t.replay.speed} className="flex overflow-hidden rounded-panel border border-line-strong">
+            <div role="group" aria-label={t.replay.speed} className="flex overflow-hidden rounded-panel border border-haze/30">
               {([1, 4] as const).map((sp) => (
-                <button key={sp} className={`px-3 py-2 text-label font-semibold transition-colors ${speed === sp ? "bg-navy text-white" : "bg-white text-navy hover:bg-navy-tint"}`}
+                <button key={sp} className={`px-3 py-2 text-label font-semibold transition-colors duration-fast ${speed === sp ? "bg-white/15 text-white" : "text-mist hover:bg-white/10 hover:text-white"}`}
                   aria-pressed={speed === sp} onClick={() => setSpeed(sp)}>{sp}×</button>
               ))}
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="btn-outline !px-2 !py-2" onClick={() => go(ms - STEP)} aria-label={t.replay.stepBack}><ChevronLeft size={16} aria-hidden /></button>
-            <div className="min-w-[10.5rem] text-center">
-              <div className="t-caption">{t.replay.selected}</div>
-              <div className="num text-section font-semibold text-navy-ink" aria-hidden>{stamp}</div>
+            <div className="flex items-center gap-1.5">
+              <button className="btn-ghost !px-2 !py-2" onClick={() => go(ms - STEP)} aria-label={t.replay.stepBack}><ChevronLeft size={16} aria-hidden /></button>
+              <button className="btn-ghost !px-2 !py-2" onClick={() => go(ms + STEP)} aria-label={t.replay.stepFwd}><ChevronRight size={16} aria-hidden /></button>
             </div>
-            <button className="btn-outline !px-2 !py-2" onClick={() => go(ms + STEP)} aria-label={t.replay.stepFwd}><ChevronRight size={16} aria-hidden /></button>
+            <label className="flex items-center gap-2">
+              <span className="text-caption text-haze">{t.replay.goTo}</span>
+              <input type="datetime-local" className="rounded-panel border border-haze/30 bg-white/[0.06] px-2.5 py-1.5 text-label text-white num transition-colors duration-fast [color-scheme:dark] hover:border-sky/60" value={fromMs(ms)} step={600}
+                min={fromMs(ix.start)} max={fromMs(ix.end)}
+                onChange={(e) => e.target.value && go(toMs(e.target.value.slice(0, 16)))} />
+            </label>
           </div>
-          <label className="flex items-center gap-2">
-            <span className="t-caption">{t.replay.goTo}</span>
-            <input type="datetime-local" className="rounded-panel border border-line-strong px-2.5 py-1.5 text-label num transition-colors hover:border-navy" value={fromMs(ms)} step={600}
-              min={fromMs(ix.start)} max={fromMs(ix.end)}
-              onChange={(e) => e.target.value && go(toMs(e.target.value.slice(0, 16)))} />
-          </label>
-          <JumpChips high={high} onJump={go} />
-        </div>
-        <Scrubber ms={ms} ix={ix} onChange={go} periods={periods} />
-      </section>
+          <Scrubber ms={ms} ix={ix} onChange={go} periods={periods} />
+        </section>
 
-      {/* Score → state → contributing systems */}
-      <div className="grid gap-5 lg:grid-cols-12">
-        <section className="card !p-5 lg:col-span-4" aria-labelledby="gauge">
-          <h2 id="gauge" className="t-label">{t.gaugeLabel}</h2>
-          <StatusGauge value={row ? row[1] : null} zone={row ? row[2] : null} edges={data.bandEdges} />
-        </section>
-        <section className="card flex flex-col gap-3 !p-5 lg:col-span-3" aria-labelledby="state">
-          <h2 id="state" className="t-label">{t.statusTitle}</h2>
-          {row ? (
-            <>
-              <div><StatusPill zone={row[2]} size="lg" /></div>
-              <p className="text-body text-ink">{zoneMeaning[row[2]]}</p>
-              <div className="flex flex-col gap-2 border-t border-line pt-3 text-label">
-                <p className="text-ink-body">{inState != null && t.inState(fmtDuration(inState / 60_000))}</p>
-                <p className="flex items-center gap-1.5 font-medium text-ink">
-                  {trend === "up" && <ArrowUpRight size={16} className="text-warning-ink" aria-hidden />}
-                  {trend === "down" && <ArrowDownRight size={16} className="text-normal-ink" aria-hidden />}
-                  {trend === "flat" && <ArrowRight size={16} className="text-ink-muted" aria-hidden />}
-                  {trend && t.trend[trend]}
-                </p>
-              </div>
-              {row[6].map((f) => (
-                <p key={f} className="flex items-start gap-2 rounded-panel bg-watch/10 p-3 text-label text-watch-ink"><Info size={15} className="mt-0.5 shrink-0" aria-hidden />{flagText[f]}</p>
-              ))}
-            </>
-          ) : (
-            <GapNotice />
-          )}
-        </section>
-        <section className="card !p-5 lg:col-span-5" aria-labelledby="drivers">
-          <h2 id="drivers" className="t-label">{t.driversTitle}</h2>
-          <p className="mb-2 text-caption text-ink-muted">{t.driversSub}</p>
-          {row && driverOption ? (row[1] > 0.5
-            ? <Chart option={driverOption} animate={!playing} height={200} label={data.families.map((f, n) => `${systemName[f]} ${row[4][n]}`).join(", ")} />
-            : <p className="text-label text-ink-muted">{t.driversNone}</p>)
-            : <GapNotice compact />}
-        </section>
-      </div>
-
-      {/* Trend, reasons, efficiency */}
-      <div className="grid gap-5 lg:grid-cols-12">
-        <section className="card !p-5 lg:col-span-8" aria-labelledby="trend">
-          <SectionHeader id="trend" title={t.trendTitle} sub={t.trendSub} />
-          {window24.s.every(([, v]) => v == null) ? <GapNotice /> : <Chart option={trendOption} animate={!playing} height={250} label={trendLabel} />}
-        </section>
-        <div className="flex flex-col gap-5 lg:col-span-4">
-          <section className="card !p-5" aria-labelledby="reasons">
-            <h2 id="reasons" className="t-label mb-3">{t.reasonsTitle}</h2>
-            {row ? (row[5].length ? (
-              <ol className="flex flex-col gap-2.5">
-                {row[5].map((r, n) => (
-                  <li key={r} className="flex gap-2.5 text-label text-ink">
-                    <NumberDot n={n + 1} />
-                    <span>{reasonText[r] ?? r}</span>
-                  </li>
+        {/* Score → state → contributing systems */}
+        <div className="grid gap-5 lg:grid-cols-12">
+          <section className="card !p-5 lg:col-span-4" aria-labelledby="gauge">
+            <h2 id="gauge" className="eyebrow">{t.gaugeLabel}</h2>
+            <StatusGauge value={row ? row[1] : null} zone={row ? row[2] : null} edges={data.bandEdges} />
+          </section>
+          <section className="card flex flex-col gap-3 !p-5 lg:col-span-3" aria-labelledby="state">
+            <h2 id="state" className="eyebrow">{t.statusTitle}</h2>
+            {row ? (
+              <>
+                <div><StatusPill zone={row[2]} size="lg" /></div>
+                <p className="text-body text-ink">{zoneMeaning[row[2]]}</p>
+                <div className="flex flex-col gap-2 border-t border-line pt-3 text-label">
+                  <p className="text-ink-body">{inState != null && t.inState(fmtDuration(inState / 60_000))}</p>
+                  <p className="flex items-center gap-1.5 font-medium text-ink">
+                    {trend === "up" && <ArrowUpRight size={16} className="text-warning-ink" aria-hidden />}
+                    {trend === "down" && <ArrowDownRight size={16} className="text-normal-ink" aria-hidden />}
+                    {trend === "flat" && <ArrowRight size={16} className="text-ink-muted" aria-hidden />}
+                    {trend && t.trend[trend]}
+                  </p>
+                </div>
+                {row[6].map((f) => (
+                  <p key={f} className="flex items-start gap-2 rounded-panel bg-watch/10 p-3 text-label text-watch-ink"><Info size={15} className="mt-0.5 shrink-0" aria-hidden />{flagText[f]}</p>
                 ))}
-              </ol>
-            ) : <p className="text-label text-ink-muted">{t.reasonsNone}</p>) : <GapNotice compact />}
+              </>
+            ) : (
+              <GapNotice />
+            )}
           </section>
-          <section className="card !p-5" aria-labelledby="eff">
-            <h2 id="eff" className="t-label">{t.effTitle}</h2>
-            <div className="mt-1 flex items-end justify-between gap-4">
-              <div className="text-kpi font-bold text-navy-ink num">{row ? fmt1(row[3]) : "–"}</div>
-              <div className="w-1/2">
-                <p className="t-caption mb-0.5 text-right">{t.effSpark}</p>
-                <Chart option={sparkOption} animate={!playing} height={48} label={`${effIndex.name}, ${t.effSpark}`} />
-              </div>
-            </div>
-            <p className="mt-2 text-caption text-ink-muted">{effIndex.scale}</p>
+          <section className="card !p-5 lg:col-span-5" aria-labelledby="drivers">
+            <h2 id="drivers" className="eyebrow">{t.driversTitle}</h2>
+            <p className="mb-2 mt-1 text-caption text-ink-muted">{t.driversSub}</p>
+            {row && driverOption ? (row[1] > 0.5
+              ? <Chart option={driverOption} animate={!playing} height={200} label={data.families.map((f, n) => `${systemName[f]} ${row[4][n]}`).join(", ")} />
+              : <p className="text-label text-ink-muted">{t.driversNone}</p>)
+              : <GapNotice compact />}
           </section>
         </div>
-      </div>
 
-      <Decisions />
-    </div>
+        {/* Trend, reasons, efficiency */}
+        <div className="grid gap-5 lg:grid-cols-12">
+          <section className="card !p-5 lg:col-span-8" aria-labelledby="trend">
+            <SectionHeader id="trend" title={t.trendTitle} sub={t.trendSub} />
+            {window24.s.every(([, v]) => v == null) ? <GapNotice /> : <Chart option={trendOption} animate={!playing} height={250} label={trendLabel} />}
+          </section>
+          <div className="flex flex-col gap-5 lg:col-span-4">
+            <section className="card !p-5" aria-labelledby="reasons">
+              <h2 id="reasons" className="eyebrow mb-3">{t.reasonsTitle}</h2>
+              {row ? (row[5].length ? (
+                <ol className="flex flex-col gap-2.5">
+                  {row[5].map((r, n) => (
+                    <li key={r} className="flex gap-2.5 text-label text-ink">
+                      <NumberDot n={n + 1} />
+                      <span>{reasonText[r] ?? r}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : <p className="text-label text-ink-muted">{t.reasonsNone}</p>) : <GapNotice compact />}
+            </section>
+            <section className="card !p-5" aria-labelledby="eff">
+              <h2 id="eff" className="eyebrow">{t.effTitle}</h2>
+              <div className="mt-1 flex items-end justify-between gap-4">
+                <div className="text-kpi font-semibold text-navy-ink num">{row ? fmt1(row[3]) : "–"}</div>
+                <div className="w-1/2">
+                  <p className="t-caption mb-0.5 text-right">{t.effSpark}</p>
+                  <Chart option={sparkOption} animate={!playing} height={48} label={`${effIndex.name}, ${t.effSpark}`} />
+                </div>
+              </div>
+              <p className="mt-2 text-caption text-ink-muted">{effIndex.scale}</p>
+            </section>
+          </div>
+        </div>
+
+        <Decisions />
+      </div>
+    </>
   );
 }
 
 /** Static parts are memoised so a playback tick re-renders only what depends on the time. */
-const ConsoleHeader = memo(function ConsoleHeader() {
+const ConsoleBand = memo(function ConsoleBand() {
   return (
-    <PageHeader title={t.title} question={t.intro}>
-      <Ribbon>{t.ribbon}</Ribbon>
-    </PageHeader>
+    <PageBand eyebrow={nav.groups.intelligence} title={t.title} question={t.intro} actions={<div className="max-w-lg"><Ribbon dark>{t.ribbon}</Ribbon></div>} />
   );
 });
 
 const JumpChips = memo(function JumpChips({ high, onJump }: { high: Period[]; onJump: (ms: number) => void }) {
   return (
     <div className="flex flex-wrap items-center gap-2 xl:ml-auto">
-      <span className="t-caption">{t.replay.jump}</span>
+      <span className="text-caption text-haze">{t.replay.jump}</span>
       {high.map((p) => (
-        <button key={p.id} className="chip-btn" onClick={() => onJump(toMs(p.onset))} aria-label={t.replay.jumpTo(pc.label(p.n), fmtDateTime(p.onset))}>
-          <span className="font-semibold text-navy-ink">{pc.label(p.n)}</span><span className="num font-medium text-ink-muted">{fmtDateTime(p.onset)}</span>
+        <button key={p.id} className="chip-dark" onClick={() => onJump(toMs(p.onset))} aria-label={t.replay.jumpTo(pc.label(p.n), fmtDateTime(p.onset))}>
+          <span className="text-white">{pc.label(p.n)}</span>{" "}<span className="num font-medium text-haze">{fmtDateTime(p.onset)}</span>
         </button>
       ))}
     </div>
@@ -292,34 +305,38 @@ const Decisions = memo(function Decisions() {
   );
 });
 
+/** A gap is drawn as a hatched, labelled absence: never interpolated, never a continuous measurement. */
 function GapNotice({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-start gap-3 rounded-panel border border-dashed border-line-strong bg-page p-4 text-ink-muted">
-      <PowerOff size={18} className="mt-0.5 shrink-0" aria-hidden />
-      <div>
-        <p className="text-label font-semibold text-ink">{t.gapTitle}</p>
-        {!compact && <p className="mt-1 text-label">{t.gapBody}</p>}
+    <div className="hatch flex items-center justify-center rounded-panel border border-dashed border-line-strong bg-subtle p-4">
+      <div className="flex max-w-sm items-start gap-3 rounded-panel bg-white/95 px-4 py-3 text-ink-muted shadow-card">
+        <PowerOff size={18} className="mt-0.5 shrink-0" aria-hidden />
+        <div>
+          <p className="eyebrow text-ink">{t.noData}</p>
+          <p className="mt-0.5 text-label font-semibold text-ink">{t.gapTitle}</p>
+          {!compact && <p className="mt-1 text-label">{t.gapBody}</p>}
+        </div>
       </div>
     </div>
   );
 }
 
-/** Static track: gaps in grey, period ticks and month labels. Memoised; only the thumb moves. */
+/** Static track: gaps hatched, period ticks and month labels. Memoised; only the thumb moves. */
 const Track = memo(function Track({ ix, periods }: { ix: Index; periods: Period[] }) {
   const span = ix.end - ix.start;
   const pct = (m: number) => ((m - ix.start) / span) * 100;
   return (
     <>
-      <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-navy-tint" aria-hidden>
+      <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-white/10" aria-hidden>
         {ix.gaps.map((g) => (
-          <div key={g.from} className="absolute top-0 h-2 bg-ink-muted/80" style={{ left: `${pct(g.from)}%`, width: `${Math.max(0.2, pct(g.to) - pct(g.from))}%` }} />
+          <div key={g.from} className="hatch absolute top-0 h-2 bg-slate/70 outline outline-1 outline-transparent" style={{ left: `${pct(g.from)}%`, width: `${Math.max(0.2, pct(g.to) - pct(g.from))}%` }} />
         ))}
         {periods.map((p) => (
-          <div key={p.id} className={`absolute -top-1.5 h-1 rounded-full ${p.severity === "HIGH" ? "bg-navy-ink" : "bg-navy/70"}`}
+          <div key={p.id} className={`absolute rounded-full outline outline-1 outline-transparent ${p.severity === "HIGH" ? "-top-2.5 h-2 bg-dalmia-orange" : "-top-1.5 h-1 bg-sky/70"}`}
             style={{ left: `${pct(toMs(p.start))}%`, width: `${Math.max(0.35, pct(toMs(p.end)) - pct(toMs(p.start)))}%` }} />
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-6 text-[11px] text-ink-muted" aria-hidden>
+      <div className="pointer-events-none absolute inset-x-0 top-6 text-[11px] text-haze" aria-hidden>
         {monthStarts(ix.start, ix.end).map((m) => <span key={m} style={{ position: "absolute", left: `${pct(m)}%` }}>{fmtMonth(fromMs(m).slice(0, 7))}</span>)}
       </div>
     </>
@@ -331,18 +348,20 @@ function Scrubber({ ms, ix, onChange, periods }: { ms: number; ix: Index; onChan
   const pct = ((ms - ix.start) / (ix.end - ix.start)) * 100;
   return (
     <div>
-      <div className="relative h-10 rounded focus-within:ring-2 focus-within:ring-navy focus-within:ring-offset-2">
+      <p className="eyebrow-dark mb-1">{t.deckTimeline}</p>
+      <div className="relative h-10 rounded focus-within:ring-2 focus-within:ring-sky focus-within:ring-offset-2 focus-within:ring-offset-midnight">
         <Track ix={ix} periods={periods} />
-        <div className="pointer-events-none absolute top-1.5 h-5 w-1 rounded bg-navy-ink" style={{ left: `calc(${pct}% - 2px)` }} aria-hidden />
+        <div className="pointer-events-none absolute top-1.5 h-5 w-1 rounded bg-white shadow-glow outline outline-1 outline-transparent" style={{ left: `calc(${pct}% - 2px)` }} aria-hidden />
         <input type="range" aria-label={t.replay.scrub} className="absolute inset-0 h-8 w-full cursor-pointer opacity-0"
-          min={ix.start} max={ix.end} step={STEP} value={ms} aria-valuetext={fmtDateTime(fromMs(ms))}
+          min={ix.start} max={ix.end} step={STEP} value={ms} aria-valuetext={fmtStamp(fromMs(ms))}
           onChange={(e) => onChange(Number(e.target.value))} />
       </div>
-      <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-caption text-ink-muted" aria-hidden>
-        <li className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-navy-tint ring-1 ring-navy-line" />{t.legend.running}</li>
-        <li className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-ink-muted/80" />{common.stopped}</li>
-        <li className="flex items-center gap-1.5"><span className="h-1 w-3 rounded-full bg-navy-ink" />{t.legend.high}</li>
-        <li className="flex items-center gap-1.5"><span className="h-1 w-3 rounded-full bg-navy/70" />{t.legend.other}</li>
+      <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-caption text-haze" aria-hidden>
+        <li className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-white/10 ring-1 ring-haze/30" />{t.legend.running}</li>
+        <li className="flex items-center gap-1.5"><span className="hatch h-2 w-3 rounded-sm bg-slate/70" />{common.stopped}</li>
+        <li className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-full bg-dalmia-orange" />{t.legend.high}</li>
+        <li className="flex items-center gap-1.5"><span className="h-1 w-3 rounded-full bg-sky/70" />{t.legend.other}</li>
+        <li>{evidence.kpiDerivedPlural} · {evidence.notValidatedPlural}</li>
       </ul>
     </div>
   );

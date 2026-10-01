@@ -2,15 +2,22 @@
 // tests/wording.test.ts scans this file. Words about present-time monitoring are allowed only
 // in the Console ribbon and inside the marked future-stages block of the Roadmap.
 
-export const brandLine = { product: "Kiln Intelligence", stage: "Proof of concept", builtBy: "Built by Astrikos AI" };
+export const brandLine = { product: "Kiln Intelligence", stage: "Proof of concept", builtBy: "Built by Astrikos AI", short: "Astrikos × Dalmia" };
 // Top bar: what this is, where, which data, and that it is a historical analysis (never a monitoring claim).
 export const context = {
   plant: "Dalmia Cement · Ariyalur kiln",
+  plantShort: "Ariyalur",
   period: "Jun–Aug 2025 history",
   status: "Historical analytical view",
+  statusShort: "Historical · Jun–Aug 2025",
   statusHint: "Every screen replays or summarises recorded June–August 2025 data. Nothing here is connected to the plant.",
 };
-export const footer = "Kiln Intelligence proof of concept · built by Astrikos AI for Dalmia Cement, Ariyalur · historical data only";
+// Co-brand footer: text only, no repeated logos.
+export const footer = {
+  brands: "Astrikos AI × Dalmia Bharat",
+  scope: "Ariyalur · Historical analytical proof of concept · historical data only",
+  status: "Historical analytical view · Jun–Aug 2025",
+};
 
 // Shared evidence labels: every abnormal-period surface carries both.
 export const evidence = {
@@ -100,7 +107,16 @@ export const common = {
 // ---------------------------------------------------------------- 1. Executive Summary
 export const summary = {
   eyebrow: "Stage 1 · delivered on your data",
-  heroTitle: "Kiln efficiency and deposit-risk intelligence for Ariyalur",
+  heroTitle: "A historical view of efficiency deterioration and process behaviour at Ariyalur.",
+  heroPeriod: "Jun — Aug 2025",
+  core: {
+    label: "Core finding",
+    lead: "Warning-state share increased",
+    from: "June",
+    to: "August",
+    sub: "Share of running time the Kiln Health Index spent in Warning, against your April–May normal.",
+    foot: (n: number) => `${n} KPI-derived abnormal periods in the same history · Not validated plant events`,
+  },
   heroSub: (rows: string) => `Built on ${rows} rows of your own SCADA data.`,
   thesis: (jun: string, aug: string, n: number) =>
     `From June to August the kiln spent more of its running time in Warning every month, ${jun} in June to ${aug} in August, and ${n} KPI-derived abnormal periods stand out in the process data (not validated plant events).`,
@@ -148,12 +164,16 @@ export const summary = {
     { name: "Early warning", status: "next", note: "Needs your event logs to calibrate" },
   ] as const,
   stepState: { past: "(where you are today)", done: "(completed)", next: "(next stage)", future: "(later stage)" },
+  stepTag: { past: "Today", done: "Demonstrated", next: "Requires plant data", future: "Requires plant data" },
   objectiveStatus: { delivered: "Delivered", signals: "Weak signal only", next: "Next stage: needs event logs" },
 };
 
 // ---------------------------------------------------------------- 2. Console
 export const consoleCopy = {
   title: "Kiln Health Console",
+  deckEyebrow: "Historical kiln console",
+  deckTimeline: "Historical replay timeline",
+  noData: "No data",
   intro: "What a shift engineer would see, replayed on your June–August data.",
   ribbon: "Replay of recorded June–August data. Live mode arrives with SCADA integration (Stage 3).",
   gaugeLabel: healthIndex.name,
@@ -184,7 +204,7 @@ export const consoleCopy = {
     selected: "Replaying",
     goTo: "Go to",
     jump: "Jump to drift onset:",
-    jumpTo: (label: string, when: string) => `Jump to where ${label} (high severity) began drifting, ${when}`,
+    jumpTo: (label: string, when: string) => `${label} ${when}, jump to where this high-severity period began drifting`,
     play: "Play",
     pause: "Pause",
     speed: "Speed",
@@ -241,6 +261,9 @@ export const periods = {
   label: (n: number) => `Period ${n}`,
   indexTitle: "Period index",
   indexSub: "Select a period to see what changed and replay it in the console.",
+  timelineTitle: "Periods in time order",
+  timelineNote: "Amber marks the periods rated high severity.",
+  highMark: "High severity",
   systemsCount: (n: number) => `${n} of 5`,
   matrixLabel: "Deviation from April–May normal",
   drawer: {
@@ -261,6 +284,7 @@ export const periods = {
     chart: "Kiln Health Index, 24 h either side",
     replay: "Replay from where the drift began",
     onset: "Drift began",
+    eyebrow: (when: string) => `Historical · ${when}`,
   },
   loadText: (load: string, change: string) => load === "LOAD_ASSOCIATED"
     ? `Feed changed ${change} TPH against the 2 hours before, so load may have contributed.`
@@ -411,6 +435,8 @@ export const validation = {
     { title: "Score", body: "Blend how far, how broad and how long the deviation is into the Kiln Health Index. Normal / Watch / Warning cut-offs come from how your kiln ran in April–May (its 75th and 90th percentiles)." },
     { title: "Test", body: "Fix the test before looking at results, then check whether the index rose ahead of each abnormal period." },
   ],
+  eyebrow: "How we validated",
+  sections: { result: "Result", interpretation: "Interpretation", limitations: "Limitations", method: "Method", evidence: "Evidence" },
   verdictLabel: "Historical early-warning endpoint",
   verdict: "Not supported",
   verdictNote: "The test was fixed before looking at results and is reported as found.",

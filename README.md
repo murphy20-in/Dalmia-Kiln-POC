@@ -13,7 +13,7 @@ Reactive Detection
 
 ## Pitch dashboard
 
-The client-facing demo lives in [`dashboard/`](dashboard/README.md): a static, eight-page app on the frozen Phase 1–9 outputs.
+The client-facing demo lives in [`dashboard/`](dashboard/README.md): a static, eight-page app on the frozen Phase 1–9 outputs, presented as an Astrikos AI × Dalmia co-brand (design system in `dashboard/DESIGN_SYSTEM.md`).
 
 ```bash
 cd dashboard && npm install && npm run dev   # http://localhost:5173/

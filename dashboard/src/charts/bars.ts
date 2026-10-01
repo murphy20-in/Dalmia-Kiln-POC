@@ -1,5 +1,5 @@
 // Stacked columns (monthly shares), sorted horizontal bars (contributions) and small month columns.
-import { brand } from "../theme";
+import { background, brand } from "../theme";
 import type { Option } from "./Chart";
 import { tip } from "./tooltip";
 
@@ -26,8 +26,8 @@ export function stackedColumns({ categories, stacks }: { categories: string[]; s
       name: s.name,
       stack: "all",
       barWidth: "44%",
-      itemStyle: { color: s.color, borderColor: "#fff", borderWidth: 1.5, borderRadius: i === stacks.length - 1 ? [3, 3, 0, 0] : 0 },
-      label: { show: true, color: s.labelColor ?? "#fff", fontWeight: 600, fontSize: 12, formatter: (p: { value: number }) => (p.value >= 0.06 ? pct(p.value) : "") },
+      itemStyle: { color: s.color, borderColor: brand.white, borderWidth: 1.5, borderRadius: i === stacks.length - 1 ? [3, 3, 0, 0] : 0 },
+      label: { show: true, color: s.labelColor ?? brand.white, fontWeight: 600, fontSize: 12, formatter: (p: { value: number }) => (p.value >= 0.06 ? pct(p.value) : "") },
       data: s.values,
       emphasis: { focus: "series" },
     })),
@@ -44,7 +44,7 @@ export function hbars({ items, max, unit = "Index points" }: { items: { name: st
     yAxis: { type: "category", data: sorted.map((d) => d.name), axisLine: { show: false }, axisLabel: { color: brand.ink, fontSize: 13 } },
     series: [{
       type: "bar", barWidth: 14,
-      showBackground: true, backgroundStyle: { color: brand.page, borderRadius: [0, 3, 3, 0] },
+      showBackground: true, backgroundStyle: { color: background.subtle, borderRadius: [0, 3, 3, 0] },
       data: sorted.map((d) => ({ value: d.value, itemStyle: { color: d.color, borderRadius: [0, 3, 3, 0] } })),
       label: { show: true, position: "right", color: brand.navyInk, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) },
       animationDurationUpdate: 250,

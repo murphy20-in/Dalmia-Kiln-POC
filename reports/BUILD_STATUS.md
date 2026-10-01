@@ -541,3 +541,22 @@ Reviews:
 - Ponytail audit: no critical or high findings.
 
 **Behaviour change for the presenter:** presentation mode is now Shift+P (was P), and Validation comes before Roadmap in the ← → order.
+
+### Brand fusion pass (2026-10-01): Astrikos AI × Dalmia
+
+Presentation only. No data file, score, period definition, validation statistic, `_sources` map or value model changed (sha256 of all 7 `public/data/*.json` identical).
+
+- **Branding:** one co-brand lockup (Astrikos on a dark panel, Dalmia Bharat on a white panel, supplied artwork unrecoloured) top-left; text-only sidebar and footer.
+- **Environment:** navy shell and page bands with a fading technical grid and abstract kiln arcs; cool canvas; white analytical surfaces; Dalmia orange as the sparing accent. All colour comes from `src/theme.ts`, enforced by `tests/tokens.test.ts`.
+- **Pages:** an Executive Summary hero with a core-finding panel; a dark Console deck with hatched no-data spans; a vertical Periods timeline; a Validation hero that leads with "Not supported"; a Roadmap journey spine that keeps demonstrated and future work visibly apart.
+- **Status:** the top bar reads "Ariyalur · Historical · Jun–Aug 2025". There is no live indicator.
+
+| Check | Result |
+|---|---|
+| Build, typecheck, tests | Pass (10/10, incl. the new token test) |
+| Playwright journeys | 12/12 |
+| Lighthouse desktop (all 8 routes) | Performance 99–100; accessibility 100; best practices 100. Mobile home 93 / 100 |
+| Console 4× playback | 59.8 fps vs 60.1 fps before; 0 long tasks |
+| Horizontal overflow | None at 375 / 768 / 1024 / 1280 / 1440 / 1920 |
+
+Reviews: React, accessibility, security, claims and Ponytail: no critical or high findings; every finding and its disposition is in `dashboard/REVIEW_LOG.md`. Details: `dashboard/UI_UX_AUDIT.md` section 5 and `dashboard/DESIGN_SYSTEM.md`.

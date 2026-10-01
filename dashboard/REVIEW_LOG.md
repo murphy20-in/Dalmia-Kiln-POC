@@ -257,3 +257,72 @@ All tooltip formatters go through the escaping `tip()`. There is no `dangerously
 | UB3 | Coverage heatmap gaps changed from alarm orange (G19) to dark navy. | DELIBERATE: the brief says not to make data quality look like a red-alert monitor. Gaps stay the loudest cells, with "✕ 0%" text and a legend. |
 | UB4 | Nav order now groups Intelligence → Evidence → Roadmap, so Validation comes before Roadmap in presentation mode. | DELIBERATE: grouping requested in the brief; the pitch now ends on the ask. |
 | UB5 | The native date input follows the browser locale (12-hour in en-US). | ACCEPTED: a large 24-hour "Replaying" stamp is now the primary readout. |
+
+# Brand fusion pass (2026-10-01): Astrikos AI × Dalmia
+
+Reviewers: ecc:react-reviewer (BR), ecc:a11y-architect (BA), ecc:security-reviewer (BS), ecc:mle-reviewer (BM), ponytail-audit (BP), and the builder (BB).
+
+## React / TypeScript (BR): 0 critical
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| BR1 | HIGH | Print: dark surfaces would print white-on-white; no `print-color-adjust`. | FIXED: `* { print-color-adjust: exact }`; dark surfaces keep their colour (checked with print emulation). |
+| BR2 | MED | Data Readiness heatmap rebuilt on every render (the "Copied" click redrew it). | FIXED: `useMemo`. |
+| BR3 | MED | `StatusGauge` rebuilt its option on every Console tick. | FIXED: `memo`. |
+| BR4 | MED | The drawer's portal was printed over the page. | FIXED: `no-print`. |
+| BR5 | MED | The expanded sidebar overlay below 768 px stayed open after navigating. | FIXED: collapses on route change. |
+| BR6 | LOW | Validation hero was a `div role=region`; `aria-current="true"` on timeline links. | FIXED: `section`; `"page"`. |
+| BR7 | LOW | Dead CSS: `.chip`, `.chip-btn`, `.anim-settle`. | FIXED: removed. |
+| BR8 | LOW | Render-time ref assignment in Drawer; hard-coded " to " in a screen-reader span; `reducedMotion` imported from `ui`; unneeded type exports. | ACCEPTED: all pre-existing, none a defect. |
+| BR9 | n/a | Console playback memoisation. | VERIFIED intact (`ConsoleBand`, `JumpChips`, `Decisions`, `Track` memoised). |
+
+## Accessibility (BA): 0 critical, 2 serious, 7 moderate
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| BA1 | SERIOUS | The sticky Console deck (about 300 px) could hide a focused control (2.4.11). | FIXED: sticky only at ≥1024 × ≥800 px, with `scroll-padding-top` that clears it. At 1280×720 it scrolls normally. |
+| BA2 | SERIOUS | Route changes were silent: one static `<title>`, focus unmoved. | FIXED: per-page `document.title`; focus moves to `<main>` after a route change (not on first load). |
+| BA3 | MOD | Scrubber gaps and ticks under 3:1 and differing by hue only. | FIXED: solid slate/70 gaps with a hatch; high-severity ticks are taller and orange; legend matches. |
+| BA4 | MOD | Windows High Contrast drops fills. | FIXED: transparent outlines on thumb, ticks and gaps; `.hatch` gets a dashed edge in forced colours. |
+| BA5 | MOD | Reduced motion shortened but did not stop looping animations (`animate-pulse`). | FIXED: `animation-iteration-count: 1`, `scroll-behavior: auto`. |
+| BA6 | MOD | 11 px `haze` text over the hero glow was about 4.4–4.6:1. | FIXED: `mist` (8:1). |
+| BA7 | MOD | The sidebar was a redundant `aside` landmark; the lockup name read "×" as "times". | FIXED: `div`; "and". |
+| BA8 | MOD | Console status region plus `aria-valuetext` on every scrub; Shift+P / arrows (2.1.4); overlay menu has no Escape. | ACCEPTED: the region is silent while playing; Shift+P has a modifier and a visible Present button; arrows apply only in presentation mode. |
+| BA9 | MINOR | LOW-severity Gantt bars about 2:1; hover-only tooltips; fixed px sizes. | ACCEPTED: bars are labelled with text; every chart has "View data"; unchanged from before. |
+
+Lighthouse accessibility 100 on all 8 routes before and after these fixes. Contrast ratios in BA were hand-computed (about ±0.1).
+
+## Security (BS): 0 critical/high/medium
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| BS1 | LOW | `npm audit --omit=dev`: 3 moderate advisories (echarts XSS, react-router open redirect and SSR). | PRE-EXISTING, identical at HEAD. The only new dependency, `@fontsource/jetbrains-mono`, has none. Recommended follow-up: echarts 6. |
+| BS2 | n/a | Tooltip HTML, SVG logos, external loads, favicon, dangerous sinks. | VERIFIED: every tooltip string and swatch colour is escaped or a theme token; logos are `<img>` with no script, `foreignObject` or external href; no runtime external loads. |
+
+## Claims and analytical integrity (BM): 0 blockers, 0 major, 2 minor
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| BM1 | MINOR | The hero foot said "(not validated plant events)" in lowercase. | FIXED: "Not validated plant events", matching the evidence label. |
+| BM2 | MINOR | The Console scrubber legend and jump chips lacked the two period labels. | FIXED for the legend: it carries "KPI-derived abnormal periods · Not validated plant events". The chips are jump buttons for a moment, not period surfaces. |
+| BM3 | n/a | Data, scripts, gaps, numbers. | VERIFIED: no diff under `public/` or `scripts/`; hero numbers come from `summary.json` via `fmtPct`; KPI micro charts use existing fields only; `connectNulls: false` intact. |
+
+## Ponytail audit (BP): no critical/high
+
+| # | Finding | Disposition |
+|---|---|---|
+| BP1 | `background.navy/hero/surfaceElevated/overlay`, `dalmia.blue/green/grey`, `fog` have no component uses. | ACCEPTED: named in the brief as the semantic token set. |
+| BP2 | `motion.ease`, `elevation.*` and `gradient.*` are read only by `tailwind.config.ts`. | ACCEPTED: that is how they reach CSS. |
+
+## Builder (BB)
+
+| # | Finding | Disposition |
+|---|---|---|
+| BB1 | The `aside` print rule hid the Executive Summary "Core finding" in print. | FIXED: it is a `section`. DESIGN_SYSTEM.md records the rule. |
+| BB2 | The Dalmia logo's 652×652 canvas leaves large empty margins. | FIXED by cropping the `viewBox` only (`12 184 606 292`); all paths are identical to the supplied file. |
+| BB3 | The seam chip overlapped the Dalmia "D". | FIXED: wider panels, smaller chip, smaller logo. |
+| BB4 | The Efficiency KPI value overflowed its tile at 1280. | FIXED: smaller value, `whitespace-nowrap`. |
+| BB5 | The wording test bans the literal token "POC". | The brief's "Historical Analytical POC" is rendered "Historical analytical proof of concept". |
+| BB6 | Console playback after the redesign. | MEASURED against the previous commit on the same machine: 59.8 / 60.1 fps vs 60.1 / 60.1, 0 long tasks. |
+| BB7 | The brief names `/mnt/data/...` for the logos and references. | The files were in the repo at `Astrikos and Dalmia logo SVG/`; used from there. That folder is left untracked; the logos used by the app are copied to `src/assets/brand/`. |
+| BB8 | The brief lists ecc:planner and ecc:code-architect. | NOT SPAWNED: the design was planned in-session from the existing code. The React, accessibility, security and claims reviewers and the Ponytail audit were run. |

@@ -4,11 +4,14 @@ export const toMs = (t: string) => Date.parse(t + ":00Z");
 export const fromMs = (ms: number) => new Date(ms).toISOString().slice(0, 16);
 
 const dt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+const dty = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 const d = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short" });
 const mon = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "short" });
 
 const day = (t: string) => toMs(t.length === 10 ? t + "T00:00" : t);
 export const fmtDateTime = (t: string) => dt.format(toMs(t)).replace(",", " ·");
+/** Full historical stamp for the console and drawer: "18 Aug 2025 · 14:32". */
+export const fmtStamp = (t: string) => dty.format(toMs(t)).replace(",", " ·");
 export const fmtDate = (t: string) => d.format(day(t));
 export const fmtMonth = (ym: string) => mon.format(toMs(ym + "-01T00:00"));
 

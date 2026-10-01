@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronDown, Copy, Fingerprint, GitBranch, ShieldCheck, Users } from "lucide-react";
 import Chart from "../charts/Chart";
 import { heatmap } from "../charts/heatmap";
 import ChartCard from "../components/ChartCard";
-import { Badge, Callout, Lead, Loading, PageHeader, SectionHeader } from "../components/ui";
-import { dataPage as t, labels } from "../copy";
+import { Badge, Callout, Lead, Loading, Page, SectionHeader } from "../components/ui";
+import { dataPage as t, labels, nav } from "../copy";
 import { useData } from "../data";
 import { fmtMonth } from "../lib/format";
 import { brand, issueColor } from "../theme";
@@ -20,23 +20,23 @@ const SevChip = ({ s }: { s: string }) => (
 export default function DataReadiness() {
   const d = useData("data");
   const [copied, setCopied] = useState<number | null>(null);
-  if (!d) return <Loading />;
-  const months = d.months.map(fmtMonth);
-  const total = SEV.reduce((a, s) => a + d.issues[s], 0);
-  const maxIssues = Math.max(...SEV.map((s) => d.issues[s]));
-  const coverage = heatmap({
+  const months = useMemo(() => d?.months.map(fmtMonth) ?? [], [d]);
+  // Memoised so a "Copied" click does not hand the chart a new option and redraw the heatmap.
+  const coverage = useMemo(() => d && heatmap({
     x: months, y: d.coverage.map((c) => c.dataset), max: 100, ramp: [brand.navyInk, brand.heatLow], darkLow: true, leftWidth: 112,
     cells: d.coverage.flatMap((c, row) => c.pct.map((v, col) => [col, row, v] as [number, number, number])),
     format: (v) => (v === 0 ? "✕ 0%" : v >= 99.95 ? "100%" : `${v.toFixed(v >= 99 ? 1 : 0)}%`), valueLabel: t.coverageLabel,
-  });
+  }), [d, months]);
+  if (!d || !coverage) return <Loading />;
+  const total = SEV.reduce((a, s) => a + d.issues[s], 0);
+  const maxIssues = Math.max(...SEV.map((s) => d.issues[s]));
 
   const copy = async (i: number, text: string) => {
     try { await navigator.clipboard.writeText(text); setCopied(i); window.setTimeout(() => setCopied(null), 2000); } catch { /* clipboard blocked: button simply does not confirm */ }
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={t.title} question={t.question} />
+    <Page eyebrow={nav.groups.evidence} title={t.title} question={t.question}>
       <Lead sub={t.issuesSub}>{t.issuesTitle(total)}</Lead>
 
       <div className="grid gap-6 lg:grid-cols-12">
@@ -107,6 +107,6 @@ export default function DataReadiness() {
           ))}
         </div>
       </section>
-    </div>
+    </Page>
   );
 }
