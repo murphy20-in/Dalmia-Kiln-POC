@@ -160,3 +160,100 @@ Build step 9: six reviews in parallel, plus the step 8 evaluator. Every finding 
 | G2-5 | Gantt gridline near 29 Jun does not match a label. | ACCEPTED: ECharts time-axis minor split; labels are correct. |
 | G2-6 | Captures caught intro animations mid-way. | ACCEPTED: 300 ms animation by spec. The demo script opens tabs before the meeting. |
 | G2-7 | Lighthouse contrast: white text on a green badge (Roadmap, stepper) and on a cyan chip (Exec). | FIXED: darker `normal-ink` fill; the chip is navy. |
+
+---
+
+# UX pass (2026-10-01): presentation polish
+
+This pass covered presentation only. The audit, scores and gates are in [UI_UX_AUDIT.md](UI_UX_AUDIT.md); the tokens and components are in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
+**Analytical integrity:** these files have the same sha256 before and after the pass:
+- `public/data/*.json` (7 files)
+- `scripts/export_data.py`
+- `src/lib/value.ts`
+
+**Reviews:** ran in parallel after the build.
+
+**Reviewer codes (UX pass):**
+- **UM:** claims (mle-reviewer)
+- **UA:** WCAG 2.2 AA (a11y-architect)
+- **UR:** React / architecture (react-reviewer)
+- **US:** security (security-reviewer)
+- **UP:** ponytail audit
+- **UB:** builder
+
+## Claims (UM): 0 blockers, 3 major, 6 minor
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| UM1 | MAJOR | The hero thesis mentioned "12 abnormal periods" without the evidence labels. | FIXED: "12 KPI-derived abnormal periods … (not validated plant events)". |
+| UM2 | MAJOR | Efficiency daily chart draws period markers with no "not validated" label. | FIXED: the legend reads "Abnormal period began (KPI-derived, not a validated plant event)". |
+| UM3 | MAJOR | "Demonstrated" next to "Early detection · Delivered" could read as validated. | FIXED: "Demonstrated in this proof of concept, on historical data". The stage name "Early detection" stays (client wording, see K4/K5). |
+| UM4 | MINOR | "Repeatable?" reads as validated. | FIXED: "Stable across settings?" and "… (a sensitivity check, not validation)". |
+| UM5 | MINOR | "System evidence" can read as evidence of an event. | FIXED: "System deviation from April–May normal". |
+| UM6 | MINOR | "pts" vs "percentile points". | FIXED: "percentile pts". |
+| UM7 | MINOR | "every month" is hard-coded. | ACCEPTED: `data.test.ts` pins the shares 0.251 / 0.416 / 0.530, so a data change fails the test first. |
+| UM8 | MINOR | "Each fixed, masked or set aside" is a blanket claim. | ACCEPTED: unchanged wording from the reviewed build (issuesSub). |
+| UM9 | MINOR | Present tense ("at this moment", "right now") in a replay UI. | FIXED: "at the replayed moment". The decisions panel stays marked "Stage 3 · illustrative". |
+
+## Accessibility (UA): 0 critical, 5 serious, 7 moderate, 5 minor
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| UA1 | SERIOUS | The skip link `href="#main"` rewrote the HashRouter route. This was pre-existing. | FIXED: onClick moves focus to `main`. |
+| UA2 | SERIOUS | Bare `P` was a single-key shortcut (2.1.4). | FIXED: Shift+P. README and button hint updated. |
+| UA3 | SERIOUS | The navy focus ring was invisible on navy-ink panels. | FIXED: white ring with a navy halo inside navy surfaces. |
+| UA4 | SERIOUS | The sticky replay bar under the sticky header could fill a zoomed or small viewport. | FIXED: sticky only at `lg`, plus `scroll-padding-top`. |
+| UA5 | SERIOUS | An expanded sidebar at 320 px left about 80 px for content. | FIXED: below `md` the expanded sidebar overlays (fixed). A matchMedia listener collapses it on resize. |
+| UA6 | MODERATE | Changing label plus `aria-pressed` on Play/Pause and View data. | FIXED: `aria-pressed` removed; the label carries the state. |
+| UA7 | MODERATE | The Present button had no visible-text name below `sm`. | FIXED: `sr-only sm:not-sr-only`. |
+| UA8 | MODERATE | Stepper state conveyed by colour only. | FIXED: sr-only state text and `aria-current="step"`. |
+| UA9 | MODERATE | Scrubber gap and tick contrast too low. | FIXED: gap fill `ink-muted/80`, ticks `navy/70`. |
+| UA10 | MODERATE | aria-live on the whole calculator column; `aria-busy` on the skeleton. | FIXED: live region on the total only (atomic); `aria-busy` removed. |
+| UA11 | MODERATE | Number inputs clamp silently. | ACCEPTED: units, including "%", are in every label. Clamping is unchanged from the reviewed build. |
+| UA12 | MODERATE | Console trend chart had no text alternative. | FIXED: the label gives the current value, zone and 24 h range. The sparkline stays labelled; the Efficiency number is shown as text. |
+| UA13 | MINOR | Nav group labels were aria-hidden. | FIXED: visible to assistive technology. |
+| UA14 | MINOR | The status chip was hidden on phones and carried meaning only in `title`. | FIXED: icon chip at all widths, plus sr-only status and hint. |
+| UA15 | MINOR | Selected period row is colour only. | FIXED: `aria-current` on its link. |
+| UA16 | MINOR | Jump-chip names. | OK: the name starts with the visible "Period N" and date. |
+| UA17 | MINOR | Tooltips are mouse-only. | ACCEPTED: every ChartCard has "View data". The Console charts carry text labels (UA12). |
+
+## React / architecture (UR): 0 critical/high
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| UR1 | MEDIUM | `Chart` memo cannot skip the time-dependent Console charts. | ACCEPTED, and the comment was corrected. They must redraw each tick. Static Console parts (header, chips, decisions, scrubber track) are memoised. Measured: 4× playback at 59 fps, p95 frame 16.8 ms, 0 long tasks. |
+| UR2 | MEDIUM | Logo hard-coded hex. | FIXED: `brand.navy` / `brand.cyan`. |
+| UR3 | MEDIUM | Colour literals outside theme.ts. | FIXED: `heatLow`, `navyLine`, `cyanSoft`, `heading`, `hoverFill`, `periodFill`, `periodEdge`, `gapFill`, `zoomFill` tokens. Tailwind reads them from theme.ts. |
+| UR4 | MEDIUM | ChartCard table toggle unmounts the chart, losing the zoom. | ACCEPTED: the table is the accessible view; resetting zoom on return is acceptable. |
+| UR5 | MEDIUM | `charts/Chart` imports `reducedMotion` from `components/ui`. | ACCEPTED: one small import; moving it adds a file for no behaviour change. |
+| UR6 | LOW | Play at the end of the data did nothing. | FIXED: restarts from the beginning. |
+| UR7 | LOW | Drawer focus return when the opener had been detached. | FIXED: `prev.isConnected` check, falling back to `main`. |
+| UR8 | LOW | Efficiency stacked-column options are built inline. | ACCEPTED: cheap, and only rebuilds on the O₂ toggle. |
+
+## Security (US): 0 critical/high/medium
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| US1 | LOW | `pages.yml` actions are pinned to tags, and permissions are workflow-wide. | ACCEPTED for this pass: CI is out of UI scope. Recommended follow-up: SHA pins and job-level `pages`/`id-token` permissions. |
+| US2 | LOW | No CSP meta. | ACCEPTED: optional hardening; GitHub Pages cannot set headers. Recommended follow-up, tested against the build. |
+
+All tooltip formatters go through the escaping `tip()`. There is no `dangerouslySetInnerHTML`, no external scripts, fonts or telemetry, and no secrets.
+
+## Ponytail audit (UP): no critical/high
+
+| # | Finding | Disposition |
+|---|---|---|
+| UP1 | `ScatterChart` and `AriaComponent` registered but unused. | FIXED: removed (about −9 kB). |
+| UP2 | `.mono` and `.btn-ghost` CSS classes unused; `CtaBand` unused after the hero redesign. | FIXED: removed. |
+| UP3 | Copy keys `labels.with`, `summary.cta` and `brandLine.dalmia/plant/vendor` unused. | FIXED: removed. |
+
+## Builder (UB)
+
+| # | Finding | Disposition |
+|---|---|---|
+| UB1 | Charts kept their width on live resize (grid items `min-width: auto`). | FIXED: `.card` is `min-w-0`. No overflow at 375–1920 on fresh load or live resize. |
+| UB2 | Periods index and matrix were too narrow side by side at 1280. | FIXED: stacked full width; matrix labels break onto two lines. |
+| UB3 | Coverage heatmap gaps changed from alarm orange (G19) to dark navy. | DELIBERATE: the brief says not to make data quality look like a red-alert monitor. Gaps stay the loudest cells, with "✕ 0%" text and a legend. |
+| UB4 | Nav order now groups Intelligence → Evidence → Roadmap, so Validation comes before Roadmap in presentation mode. | DELIBERATE: grouping requested in the brief; the pitch now ends on the ask. |
+| UB5 | The native date input follows the browser locale (12-hour in en-US). | ACCEPTED: a large 24-hour "Replaying" stamp is now the primary readout. |

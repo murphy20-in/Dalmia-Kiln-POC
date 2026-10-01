@@ -42,14 +42,14 @@ export default function StatusGauge({ value, zone, edges }: { value: number | nu
   const zoneLabel = zone ? zoneName[zone] : consoleCopy.gapTitle;
   return (
     <div>
-      <Chart option={option} height={250} label={value == null ? zoneLabel : consoleCopy.gaugeAlt(value.toFixed(1), zoneLabel)} />
-      <p className="-mt-2 text-center text-xs text-ink-muted">{healthIndex.scale}</p>
-      <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-ink">
+      <Chart option={option} height={220} label={value == null ? zoneLabel : consoleCopy.gaugeAlt(value.toFixed(1), zoneLabel)} />
+      <p className="-mt-2 text-center text-caption text-ink-muted">{healthIndex.scale}</p>
+      <ul className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-caption text-ink-body">
         <li><Swatch c={status.N.fill} /> {zoneName.N} &lt; {edges.watch}</li>
         <li><Swatch c={status.W.fill} /> {zoneName.W} {edges.watch}–{edges.warning}</li>
         <li><Swatch c={status.A.fill} /> {zoneName.A} ≥ {edges.warning}</li>
       </ul>
-      <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium" style={{ color: status.C.ink }}>
+      <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-caption font-medium" style={{ color: status.C.ink }}>
         <Lock size={12} aria-hidden /> {zoneName.C}: {consoleCopy.criticalLocked.replace("Critical ", "")}
       </p>
     </div>

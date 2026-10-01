@@ -2,11 +2,27 @@
 // tests/wording.test.ts scans this file. Words about present-time monitoring are allowed only
 // in the Console ribbon and inside the marked future-stages block of the Roadmap.
 
-export const brandLine = { dalmia: "DALMIA CEMENT", vendor: "Astrikos AI", product: "Kiln Intelligence" };
-export const topChip = "Ariyalur Kiln · Historical data Jun–Aug 2025";
-export const footer = "Built by Astrikos AI for Dalmia Cement, Ariyalur";
+export const brandLine = { product: "Kiln Intelligence", stage: "Proof of concept", builtBy: "Built by Astrikos AI" };
+// Top bar: what this is, where, which data, and that it is a historical analysis (never a monitoring claim).
+export const context = {
+  plant: "Dalmia Cement · Ariyalur kiln",
+  period: "Jun–Aug 2025 history",
+  status: "Historical analytical view",
+  statusHint: "Every screen replays or summarises recorded June–August 2025 data. Nothing here is connected to the plant.",
+};
+export const footer = "Kiln Intelligence proof of concept · built by Astrikos AI for Dalmia Cement, Ariyalur · historical data only";
+
+// Shared evidence labels: every abnormal-period surface carries both.
+export const evidence = {
+  kpiDerived: "KPI-derived abnormal period",
+  kpiDerivedPlural: "KPI-derived abnormal periods",
+  notValidated: "Not a validated plant event",
+  notValidatedPlural: "Not validated plant events",
+  source: "Source",
+};
 
 export const nav = {
+  groups: { intelligence: "Intelligence", evidence: "Evidence", roadmap: "Roadmap" },
   summary: "Executive Summary",
   console: "Kiln Health Console",
   efficiency: "Efficiency Story",
@@ -18,7 +34,7 @@ export const nav = {
   collapse: "Collapse menu",
   expand: "Expand menu",
   present: "Present",
-  presentHint: "Presentation mode (P). Use ← → to move between pages.",
+  presentHint: "Presentation mode (Shift+P). Use ← → to move between pages, Esc to exit.",
   exitPresent: "Exit presentation",
 };
 
@@ -66,7 +82,7 @@ export const severityName = { HIGH: "High", MODERATE: "Moderate", LOW: "Low" } a
 export const labels = {
   month: "Month", day: "Day", system: "System", period: "Period", dataset: "Dataset",
   start: "Start", end: "End", duration: "Duration", severity: "Severity", mainSystem: "Main system",
-  headline: "Headline numbers", skip: "Skip to content", pages: "Pages", with: "with",
+  headline: "Headline numbers", skip: "Skip to content", pages: "Pages",
   examples: "Examples of issues caught", rigour: "How the work was checked", domino: "What happens when alternative fuel stops",
   severityLegend: (s: string) => `${s} severity`,
 };
@@ -86,8 +102,18 @@ export const summary = {
   eyebrow: "Stage 1 · delivered on your data",
   heroTitle: "Kiln efficiency and deposit-risk intelligence for Ariyalur",
   heroSub: (rows: string) => `Built on ${rows} rows of your own SCADA data.`,
+  thesis: (jun: string, aug: string, n: number) =>
+    `From June to August the kiln spent more of its running time in Warning every month, ${jun} in June to ${aug} in August, and ${n} KPI-derived abnormal periods stand out in the process data (not validated plant events).`,
   heroCta: "Open the Kiln Health Console",
   heroCta2: "See the Stage 2 ask",
+  nextTitle: "Next: Stage 2 early warning",
+  nextBody: "Early warning cannot be tested until the periods are matched to real plant events. Dalmia provides:",
+  evidence: {
+    rows: "Source: SCADA exports, April–September 2025",
+    periods: "KPI-derived · not validated plant events",
+    eff: "Monthly median · 0 = your April–May normal",
+    issues: "Source: data-health audit, before modelling",
+  },
   journeyTitle: "Where Ariyalur is on the journey",
   journey: [
     { label: "Reactive", note: "Today: problems seen after they happen", state: "past" },
@@ -96,10 +122,10 @@ export const summary = {
     { label: "Planned intervention", note: "Stages 3–4", state: "future" },
   ] as const,
   kpis: {
-    rows: { label: "rows analysed", sub: (tags: number) => `${tags} process tags · Apr–Sep 2025` },
-    periods: { label: "abnormal periods found automatically", sub: "Jun–Aug 2025, from process data" },
-    eff: { label: "Efficiency Index, June → August", sub: "0 = your April–May normal" },
-    issues: { label: "data issues caught before modelling", sub: "1 critical · 4 high · 16 medium · 11 low / info" },
+    rows: { label: "SCADA rows analysed", sub: (tags: number) => `Across ${tags} process tags, five months of running data.` },
+    periods: { label: "Abnormal periods, Jun–Aug", sub: (high: number) => `Found automatically in the process data; ${high} rated high severity.` },
+    eff: { label: "Efficiency Index, June → August", sub: "Process drift away from the April–May normal." },
+    issues: { label: "Data issues caught", sub: (i: Record<"critical" | "high" | "medium" | "low" | "info", number>) => `${i.critical} critical · ${i.high} high · ${i.medium} medium · ${i.low + i.info} low / info. Each fixed, masked or set aside.` },
   },
   findingsTitle: "What your kiln data revealed",
   findings: {
@@ -121,19 +147,15 @@ export const summary = {
     { name: "Preliminary score: Kiln Health Index", status: "delivered", note: "A 0–100 index against your April–May normal, with Normal / Watch / Warning" },
     { name: "Early warning", status: "next", note: "Needs your event logs to calibrate" },
   ] as const,
+  stepState: { past: "(where you are today)", done: "(completed)", next: "(next stage)", future: "(later stage)" },
   objectiveStatus: { delivered: "Delivered", signals: "Weak signal only", next: "Next stage: needs event logs" },
-  cta: {
-    title: "Early detection is delivered on your data. Early warning is the next stage.",
-    body: "To start Stage 2 we need four things, starting with your coating, ring, cleaning and stoppage logs.",
-    button: "See what Stage 2 needs from Dalmia",
-  },
 };
 
 // ---------------------------------------------------------------- 2. Console
 export const consoleCopy = {
   title: "Kiln Health Console",
   intro: "What a shift engineer would see, replayed on your June–August data.",
-  ribbon: (t: string) => `Replay of historical data · ${t}. Live mode arrives with SCADA integration.`,
+  ribbon: "Replay of recorded June–August data. Live mode arrives with SCADA integration (Stage 3).",
   gaugeLabel: healthIndex.name,
   gaugeAlt: (v: string, zone: string) => `${healthIndex.name} ${v} out of 100: ${zone}.`,
   criticalLocked: "Critical activates after calibration with your event logs",
@@ -143,11 +165,12 @@ export const consoleCopy = {
   effTitle: effIndex.name,
   effSpark: "Last 24 h",
   driversTitle: "What's driving it",
-  driversSub: "Index points contributed by each system at this moment",
+  driversSub: "Index points contributed by each system at the replayed moment",
   driversNone: "No system is contributing. The kiln is at its April–May normal.",
   reasonsTitle: "Top reasons",
-  reasonsNone: "No system is outside its normal range right now.",
+  reasonsNone: "No system is outside its normal range at the replayed moment.",
   trendTitle: "Last 24 hours",
+  trendRange: (lo: string, hi: string) => `Ranged from ${lo} to ${hi} over the 24 hours shown.`,
   trendSub: "Shaded blocks are abnormal operating periods found in the history.",
   decisionsTitle: "Decision support",
   decisionsSub: "How the console will point to a decision once calibrated. Not tied to the moment being replayed.",
@@ -158,7 +181,10 @@ export const consoleCopy = {
   ],
   replay: {
     time: "Replay time",
-    jump: "Jump to where a high-severity period began drifting",
+    selected: "Replaying",
+    goTo: "Go to",
+    jump: "Jump to drift onset:",
+    jumpTo: (label: string, when: string) => `Jump to where ${label} (high severity) began drifting, ${when}`,
     play: "Play",
     pause: "Pause",
     speed: "Speed",
@@ -166,6 +192,7 @@ export const consoleCopy = {
     stepBack: "Back 10 minutes",
     stepFwd: "Forward 10 minutes",
   },
+  legend: { running: "Running data", high: "High-severity abnormal period", other: "Other abnormal period" },
   gapTitle: "Kiln stopped / no data",
   gapBody: "The kiln was stopped, restarting, or the data was incomplete at this time. Nothing is drawn rather than guessed.",
 };
@@ -177,6 +204,10 @@ export const efficiency = {
   hero: (a: string, b: string) => `Time in Warning: ${a} in June → ${b} in August.`,
   heroSub: "Share of running time the Kiln Health Index spent in Warning, measured against your April–May normal. The August-versus-June difference is the one that holds up statistically.",
   zonesTitle: "Warning grew every month while Normal shrank",
+  zonesSub: "Share of running time in Normal, Watch and Warning, by month.",
+  source: "Source: Kiln Health Index on June–August running data, against the April–May reference.",
+  markerLegend: "Abnormal period began (KPI-derived, not a validated plant event)",
+  interpretTitle: "What the evidence does and does not establish",
   dailyTitle: "The daily index climbed through July and stayed high in August",
   dailySub: "Daily median of the Kiln Health Index (0–100). Dotted lines mark the day each abnormal period (#1–#12) began; gaps are days the kiln was stopped or had no data. Drag the handles below to zoom.",
   o2Toggle: "Sensitivity check: O₂ analyser excluded",
@@ -197,21 +228,36 @@ export const periods = {
   title: "Abnormal Periods",
   question: "What went wrong, when, and which systems?",
   subtitle: "Found automatically from process data; next step is matching them to your plant logs.",
-  tiles: { total: "abnormal periods, Jun–Aug", high: "high severity", multi: "involved several systems", longest: "longest period" },
+  tiles: {
+    total: "Abnormal periods, Jun–Aug", high: "High severity", multi: "Involved several systems", longest: "Longest period",
+    highNote: "Severity = how far, how broad, how long",
+    multiNote: (n: number) => `Out of ${n} periods`,
+  },
+  source: "Source: Kiln Health Index and period finder on June–August SCADA data. Not yet matched to plant logs.",
   ganttTitle: "Periods cluster in mid-June and mid-July",
   ganttSub: "Each bar is one abnormal operating period. Click a bar for details.",
   heatTitle: "Combustion, thermal and draft deviate together most often",
   heatSub: "How far each system moved from its April–May normal during each period (darker = further)",
   label: (n: number) => `Period ${n}`,
+  indexTitle: "Period index",
+  indexSub: "Select a period to see what changed and replay it in the console.",
+  systemsCount: (n: number) => `${n} of 5`,
+  matrixLabel: "Deviation from April–May normal",
   drawer: {
+    factsTitle: "Period facts",
+    classification: "Classification",
+    changedTitle: "What changed",
+    evidenceTitle: "System deviation from April–May normal",
+    evidenceSub: "How far each system moved from its April–May normal during the period (larger = further).",
+    contextTitle: "Historical context",
     when: "When",
     duration: "Duration",
     severity: "Severity",
     dominant: "Main system",
     systems: "Systems involved",
     load: "Load context",
-    robust: "Repeatable?",
-    robustVal: (p: string) => `Found again in ${p} of alternative settings`,
+    robust: "Stable across settings?",
+    robustVal: (p: string) => `Found again in ${p} of alternative analysis settings (a sensitivity check, not validation)`,
     chart: "Kiln Health Index, 24 h either side",
     replay: "Replay from where the drift began",
     onset: "Drift began",
@@ -233,6 +279,7 @@ export const fuel = {
     { title: "Temperatures dip", body: "Preheater cyclone, TAD and hood temperatures fall in the same hours." },
   ],
   monthlyTitle: "AFR use eased from April to August while kiln feed stayed between about 380 and 420 TPH",
+  source: "Source: April–August SCADA running data; monthly AFR mean and kiln-feed median.",
   afrPanel: "Mean AFR while running (TPH)",
   feedPanel: "Median kiln feed while running (TPH)",
   cardsTitle: "What moves with alternative fuel",
@@ -260,7 +307,14 @@ export const dataPage = {
   title: "Data Readiness",
   question: "Can we trust this, and what do you need?",
   coverageTitle: "Two logs are missing a whole month: main kiln (September) and Kiln-IIIA (April)",
-  coverageSub: "Share of minutes present per dataset and month",
+  coverageSub: "Share of minutes present per dataset and month. Darker cells are missing more data.",
+  coverageLabel: "Minutes present",
+  coverageFull: "Complete",
+  coverageNone: "Missing",
+  coverageSource: "Source: data-health audit of the SCADA exports received, April–September 2025.",
+  bySeverity: "Issues by severity",
+  bySeveritySub: "Severity is the effect on analysis, not on the plant.",
+  examplesSub: (n: number, total: number) => `${n} examples of the ${total}. Open a card for what was found and how it was handled.`,
   issuesTitle: (n: number) => `${n} data issues caught before any modelling`,
   issuesSub: "By severity. Each was fixed, masked or set aside, never silently used.",
   sev: { critical: "Critical", high: "High", medium: "Medium", low: "Low", info: "Info" } as Record<string, string>,
@@ -298,6 +352,8 @@ export const roadmap = {
       get: ["Intervention recommendations", "Fuel-mix optimisation", "Roll-out to other kilns"],
       need: ["Fuel-lab integration", "Operations sponsorship"] },
   ],
+  demonstrated: "Demonstrated in this proof of concept, on historical data",
+  requires: "Requires additional plant data and validation",
   investment: "Stage 2 investment: to be scoped with you.",
   youGet: "You get",
   weNeed: "We need from you",
@@ -307,6 +363,7 @@ export const roadmap = {
 export const value = {
   title: "What could early detection be worth?",
   label: "Illustrative: your inputs, not a measured result.",
+  short: "Illustrative",
   placeholder: "Grey values are placeholders. Type your own.",
   inputs: {
     clinkerTpd: { label: "Clinker output", unit: "t/day" },
@@ -354,6 +411,10 @@ export const validation = {
     { title: "Score", body: "Blend how far, how broad and how long the deviation is into the Kiln Health Index. Normal / Watch / Warning cut-offs come from how your kiln ran in April–May (its 75th and 90th percentiles)." },
     { title: "Test", body: "Fix the test before looking at results, then check whether the index rose ahead of each abnormal period." },
   ],
+  verdictLabel: "Historical early-warning endpoint",
+  verdict: "Not supported",
+  verdictNote: "The test was fixed before looking at results and is reported as found.",
+  stats: { rise: "Median rise, hour before", range: "95% range", p: "p-value", pts: "percentile pts" },
   resultTitle: "The result, stated straight",
   result: "On June–August data, the index did not reliably rise before the abnormal periods.",
   resultDetail: (pe: string, lo: string, hi: string, p: string) => `The median rise in the hour before was ${pe} percentile points (95% range ${lo} to ${hi}; p = ${p}). That is too small and too uncertain to call an early warning.`,

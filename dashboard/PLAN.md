@@ -3,6 +3,8 @@
 Static Vite + React 18 + TS app. It reads `public/data/*.json` and only formats, filters and draws; the browser computes no statistics. It uses HashRouter, and all user-facing text lives in `src/copy.ts`.
 
 ## Pages (pitch order = nav order)
+
+The nav is grouped Intelligence (1–5) / Evidence (6, 8) / Roadmap (7). Since the 2026-10-01 UX pass, the presentation order is 1–6, 8, 7: Validation comes before Roadmap, so the pitch ends on the ask.
 | # | Route | Question | Main pieces | Tier |
 |---|---|---|---|---|
 | 1 | `/` Executive Summary | Is this worth funding? | HeroBand, Stepper, 4 KpiTiles, 3 finding cards, 7-objective scorecard, CtaBand | P0 |

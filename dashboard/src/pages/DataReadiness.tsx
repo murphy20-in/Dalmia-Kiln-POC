@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { Check, Copy, Fingerprint, GitBranch, ShieldCheck, Users } from "lucide-react";
+import { Check, ChevronDown, Copy, Fingerprint, GitBranch, ShieldCheck, Users } from "lucide-react";
 import Chart from "../charts/Chart";
 import { heatmap } from "../charts/heatmap";
 import ChartCard from "../components/ChartCard";
-import { Loading, PageHeader } from "../components/ui";
+import { Badge, Callout, Lead, Loading, PageHeader, SectionHeader } from "../components/ui";
 import { dataPage as t, labels } from "../copy";
 import { useData } from "../data";
 import { fmtMonth } from "../lib/format";
-import { brand } from "../theme";
+import { brand, issueColor } from "../theme";
 
 const SEV = ["critical", "high", "medium", "low", "info"] as const;
 const rigourIcon = [ShieldCheck, Fingerprint, Users, GitBranch];
+
+/** Severity word with a magnitude swatch (navy ramp, not alarm colours). */
+const SevChip = ({ s }: { s: string }) => (
+  <Badge tone="outline"><span className="h-2 w-2 rounded-sm" style={{ background: issueColor[s] }} aria-hidden />{t.sev[s]}</Badge>
+);
 
 export default function DataReadiness() {
   const d = useData("data");
@@ -20,9 +25,9 @@ export default function DataReadiness() {
   const total = SEV.reduce((a, s) => a + d.issues[s], 0);
   const maxIssues = Math.max(...SEV.map((s) => d.issues[s]));
   const coverage = heatmap({
-    x: months, y: d.coverage.map((c) => c.dataset), max: 100, ramp: ["#c4511a", "#f1f4fb"], darkLow: true, leftWidth: 120,
+    x: months, y: d.coverage.map((c) => c.dataset), max: 100, ramp: [brand.navyInk, brand.heatLow], darkLow: true, leftWidth: 112,
     cells: d.coverage.flatMap((c, row) => c.pct.map((v, col) => [col, row, v] as [number, number, number])),
-    format: (v) => (v === 0 ? "✕ 0%" : v >= 99.95 ? "✓ 100%" : `${v.toFixed(v >= 99 ? 1 : 0)}%`),
+    format: (v) => (v === 0 ? "✕ 0%" : v >= 99.95 ? "100%" : `${v.toFixed(v >= 99 ? 1 : 0)}%`), valueLabel: t.coverageLabel,
   });
 
   const copy = async (i: number, text: string) => {
@@ -32,60 +37,72 @@ export default function DataReadiness() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={t.title} question={t.question} />
+      <Lead sub={t.issuesSub}>{t.issuesTitle(total)}</Lead>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <ChartCard className="lg:col-span-3" title={t.coverageTitle} sub={t.coverageSub}
+      <div className="grid gap-6 lg:grid-cols-12">
+        <ChartCard className="lg:col-span-7" title={t.coverageTitle} sub={t.coverageSub} source={t.coverageSource}
+          legend={[{ name: t.coverageFull, color: brand.heatLow }, { name: t.coverageNone, color: brand.navyInk }]}
           table={{ columns: [labels.dataset, ...months], rows: d.coverage.map((c) => [c.dataset, ...c.pct.map((v) => `${v}%`)]) }}>
-          <Chart option={coverage} height={420} label={t.coverageTitle} />
+          <Chart option={coverage} height={400} label={t.coverageTitle} />
         </ChartCard>
-        <ChartCard className="lg:col-span-2" title={t.issuesTitle(total)} sub={t.issuesSub}>
-          <ul className="flex flex-col gap-2">
+        <section className="card flex flex-col lg:col-span-5" aria-labelledby="sev">
+          <SectionHeader id="sev" title={t.bySeverity} sub={t.bySeveritySub} />
+          <ul className="flex flex-col gap-3">
             {SEV.map((s) => (
-              <li key={s} className="grid grid-cols-[5rem_1fr_2rem] items-center gap-3 text-sm">
-                <span className="font-medium">{t.sev[s]}</span>
-                <span className="h-4 rounded" style={{ width: `${(d.issues[s] / maxIssues) * 100}%`, background: s === "critical" ? brand.navyInk : s === "high" ? brand.navy : "#8fa1d8" }} aria-hidden />
-                <span className="text-right font-semibold num">{d.issues[s]}</span>
+              <li key={s} className="grid grid-cols-[6rem_1fr_2rem] items-center gap-3 text-label">
+                <SevChip s={s} />
+                <span className="h-2.5 overflow-hidden rounded-full bg-page" aria-hidden>
+                  <span className="block h-full rounded-full" style={{ width: `${(d.issues[s] / maxIssues) * 100}%`, background: issueColor[s] }} />
+                </span>
+                <span className="text-right font-semibold text-navy-ink num">{d.issues[s]}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-4 rounded-lg bg-navy-tint p-3 text-sm text-navy-ink">{t.criticalNote}</p>
-        </ChartCard>
+          <div className="mt-5"><Callout>{t.criticalNote}</Callout></div>
+        </section>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-5" aria-label={labels.examples}>
-        {d.examples.map((e) => (
-          <article key={e.src} className="card !p-5">
-            <span className="eyebrow">{t.sev[e.severity.toLowerCase()]}</span>
-            <h3 className="mt-1 font-semibold leading-snug">{e.title}</h3>
-            <p className="mt-2 text-sm text-ink-muted">{e.body}</p>
-          </article>
-        ))}
+      <section aria-labelledby="examples">
+        <SectionHeader id="examples" title={labels.examples} sub={t.examplesSub(d.examples.length, total)} />
+        <div className="grid gap-3 md:grid-cols-2">
+          {d.examples.map((e) => (
+            <details key={e.src} className="group card !p-0 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-start gap-3 rounded-card px-5 py-4 transition-colors hover:bg-page">
+                <SevChip s={e.severity.toLowerCase()} />
+                <span className="flex-1 text-label font-semibold text-navy-ink">{e.title}</span>
+                <ChevronDown size={16} className="mt-0.5 shrink-0 text-ink-muted transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <p className="border-t border-line px-5 py-4 text-label text-ink-body">{e.body}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
-      <section className="grid gap-4 rounded-card bg-navy-tint p-6 md:grid-cols-4" aria-label={labels.rigour}>
+      <section className="panel grid gap-5 md:grid-cols-4" aria-label={labels.rigour}>
         {t.rigour.map((r, i) => {
           const Icon = rigourIcon[i];
           return (
             <div key={r.title} className="flex gap-3">
-              <Icon size={24} className="shrink-0 text-navy" aria-hidden />
-              <div><h3 className="font-semibold">{r.title}</h3><p className="text-sm text-ink-muted">{r.body}</p></div>
+              <Icon size={20} className="mt-0.5 shrink-0 text-navy" aria-hidden />
+              <div><h3 className="text-label font-semibold text-navy-ink">{r.title}</h3><p className="mt-0.5 text-label text-ink-muted">{r.body}</p></div>
             </div>
           );
         })}
       </section>
 
       <section aria-labelledby="asks">
-        <h2 id="asks" className="mb-3 text-lg font-semibold">{t.asksTitle}</h2>
+        <SectionHeader id="asks" title={t.asksTitle} />
         <div className="grid gap-4 md:grid-cols-2">
           {d.asks.map((a, i) => (
-            <article key={a.title} className="card flex flex-col gap-2">
-              <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-semibold ${a.priority === 1 ? "bg-navy text-white" : "bg-navy-tint text-navy"}`}>{t.priority(a.priority)}</span>
-              <h3 className="font-semibold">{a.title}</h3>
-              <p className="text-sm text-ink">{a.detail}</p>
-              <p className="text-sm text-ink-muted"><span className="font-semibold">{t.unlocks}:</span> {a.unlocks}</p>
-              <button className="btn-outline mt-auto self-start px-3 py-1.5 text-xs" onClick={() => copy(i, t.requestText(a.title, a.detail))}>
+            <article key={a.title} className="card flex flex-col gap-2 !p-5">
+              <Badge tone={a.priority === 1 ? "navy" : "tint"} className="self-start">{t.priority(a.priority)}</Badge>
+              <h3 className="t-card">{a.title}</h3>
+              <p className="text-label text-ink-body">{a.detail}</p>
+              <p className="text-label text-ink-muted"><span className="font-semibold text-ink">{t.unlocks}:</span> {a.unlocks}</p>
+              <button className="btn-outline btn-sm mt-auto self-start" onClick={() => copy(i, t.requestText(a.title, a.detail))}>
                 {copied === i ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />} {copied === i ? t.copied : t.copy}
               </button>
+              <span className="sr-only" role="status">{copied === i ? t.copied : ""}</span>
             </article>
           ))}
         </div>

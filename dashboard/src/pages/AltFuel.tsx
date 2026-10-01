@@ -1,30 +1,18 @@
-import { ArrowRight, BadgeCheck, FlaskConical } from "lucide-react";
+import { BadgeCheck, CircleDashed, FlaskConical } from "lucide-react";
 import Chart from "../charts/Chart";
+import { monthBars } from "../charts/bars";
 import ChartCard from "../components/ChartCard";
-import { HeroBand, Loading, PageHeader } from "../components/ui";
+import { Badge, Lead, Loading, NumberDot, PageHeader, SectionHeader } from "../components/ui";
 import { fuel as t, labels } from "../copy";
 import { useData, type AfrCard } from "../data";
 import { fmtMonth, fmtSigned } from "../lib/format";
 import { brand, systemColor } from "../theme";
-import type { Option } from "../charts/Chart";
 
-const strengthStyle: Record<AfrCard["strength"], string> = {
-  Consistent: "bg-navy text-white",
-  "Lower confidence": "bg-navy-tint text-navy",
-  Emerging: "bg-page text-ink-muted",
+const strengthTone: Record<AfrCard["strength"], "navy" | "tint" | "outline"> = {
+  Consistent: "navy",
+  "Lower confidence": "tint",
+  Emerging: "outline",
 };
-
-/** One small column chart per measure: small multiples instead of a dual axis. */
-function monthBars(months: string[], values: number[], color: string, min: number): Option {
-  return {
-    grid: { left: 40, right: 8, top: 24, bottom: 24 },
-    tooltip: { trigger: "axis", valueFormatter: (v: number) => `${v.toFixed(1)} TPH` },
-    xAxis: { type: "category", data: months, axisLabel: { color: brand.ink } },
-    yAxis: { type: "value", min, splitNumber: 3 },
-    series: [{ type: "bar", data: values, barWidth: "50%", itemStyle: { color, borderRadius: [4, 4, 0, 0] },
-      label: { show: true, position: "top", color: brand.ink, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) } }],
-  };
-}
 
 export default function AltFuel() {
   const d = useData("afr");
@@ -34,61 +22,60 @@ export default function AltFuel() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={t.title} question={t.question} />
-      <HeroBand className="!p-8">
-        <p className="text-3xl font-bold text-white">{t.hero}</p>
-        <p className="mt-2 text-white/85">{t.heroSub(d.associated, d.augustConfirmed)}</p>
-      </HeroBand>
+      <Lead sub={t.heroSub(d.associated, d.augustConfirmed)}>{t.hero}</Lead>
 
-      <section className="grid items-stretch gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-label={labels.domino}>
-        {t.domino.map((s, i) => (
-          <div key={i} className="contents">
-            <div className="card flex flex-col gap-2" style={{ borderTop: `4px solid ${[brand.navy, systemColor.COMBUSTION, systemColor.THERMAL][i]}` }}>
-              <span className="eyebrow">{i + 1}</span>
-              <h2 className="text-xl font-bold">{typeof s.title === "function" ? s.title(d.coalStepTph) : s.title}</h2>
-              <p className="text-sm text-ink-muted">{s.body}</p>
-            </div>
-            {i < 2 && <ArrowRight className="hidden self-center text-ink-faint md:block" size={28} aria-hidden />}
-          </div>
-        ))}
+      {/* The sequence seen in the data: three linked steps, not proven causes */}
+      <section className="card !p-0" aria-labelledby="domino">
+        <div className="px-6 pt-5"><SectionHeader id="domino" title={labels.domino} sub={t.caveat} /></div>
+        <ol className="grid border-t border-line md:grid-cols-3 md:divide-x md:divide-line">
+          {t.domino.map((s, i) => (
+            <li key={i} className="relative flex gap-3 border-b border-line p-5 last:border-b-0 md:border-b-0">
+              <NumberDot n={i + 1} tone={i === 1 ? "navy" : "tint"} />
+              <div>
+                <h3 className="t-card">{typeof s.title === "function" ? s.title(d.coalStepTph) : s.title}</h3>
+                <p className="mt-1 text-label text-ink-muted">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <ChartCard title={t.monthlyTitle} table={{ columns: [labels.month, t.afrPanel, t.feedPanel], rows: d.monthly.map((m, i) => [months[i], m.afr, m.feed]) }}>
+      <ChartCard title={t.monthlyTitle} source={t.source} table={{ columns: [labels.month, t.afrPanel, t.feedPanel], rows: d.monthly.map((m, i) => [months[i], m.afr, m.feed]) }}>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <h3 className="text-sm font-semibold text-ink-muted">{t.afrPanel}</h3>
-            <Chart option={monthBars(months, d.monthly.map((m) => m.afr), brand.navy, 0)} height={220} label={t.afrPanel} />
+            <h3 className="t-label">{t.afrPanel}</h3>
+            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.afr), color: brand.navy, unit: t.afrPanel })} height={210} label={t.afrPanel} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink-muted">{t.feedPanel}</h3>
-            <Chart option={monthBars(months, d.monthly.map((m) => m.feed), systemColor.COMBUSTION, 0)} height={220} label={t.feedPanel} />
+            <h3 className="t-label">{t.feedPanel}</h3>
+            <Chart option={monthBars({ months, values: d.monthly.map((m) => m.feed), color: systemColor.COMBUSTION, unit: t.feedPanel })} height={210} label={t.feedPanel} />
           </div>
         </div>
       </ChartCard>
 
-      <section>
-        <h2 className="text-lg font-semibold">{t.cardsTitle}</h2>
-        <p className="mb-3 text-sm text-ink-muted">{t.strengthHint} {t.caveat}</p>
+      <section aria-labelledby="cards">
+        <SectionHeader id="cards" title={t.cardsTitle} sub={t.strengthHint} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {d.cards.map((c) => (
-            <article key={c.key} className="card flex flex-col gap-2">
-              <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-semibold ${strengthStyle[c.strength]}`}>{c.strength}</span>
-              <h3 className="font-semibold">{t.cards[c.key].title}</h3>
-              <p className="text-sm text-ink-muted">{t.cards[c.key].body(effect(c))}</p>
-              <p className={`mt-auto flex items-center gap-1.5 text-xs font-semibold ${c.augustConfirmed ? "text-normal-ink" : "text-ink-muted"}`}>
-                <BadgeCheck size={14} aria-hidden /> {c.augustConfirmed ? t.august : t.notAugust}
+            <article key={c.key} className="card flex flex-col gap-2 !p-5">
+              <Badge tone={strengthTone[c.strength]} className="self-start">{c.strength}</Badge>
+              <h3 className="t-card leading-snug">{t.cards[c.key].title}</h3>
+              <p className="text-label text-ink-muted">{t.cards[c.key].body(effect(c))}</p>
+              <p className={`mt-auto flex items-center gap-1.5 border-t border-line pt-3 text-caption font-semibold ${c.augustConfirmed ? "text-normal-ink" : "text-ink-muted"}`}>
+                {c.augustConfirmed ? <BadgeCheck size={14} aria-hidden /> : <CircleDashed size={14} aria-hidden />} {c.augustConfirmed ? t.august : t.notAugust}
               </p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="card flex flex-col gap-4 border-2 border-dashed border-navy/30 !shadow-none md:flex-row md:items-center">
-        <FlaskConical size={36} className="shrink-0 text-navy" aria-hidden />
+      <section className="card-dashed flex flex-col gap-4 md:flex-row md:items-start" aria-labelledby="deeper">
+        <FlaskConical size={28} className="shrink-0 text-navy" aria-hidden />
         <div>
-          <h2 className="text-lg font-semibold">{t.deeperTitle}</h2>
-          <p className="text-sm text-ink-muted">{t.deeperBody}</p>
-          <ul className="mt-2 flex flex-wrap gap-2">{t.deeperItems.map((x) => <li key={x} className="chip">{x}</li>)}</ul>
-          <p className="mt-2 text-sm font-semibold text-navy">{t.deeperUnlocks}</p>
+          <h2 id="deeper" className="t-section">{t.deeperTitle}</h2>
+          <p className="mt-1 text-label text-ink-muted">{t.deeperBody}</p>
+          <ul className="mt-3 flex flex-wrap gap-2">{t.deeperItems.map((x) => <li key={x}><Badge>{x}</Badge></li>)}</ul>
+          <p className="mt-3 text-label font-semibold text-navy">{t.deeperUnlocks}</p>
         </div>
       </section>
     </div>

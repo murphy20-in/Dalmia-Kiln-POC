@@ -1,6 +1,12 @@
 # Kiln Intelligence dashboard (pitch build)
 
-A static, eight-page product demo for Dalmia Cement, Ariyalur: Executive Summary, Kiln Health Console (historical replay), Efficiency Story, Abnormal Periods, Alternative Fuel, Data Readiness, Roadmap & Value, and How we validated.
+A static, eight-page product demo for Dalmia Cement, Ariyalur. The navigation is grouped:
+
+- **Intelligence:** Executive Summary, Kiln Health Console (historical replay), Efficiency Story, Abnormal Periods, Alternative Fuel.
+- **Evidence:** Data Readiness, How we validated.
+- **Roadmap:** Roadmap & Value.
+
+Everything shown is a historical analysis of June–August 2025 data. Nothing is connected to the plant.
 
 Stack: Vite + React 18 + TypeScript, Tailwind CSS 3, Apache ECharts (`echarts/core`), HashRouter. There is no backend. The browser only formats, filters and draws the JSON in `public/data/`.
 
@@ -12,7 +18,14 @@ npm install
 npm run dev          # http://localhost:5173/
 ```
 
-Presentation mode: press `P` or open `/?present=1#/`. Use ← → to step through the pages in pitch order, and `Esc` to exit.
+Presentation mode: press `Shift+P` or open `/?present=1#/`. Use ← → to step through the pages in pitch order, and `Esc` to exit.
+
+## Design and review docs
+
+- [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md): tokens, type scale, card hierarchy, components, chart and motion rules.
+- [UI_UX_AUDIT.md](UI_UX_AUDIT.md): per-page scores (before → after), stakeholder read, gate results.
+- [REVIEW_LOG.md](REVIEW_LOG.md): every review finding and its disposition.
+- `screenshots/`: final 1280×720 captures of every page and the period drawer.
 
 ## Regenerate the data
 
@@ -43,10 +56,10 @@ npm run preview      # serve dist/ locally
 scripts/export_data.py   frozen outputs → public/data/*.json
 src/copy.ts              every user-facing string
 src/data.ts              typed loaders for each JSON file
-src/theme.ts             tokens, status and system palettes, ECharts theme
+src/theme.ts             the only colour source (Tailwind imports it), status and system palettes, ECharts theme
 src/lib/                 format.ts (dates, ₹), value.ts (ROI model)
-src/components/          Shell, ui blocks, ChartCard, StatusGauge, Drawer
-src/charts/              Chart wrapper + option builders (zone line, bars, Gantt, heatmap)
+src/components/          Shell, ui blocks (KpiTile, Badge, Lead, …), ChartCard, StatusGauge, Drawer
+src/charts/              Chart wrapper, tooltip.ts (escaped tooltip layout), option builders (zone line, bars, Gantt, heatmap)
 src/pages/               one file per page
 tests/                   vitest suites
 ```

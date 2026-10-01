@@ -509,3 +509,35 @@ Pitch on 2026-10-01. The Stage 2 ask is plant event logs (coating / ring / clean
 
 - Run the dashboard: `cd dashboard && npm install && npm run dev`, then open `http://localhost:5173/`.
 - Phase 9 reproduction is unchanged: `cd phase-09-api/scripts && ../../.venv/bin/python -B run_phase9.py --clean` (twice).
+
+## 18. Pitch dashboard: UI/UX presentation pass (2026-10-01)
+
+This pass changed presentation only, in `dashboard/` on branch `pitch-dashboard`. It made no analytical change. `public/data/*.json`, `scripts/export_data.py` and `src/lib/value.ts` are byte-identical to before (sha256).
+
+**Changes**
+- One design system: `src/theme.ts` is the colour source that Tailwind imports. It adds a type scale, a card hierarchy and shared components (KpiTile, Badge, Lead, SectionHeader, PeriodEvidence), plus an escaped tooltip layout. See `dashboard/DESIGN_SYSTEM.md`.
+- Shell: grouped sidebar (Intelligence / Evidence / Roadmap) and a top bar with a "Historical analytical view" status chip. There is no live indicator.
+- Pages:
+  - Executive Summary: a thesis hero, plus "what Dalmia provides next".
+  - Console: the replayed time is now the anchor, and gaps are shaded and labelled.
+  - Periods: a period index and a structured drawer. Every period surface says "KPI-derived" and "Not a validated plant event".
+  - Validation: opens with "Historical early-warning endpoint: NOT SUPPORTED".
+  - Roadmap: splits "demonstrated" from "requires plant data", and the calculator stays Illustrative.
+
+**Evidence** (details in `dashboard/UI_UX_AUDIT.md` and `dashboard/REVIEW_LOG.md`)
+
+| Check | Result |
+|---|---|
+| Build, typecheck, tests | Pass (9/9) |
+| Playwright journeys | 12/12 |
+| Lighthouse desktop (Summary, Console, Efficiency, Periods, Validation) | Performance 99–100; accessibility 100 |
+| Console 4× playback | 59 fps, 0 long tasks |
+| Horizontal overflow | None at 375–1920 |
+
+Reviews:
+- Claims and security: no blockers.
+- WCAG 2.2 AA: no critical findings; serious ones fixed.
+- React: no critical or high findings.
+- Ponytail audit: no critical or high findings.
+
+**Behaviour change for the presenter:** presentation mode is now Shift+P (was P), and Validation comes before Roadmap in the ← → order.
