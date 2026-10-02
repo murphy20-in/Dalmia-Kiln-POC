@@ -52,7 +52,8 @@ export function PageBand({ eyebrow, title, question, badges, actions }: BandProp
   return (
     <div className="atmosphere">
       <ProcessLines />
-      <div className="mx-auto flex max-w-page flex-wrap items-end justify-between gap-x-6 gap-y-3 px-4 py-5 sm:px-8 sm:py-6">
+      <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-rule opacity-70" />
+      <div className="mx-auto flex max-w-page flex-wrap items-end justify-between gap-x-6 gap-y-3 px-4 py-4 sm:px-8 sm:py-5">
         <div className="min-w-0">
           {eyebrow && <p className="eyebrow-dark">{eyebrow}</p>}
           <h1 className="mt-1.5 text-title font-semibold">{title}</h1>
@@ -79,7 +80,7 @@ export function Lead({ children, sub }: { children: ReactNode; sub?: ReactNode }
   return (
     <section className="relative pl-5">
       <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] rounded-full bg-accent" />
-      <p className="max-w-4xl text-lead font-semibold text-navy-ink">{children}</p>
+      <p className="max-w-4xl text-lead font-semibold text-ink">{children}</p>
       {sub && <p className="mt-1.5 max-w-prose text-label text-ink-muted">{sub}</p>}
     </section>
   );
@@ -88,7 +89,7 @@ export function Lead({ children, sub }: { children: ReactNode; sub?: ReactNode }
 /** Dark atmospheric statement panel. Used sparingly (Executive Summary closing ask, Roadmap ask). */
 export function HeroBand({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <section className={`atmosphere rounded-card border border-steel/60 shadow-dark ${className}`}>
+    <section className={`atmosphere rounded-card border border-moss/60 shadow-dark ${className}`}>
       <ProcessLines />
       {children}
     </section>
@@ -108,21 +109,38 @@ export function SectionHeader({ title, sub, id, aside, eyebrow }: { title: strin
   );
 }
 
-/** Label → number (+ unit, micro trend) → context → evidence line, on a subtle left accent. */
-export function KpiTile({ label, value, unit, sub, evidence: ev, micro, className = "" }: {
-  label: string; value: ReactNode; unit?: string; sub?: string; evidence?: string; micro?: ReactNode; className?: string;
+/**
+ * Two layouts. With `category`: category eyebrow → large number (+ unit, micro trend) → the metric's name in plain
+ * words → one context line → evidence line. Without: label eyebrow → number → context → evidence (compact tiles).
+ */
+export function KpiTile({ category, label, value, unit, sub, evidence: ev, micro, className = "" }: {
+  category?: string; label: string; value: ReactNode; unit?: string; sub?: string; evidence?: string; micro?: ReactNode; className?: string;
 }) {
-  return (
-    <div className={`card relative flex flex-col overflow-hidden !p-5 !pl-6 ${className}`}>
-      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-accent" />
-      <div className="eyebrow min-h-[2rem]">{label}</div>
-      <div className="mt-1 flex items-end justify-between gap-3">
-        <div className="flex min-w-0 items-baseline gap-1.5 text-kpi font-semibold text-navy-ink num">
-          {value}{unit && <span className="text-section font-medium text-ink-muted">{unit}</span>}
-        </div>
-        {micro && <div aria-hidden className="shrink-0 pb-1.5">{micro}</div>}
+  const number = (
+    <div className="mt-2 flex items-end justify-between gap-3">
+      <div className="flex min-w-0 items-baseline gap-1.5 text-kpi font-semibold text-ink num">
+        {value}{unit && <span className="text-section font-medium text-ink-muted">{unit}</span>}
       </div>
-      {sub && <p className="mt-2 text-label text-ink-body">{sub}</p>}
+      {micro && <div aria-hidden className="shrink-0 pb-1.5">{micro}</div>}
+    </div>
+  );
+  return (
+    <div className={`card card-lift relative flex flex-col overflow-hidden !p-5 !pl-6 ${className}`}>
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-accent" />
+      {category ? (
+        <>
+          <div className="eyebrow">{category}</div>
+          {number}
+          <p className="mt-2 text-card font-semibold text-ink">{label}</p>
+          {sub && <p className="mt-1 text-label text-ink-muted">{sub}</p>}
+        </>
+      ) : (
+        <>
+          <div className="eyebrow min-h-[2rem]">{label}</div>
+          {number}
+          {sub && <p className="mt-2 text-label text-ink-body">{sub}</p>}
+        </>
+      )}
       {ev && <p className="mt-auto flex items-center gap-1.5 border-t border-line pt-3 text-caption text-ink-muted [&:not(:first-child)]:mt-3"><FileSearch size={12} aria-hidden className="shrink-0" />{ev}</p>}
     </div>
   );
@@ -133,12 +151,12 @@ export function InsightCard({ title, body, children, to, link }: {
   title: string; body?: ReactNode; children?: ReactNode; to?: string; link?: string;
 }) {
   return (
-    <article className="flex flex-col gap-3 border-t-2 border-navy-ink pt-4">
+    <article className="flex flex-col gap-3 border-t-2 border-ink pt-4">
       <h3 className="t-card leading-snug">{title}</h3>
       {body && <p className="text-label text-ink-muted">{body}</p>}
       {children}
       {to && link && (
-        <Link to={to} className="mt-auto inline-flex items-center gap-1 self-start pt-1 text-label font-semibold text-navy hover:underline">
+        <Link to={to} className="mt-auto inline-flex items-center gap-1 self-start pt-1 text-label font-semibold text-brunswick hover:underline">
           {link} <ArrowRight size={14} aria-hidden />
         </Link>
       )}
@@ -162,14 +180,14 @@ export function StatusPill({ zone, size = "sm" }: { zone: "N" | "W" | "A" | "C";
 }
 
 const badgeTone = {
-  navy: "bg-navy text-white border-navy",
-  tint: "bg-navy-tint text-navy-ink border-navy-line",
+  brand: "bg-brunswick text-white border-brunswick",
+  tint: "bg-polar text-ink border-sage/50",
   outline: "bg-white text-ink-body border-line-strong",
   dashed: "bg-white text-ink-muted border-line-strong border-dashed",
   caveat: "bg-watch/10 text-watch-ink border-watch/40",
   positive: "bg-normal/10 text-normal-ink border-normal/40",
-  glass: "bg-white/10 text-white border-haze/30",
-  glassDashed: "bg-transparent text-mist border-haze/40 border-dashed",
+  glass: "bg-white/10 text-white border-sage/30",
+  glassDashed: "bg-transparent text-mist border-sage/40 border-dashed",
 } as const;
 
 /** Small word label. Colour is never the only signal: the text always carries the meaning. */
@@ -183,7 +201,7 @@ export function Badge({ tone = "outline", icon: Icon, children, className = "" }
   );
 }
 
-/** The two labels every abnormal-period surface carries. `dark` for use on a navy band. */
+/** The two labels every abnormal-period surface carries. `dark` for use on a dark green band. */
 export const PeriodEvidence = ({ plural = false, dark = false }: { plural?: boolean; dark?: boolean }) => (
   <>
     <Badge tone={dark ? "glass" : "tint"} icon={FileSearch}>{plural ? evidence.kpiDerivedPlural : evidence.kpiDerived}</Badge>
@@ -193,15 +211,15 @@ export const PeriodEvidence = ({ plural = false, dark = false }: { plural?: bool
 
 export function Callout({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "caveat" }) {
   return (
-    <p className={`flex items-start gap-2 rounded-panel px-3 py-2.5 text-label ${tone === "info" ? "bg-navy-tint text-navy-ink" : "bg-watch/10 text-watch-ink"}`}>
+    <p className={`flex items-start gap-2 rounded-panel px-3 py-2.5 text-label ${tone === "info" ? "bg-polar text-ink" : "bg-watch/10 text-watch-ink"}`}>
       <Info size={15} className="mt-0.5 shrink-0" aria-hidden />
       <span>{children}</span>
     </p>
   );
 }
 
-export const NumberDot = ({ n, tone = "navy" }: { n: ReactNode; tone?: "navy" | "tint" | "sky" }) => (
-  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-bold ${tone === "navy" ? "bg-navy text-white" : tone === "sky" ? "bg-sky text-night" : "bg-navy-tint text-navy"}`}>{n}</span>
+export const NumberDot = ({ n, tone = "brand" }: { n: ReactNode; tone?: "brand" | "tint" | "emerald" }) => (
+  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-bold ${tone === "brand" ? "bg-brunswick text-white" : tone === "emerald" ? "bg-emerald text-forest" : "bg-polar text-brunswick"}`}>{n}</span>
 );
 
 export const Source = ({ children }: { children: ReactNode }) => (
@@ -210,7 +228,7 @@ export const Source = ({ children }: { children: ReactNode }) => (
 
 export function Ribbon({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
-    <div role="note" className={`flex items-center gap-2 rounded-panel border px-3 py-2 text-label ${dark ? "border-haze/25 bg-white/[0.05] text-mist" : "border-navy-line bg-navy-tint text-navy-ink"}`}>
+    <div role="note" className={`flex items-center gap-2 rounded-panel border px-3 py-2 text-label ${dark ? "border-sage/25 bg-white/[0.05] text-mist" : "border-sage/50 bg-polar text-ink"}`}>
       <Info size={15} className="shrink-0" aria-hidden />
       {children}
     </div>
@@ -229,18 +247,18 @@ export function Stepper({ steps }: { steps: readonly { label: string; note: stri
         return (
           <li key={s.label} className="relative pt-7" aria-current={next ? "step" : undefined}>
             {i < steps.length - 1 && (
-              <span aria-hidden className={`absolute left-4 top-[11px] hidden lg:block ${demonstrated ? "-right-6 h-px bg-navy" : "-right-6 border-t border-dashed border-slate"}`} />
+              <span aria-hidden className={`absolute left-4 top-[11px] hidden lg:block ${demonstrated ? "-right-6 h-px bg-brunswick" : "-right-6 border-t border-dashed border-slate"}`} />
             )}
             <span aria-hidden className={`absolute left-0 top-1 flex h-[14px] w-[14px] items-center justify-center rounded-full ${
-              done ? "bg-normal-ink text-white" : next ? "bg-navy shadow-glow ring-2 ring-sky/60" : s.state === "past" ? "bg-navy-ink" : "border border-dashed border-slate bg-page"}`}>
+              done ? "bg-normal-ink text-white" : next ? "bg-brunswick shadow-glow ring-2 ring-emerald/60" : s.state === "past" ? "bg-ink" : "border border-dashed border-slate bg-page"}`}>
               {done && <Check size={9} strokeWidth={3.5} />}
             </span>
             <div className="flex items-center gap-2">
-              <span className={`text-card font-semibold ${s.state === "future" ? "text-ink-muted" : "text-navy-ink"}`}>{s.label}</span>
+              <span className={`text-card font-semibold ${s.state === "future" ? "text-ink-muted" : "text-ink"}`}>{s.label}</span>
               <span className="sr-only">{summary.stepState[s.state]}</span>
             </div>
             <p className="eyebrow mt-1">{summary.stepTag[s.state]}</p>
-            <p className={`mt-1.5 text-label ${done ? "font-semibold text-normal-ink" : next ? "font-medium text-navy" : "text-ink-muted"}`}>{s.note}</p>
+            <p className={`mt-1.5 text-label ${done ? "font-semibold text-normal-ink" : next ? "font-medium text-brunswick" : "text-ink-muted"}`}>{s.note}</p>
           </li>
         );
       })}

@@ -3,17 +3,23 @@
 @tailwind utilities;
 
 @layer base {
+  /* The header is sized by the product name it carries (Brand.tsx → ProductLine: 24 → 32 → 48 → 56 → 64 px). */
   :root { --header-h: 4rem; }
+  @media (min-width: 768px) { :root { --header-h: 4.5rem; } }
+  @media (min-width: 1024px) { :root { --header-h: 5.25rem; } }
+  @media (min-width: 1280px) { :root { --header-h: 6rem; } }
+  @media (min-width: 1536px) { :root { --header-h: 6.75rem; } }
   html { font-size: 16px; -webkit-font-smoothing: antialiased; }
   html.present { font-size: 18.4px; } /* 1.15 × for presentation mode */
   body { @apply bg-page text-ink-body font-sans text-body; font-feature-settings: "cv11", "ss01"; background-image: theme('backgroundImage.canvas'); background-repeat: no-repeat; }
   .num, table td, table th { font-variant-numeric: tabular-nums; }
-  :focus-visible { outline: 2px solid theme('colors.navy.DEFAULT'); outline-offset: 2px; border-radius: 4px; }
-  /* Dark surfaces (top bar, sidebar, hero, console deck) flip the ring to sky with a night halo. Filled navy buttons get a white ring. */
-  .on-dark :focus-visible, .on-dark:focus-visible { outline-color: theme('colors.sky.DEFAULT'); box-shadow: 0 0 0 4px theme('colors.night'); }
-  .btn-navy:focus-visible { outline-color: theme('colors.white'); box-shadow: 0 0 0 4px theme('colors.navy.ink'); }
+  /* Focus: Brunswick on light (11:1). Emerald is too pale on white to be a ring, so it is used only on dark. */
+  :focus-visible { outline: 2px solid theme('colors.brunswick'); outline-offset: 2px; border-radius: 4px; }
+  /* Dark surfaces (top bar, sidebar, hero, console deck) flip the ring to Emerald with a Deep Forest halo. Filled Brunswick buttons get a white ring. */
+  .on-dark :focus-visible, .on-dark:focus-visible { outline-color: theme('colors.emerald.DEFAULT'); box-shadow: 0 0 0 4px theme('colors.forest'); }
+  .btn-brand:focus-visible { outline-color: theme('colors.white'); box-shadow: 0 0 0 4px theme('colors.brunswick'); }
   html { scroll-padding-top: calc(var(--header-h) + 1rem); }
-  h1, h2, h3 { @apply text-navy-ink; }
+  h1, h2, h3 { @apply text-ink; }
   .on-dark h1, .on-dark h2, .on-dark h3 { @apply text-white; }
 }
 
@@ -21,39 +27,48 @@
   /* Surfaces (DESIGN_SYSTEM.md): canvas (body) → surface (.card) → elevated (drawer, tooltip) → dark (.surface-dark, .atmosphere). */
   .on-dark { @apply text-mist; }
   .card { @apply min-w-0 rounded-card border border-line bg-white p-6 shadow-card; } /* min-w-0: grid items must shrink so charts can resize */
+  .card-lift { background-image: linear-gradient(160deg, theme('colors.white') 52%, theme('colors.polar / 80%') 100%); } /* the one gradient on a light card: a faint Polar lift, KPI tiles only */
+  /* The product name emerges from the header's Emerald light: a close halo, then a wide one. */
+  .glow-text { text-shadow: 0 0 16px theme('colors.emerald.DEFAULT / 30%'), 0 0 56px theme('colors.emerald.DEFAULT / 28%'); }
   .card-dashed { @apply rounded-card border border-dashed border-line-strong bg-white/60 p-5; }
-  .panel { @apply rounded-panel bg-navy-tint p-5; }
+  .panel { @apply rounded-panel bg-polar p-5; }
   .inset { @apply rounded-panel border border-line bg-subtle p-4; }
-  .surface-dark { @apply on-dark relative min-w-0 overflow-hidden rounded-card border border-steel/70 shadow-dark; background-image: theme('backgroundImage.sidebar'); }
-  .surface-glass { @apply rounded-panel border border-haze/20 bg-white/[0.05]; } /* only on dark: a raised pane inside a hero */
+  .surface-dark { @apply on-dark relative min-w-0 overflow-hidden rounded-card border border-moss/70 shadow-dark; background-image: theme('backgroundImage.sidebar'); }
+  .surface-glass { @apply rounded-panel border border-sage/20 bg-white/[0.05]; } /* only on dark: a raised pane inside a hero */
 
-  /* Atmosphere: deep navy with one cool light and a fine technical grid. The grid fades out; it never sits under body text at full strength. */
+  /* Atmosphere: Deep Forest into Brunswick with one Emerald light and a fine technical grid. The grid fades out; it never sits under body text at full strength. */
   .atmosphere { @apply on-dark relative isolate overflow-hidden; background-image: theme('backgroundImage.hero'); }
   .atmosphere::before {
     content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background-image: linear-gradient(theme('colors.haze / 9%') 1px, transparent 1px), linear-gradient(90deg, theme('colors.haze / 9%') 1px, transparent 1px);
+    background-image: linear-gradient(theme('colors.sage / 9%') 1px, transparent 1px), linear-gradient(90deg, theme('colors.sage / 9%') 1px, transparent 1px);
     background-size: 44px 44px; background-position: -1px -1px;
-    -webkit-mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.night') 0%, transparent 72%);
-    mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.night') 0%, transparent 72%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.forest') 0%, transparent 72%);
+    mask-image: radial-gradient(ellipse 70% 95% at 82% 0%, theme('colors.forest') 0%, transparent 72%);
   }
-  .hatch { background-image: repeating-linear-gradient(135deg, theme('colors.slate / 30%') 0 1px, transparent 1px 7px); } /* "no data": drawn as an intentional gap, never as a line */
+  .hatch { background-image: repeating-linear-gradient(135deg, theme('colors.slate / 45%') 0 1px, transparent 1px 7px); } /* "no data": drawn as an intentional gap, never as a line */
+  /* The slate hatch is invisible on a slate fill; on dark it is drawn light — but quietly: a gap is an absence of
+     data, not an alarm, so it must stay the calmest thing on the track. */
+  .on-dark .hatch { background-image: repeating-linear-gradient(135deg, theme('colors.sage / 42%') 0 1px, transparent 1px 7px); }
+  /* A texture on top of the Warning fill, so state is never colour alone. It runs horizontally: the timeline's
+     own columns are vertical, and a vertical texture at that pitch beats against them into visual static. */
+  .pin { background-image: repeating-linear-gradient(0deg, theme('colors.abyss / 26%') 0 1px, transparent 1px 4px); }
 
   /* Type roles. Eyebrow = technical metadata (mono, caps); the rest are Inter. */
-  .t-section { @apply text-section font-semibold text-navy-ink; }
-  .t-card { @apply text-card font-semibold text-navy-ink; }
+  .t-section { @apply text-section font-semibold text-ink; }
+  .t-card { @apply text-card font-semibold text-ink; }
   .t-label { @apply text-label font-semibold text-ink-muted; }
   .t-caption { @apply text-caption text-ink-muted; }
   .eyebrow { @apply font-mono text-eyebrow font-medium uppercase text-ink-muted; }
-  .eyebrow-dark { @apply font-mono text-eyebrow font-medium uppercase text-sky-soft; }
+  .eyebrow-dark { @apply font-mono text-eyebrow font-medium uppercase text-emerald; }
 
   .btn { @apply inline-flex items-center gap-2 rounded-panel px-4 py-2.5 text-label font-semibold transition-colors duration-fast active:translate-y-px; }
-  .btn-primary { @apply btn bg-white text-navy-ink hover:bg-navy-tint; }
-  .btn-navy { @apply btn bg-navy text-white hover:bg-navy-deep; }
-  .btn-outline { @apply btn border border-line-strong bg-white text-navy hover:border-navy hover:bg-navy-tint; }
-  .btn-ghost { @apply btn border border-haze/30 text-white hover:border-haze/60 hover:bg-white/10; }
+  .btn-primary { @apply btn bg-emerald text-forest hover:bg-polar; } /* the one Emerald action on a dark surface */
+  .btn-brand { @apply btn bg-brunswick text-white hover:bg-moss; }
+  .btn-outline { @apply btn border border-line-strong bg-white text-brunswick hover:border-brunswick hover:bg-polar; }
+  .btn-ghost { @apply btn border border-sage/30 text-white hover:border-sage/60 hover:bg-white/10; }
   .btn-sm { @apply px-3 py-1.5 text-caption; }
 
-  .chip-dark { @apply inline-flex items-center gap-1.5 rounded-full border border-haze/25 bg-white/[0.04] px-3 py-1 text-caption font-semibold text-mist transition-colors duration-fast hover:border-sky/60 hover:bg-white/10 hover:text-white; }
+  .chip-dark { @apply inline-flex items-center gap-1.5 rounded-full border border-sage/25 bg-white/[0.04] px-3 py-1 text-caption font-semibold text-mist transition-colors duration-fast hover:border-emerald/60 hover:bg-white/10 hover:text-white; }
 
   .data-table { @apply w-full text-label; }
   .data-table th { @apply sticky top-0 z-[1] border-b border-line-strong bg-white py-2.5 pr-4 text-left text-caption font-semibold text-ink-muted; }
@@ -70,10 +85,10 @@
 .anim-drawer { animation: drawer-in theme('transitionDuration.slow') theme('transitionTimingFunction.DEFAULT'); }
 .anim-fade { animation: fade-in theme('transitionDuration.normal') ease-out; }
 
-/* The Console deck sticks only on large, tall windows, and scroll-padding then clears it so a focused control is never hidden (WCAG 2.4.11). */
-@media (min-width: 1024px) and (min-height: 800px) {
+/* The Console deck (about 22 rem tall) sticks only on very tall windows, and scroll-padding then clears it so a focused control is never hidden (WCAG 2.4.11). */
+@media (min-width: 1024px) and (min-height: 1000px) {
   .deck-sticky { position: sticky; top: calc(var(--header-h) + 0.5rem); }
-  html.has-deck { scroll-padding-top: calc(var(--header-h) + 20rem); }
+  html.has-deck { scroll-padding-top: calc(var(--header-h) + 24rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

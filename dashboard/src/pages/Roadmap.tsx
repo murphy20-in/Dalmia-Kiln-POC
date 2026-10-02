@@ -28,18 +28,18 @@ function StageCard({ s, i }: { s: Stage; i: number }) {
     <li className={`flex flex-col gap-3 p-5 ${done ? "card !p-5 shadow-[inset_0_3px_0_theme(colors.normal.DEFAULT)]" : "rounded-card border border-dashed border-line-strong bg-white/60"}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="eyebrow">{s.tag}</span>
-        <Badge tone={done ? "positive" : next ? "navy" : "outline"} icon={done ? CheckCircle2 : Lock}>{s.when}</Badge>
+        <Badge tone={done ? "positive" : next ? "brand" : "outline"} icon={done ? CheckCircle2 : Lock}>{s.when}</Badge>
       </div>
-      <h3 className="text-section font-semibold text-navy-ink">{s.title}</h3>
+      <h3 className="text-section font-semibold text-ink">{s.title}</h3>
       <div>
         <h4 className="t-caption font-semibold">{t.youGet}</h4>
         <ul className="mt-1.5 flex flex-col gap-1">
           {s.get.map((g) => <li key={g} className="flex gap-2 text-label text-ink-body"><Check size={14} className={`mt-0.5 shrink-0 ${done ? "text-normal-ink" : "text-ink-faint"}`} aria-hidden />{g}</li>)}
         </ul>
       </div>
-      <div className="mt-auto rounded-panel bg-navy-tint p-3">
-        <h4 className="text-caption font-semibold text-navy">{t.weNeed}</h4>
-        <ul className="mt-1 flex flex-col gap-0.5 text-label text-navy-ink">{s.need.map((g) => <li key={g}>{g}</li>)}</ul>
+      <div className="mt-auto rounded-panel bg-polar p-3">
+        <h4 className="text-caption font-semibold text-brunswick">{t.weNeed}</h4>
+        <ul className="mt-1 flex flex-col gap-0.5 text-label text-ink">{s.need.map((g) => <li key={g}>{g}</li>)}</ul>
       </div>
     </li>
   );
@@ -84,12 +84,12 @@ export default function Roadmap() {
           <div className="grid gap-6 sm:grid-cols-2 lg:col-span-3">
             {GROUPS.map((g) => (
               <fieldset key={g.title} className="flex flex-col gap-3">
-                <legend className="mb-2 text-label font-semibold text-navy">{g.title}</legend>
+                <legend className="mb-2 text-label font-semibold text-brunswick">{g.title}</legend>
                 {g.keys.map((k) => (
                   <label key={k} className="flex flex-col gap-1 text-label">
                     <span className="font-medium text-ink">{v.inputs[k].label} <span className="text-ink-muted">({v.inputs[k].unit})</span></span>
                     <input type="number" min={0} max={v.inputs[k].unit === "%" ? 100 : undefined} inputMode="decimal"
-                      className={`rounded-panel border border-line-strong px-3 py-2 num transition-colors duration-fast hover:border-navy focus:border-navy ${inputs[k] === PLACEHOLDERS[k] ? "text-ink-muted" : "font-semibold text-navy-ink"}`}
+                      className={`rounded-panel border border-eucalyptus px-3 py-2 num transition-colors duration-fast hover:border-brunswick focus:border-brunswick ${inputs[k] === PLACEHOLDERS[k] ? "text-ink-muted" : "font-semibold text-ink"}`}
                       value={inputs[k]} onChange={(e) => setInputs((s) => ({ ...s, [k]: clamp(k, Number(e.target.value) || 0) }))} />
                   </label>
                 ))}
@@ -121,7 +121,7 @@ export default function Roadmap() {
           <ol className="mt-5 grid gap-3 md:grid-cols-2">
             {ask.items.map((a, i) => (
               <li key={a} className="surface-glass flex items-start gap-3 p-4 text-label text-white/90">
-                <NumberDot n={i + 1} tone="sky" />
+                <NumberDot n={i + 1} tone="emerald" />
                 <span>{a}</span>
               </li>
             ))}
@@ -137,7 +137,7 @@ function Out({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 px-4 py-3">
       <dt className="text-label text-ink-muted">{label}</dt>
-      <dd className="text-section font-semibold text-navy-ink num">{value}</dd>
+      <dd className="text-section font-semibold text-ink num">{value}</dd>
     </div>
   );
 }

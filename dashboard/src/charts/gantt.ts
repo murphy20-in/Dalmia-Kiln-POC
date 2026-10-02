@@ -1,6 +1,6 @@
 // Timeline of periods: one row per period, a bar from start to end on a Jun–Aug time axis.
 import { fmtDate, fromMs } from "../lib/format";
-import { brand, chart, font } from "../theme";
+import { chart, font, semantic } from "../theme";
 import type { Option } from "./Chart";
 import { tip, type TipRow } from "./tooltip";
 
@@ -10,8 +10,8 @@ export function gantt({ items, min, max }: { items: GanttItem[]; min: number; ma
   return {
     grid: { left: 72, right: 132, top: 8, bottom: 28 },
     tooltip: { trigger: "item", formatter: (p: { dataIndex: number }) => tip(items[p.dataIndex].tip) },
-    xAxis: { type: "time", min, max, splitNumber: 5, axisLabel: { formatter: (v: number) => fmtDate(fromMs(v)), hideOverlap: true }, splitLine: { show: true, lineStyle: { color: brand.grid } } },
-    yAxis: { type: "category", inverse: true, data: items.map((d) => d.label), axisLine: { show: false }, axisLabel: { color: brand.ink, fontSize: 12 } },
+    xAxis: { type: "time", min, max, splitNumber: 5, axisLabel: { formatter: (v: number) => fmtDate(fromMs(v)), hideOverlap: true }, splitLine: { show: true, lineStyle: { color: semantic.grid } } },
+    yAxis: { type: "category", inverse: true, data: items.map((d) => d.label), axisLine: { show: false }, axisLabel: { color: semantic.textSecondary, fontSize: 12 } },
     series: [{
       type: "custom",
       encode: { x: [1, 2], y: 0 },

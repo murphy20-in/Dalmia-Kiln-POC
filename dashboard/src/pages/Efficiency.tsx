@@ -7,7 +7,7 @@ import { Callout, Lead, Loading, Page } from "../components/ui";
 import { efficiency as t, labels, nav, systemName, zoneName } from "../copy";
 import { useData } from "../data";
 import { fmt1, fmtDate, fmtMonth, fmtPct, toMs } from "../lib/format";
-import { brand, chart, status, systemColor } from "../theme";
+import { chart, colors, semantic, status, systemColor, systemLabel } from "../theme";
 
 const DAY = 86_400_000;
 const FAM = ["efficiency", "combustion", "thermal", "draft_pressure", "stability"] as const;
@@ -51,12 +51,12 @@ export default function Efficiency() {
 
   const zoneStacks = [
     { name: zoneName.N, color: status.N.fill, values: e.zoneShares.map((z) => z.normal) },
-    { name: zoneName.W, color: status.W.fill, values: e.zoneShares.map((z) => z.watch), labelColor: brand.ink },
+    { name: zoneName.W, color: status.W.fill, values: e.zoneShares.map((z) => z.watch), labelColor: semantic.textPrimary },
     { name: zoneName.A, color: status.A.fill, values: e.zoneShares.map((z) => z.warning) },
   ];
   const driverStacks = [
-    ...FAM.map((f) => ({ name: systemName[f.toUpperCase()], color: systemColor[f.toUpperCase()], values: e.drivers.map((d) => d[f]) })),
-    { name: systemName.BREADTH_PERSISTENCE, color: systemColor.BREADTH_PERSISTENCE, values: e.drivers.map((d) => d.concurrence + d.persistence), labelColor: brand.ink },
+    ...FAM.map((f) => ({ name: systemName[f.toUpperCase()], color: systemColor[f.toUpperCase()], values: e.drivers.map((d) => d[f]), labelColor: systemLabel[f.toUpperCase()] })),
+    { name: systemName.BREADTH_PERSISTENCE, color: systemColor.BREADTH_PERSISTENCE, values: e.drivers.map((d) => d.concurrence + d.persistence), labelColor: systemLabel.BREADTH_PERSISTENCE },
   ];
 
   const i1 = t.insights.median(fmt1(jun.median), fmt1(aug.median));
@@ -77,8 +77,8 @@ export default function Efficiency() {
         </ChartCard>
         <ChartCard className="lg:col-span-7" title={t.dailyTitle} sub={t.dailySub} legend={lineLegend} source={t.source}
           actions={
-            <label className="flex cursor-pointer items-center gap-2 rounded-panel border border-line-strong px-3 py-1.5 text-caption font-semibold text-ink transition-colors hover:border-navy">
-              <input type="checkbox" className="h-4 w-4 accent-navy" checked={o2} onChange={(ev) => setO2(ev.target.checked)} />
+            <label className="flex cursor-pointer items-center gap-2 rounded-panel border border-line-strong px-3 py-1.5 text-caption font-semibold text-ink transition-colors hover:border-brunswick">
+              <input type="checkbox" className="h-4 w-4 accent-brunswick" checked={o2} onChange={(ev) => setO2(ev.target.checked)} />
               {t.o2Toggle}
             </label>
           }
@@ -97,7 +97,7 @@ export default function Efficiency() {
         <section className="card lg:col-span-7" aria-labelledby="interpret">
           <h2 id="interpret" className="t-section">{t.interpretTitle}</h2>
           <div className="mt-4 flex flex-col divide-y divide-line">
-            {[{ ...i1, tone: brand.navy }, { ...i2, tone: systemColor.EFFICIENCY }, { ...t.insights.o2, tone: chart.annotation }].map((x) => (
+            {[{ ...i1, tone: colors.brunswick }, { ...i2, tone: systemColor.EFFICIENCY }, { ...t.insights.o2, tone: chart.annotation }].map((x) => (
               <article key={x.title} className="flex gap-4 py-4 first:pt-0 last:pb-0">
                 <span className="mt-1 w-1 shrink-0 self-stretch rounded-full" style={{ background: x.tone }} aria-hidden />
                 <div>

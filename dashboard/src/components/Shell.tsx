@@ -54,18 +54,21 @@ export default function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }} className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn-navy">{labels.skip}</a>
+      <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }} className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn-brand">{labels.skip}</a>
 
       {/* One brand moment, top-left: the co-brand lockup. The sidebar and footer carry text only. */}
-      <header className="no-print on-dark sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-haze/15 bg-night px-4 sm:px-6">
+      <header className="no-print on-dark sticky top-0 z-30 flex h-[var(--header-h)] items-center gap-4 overflow-hidden border-b border-sage/20 bg-header px-4 sm:px-6 lg:gap-5">
         <BrandLockup />
         <ProductLine />
         <div className="ml-auto flex shrink-0 items-center gap-4">
           <div className="flex items-center gap-2.5">
-            <History size={16} className="text-sky" aria-hidden />
-            <div className="hidden text-right leading-none md:block">
+            <History size={16} className="text-emerald" aria-hidden />
+            {/* Below 1024 px the bar belongs to the product name: the icon stays, and the wording is carried by
+                the page ribbon, the footer and the screen-reader text below, so nothing overlaps and none is lost. */}
+            <div className="hidden text-right leading-none lg:block">
               <div className="font-mono text-eyebrow font-medium uppercase text-white">{context.plantShort}</div>
-              <div className="mt-1.5 font-mono text-eyebrow uppercase text-haze">{context.statusShort}</div>
+              {/* The long form needs 1280 px; below that the plant alone shares the bar with the product name. */}
+              <div className="mt-1.5 hidden font-mono text-eyebrow uppercase text-sage xl:block">{context.statusShort}</div>
             </div>
             <span className="sr-only">{context.status}, {context.period}. {context.statusHint}</span>
           </div>
@@ -78,36 +81,37 @@ export default function Shell({ children }: { children: ReactNode }) {
 
       <div className="flex flex-1">
         {!present && (
-          <div className={`no-print on-dark sticky top-16 flex h-[calc(100vh-4rem)] shrink-0 flex-col self-start border-r border-haze/15 bg-sidebar transition-[width] ${collapsed ? "w-16" : "w-60 max-md:fixed max-md:left-0 max-md:z-30 max-md:shadow-drawer"}`}>
+          <div className={`no-print on-dark sticky top-[var(--header-h)] flex h-[calc(100vh-var(--header-h))] shrink-0 flex-col self-start border-r border-sage/15 bg-sidebar transition-[width] ${collapsed ? "w-16" : "w-60 max-md:fixed max-md:left-0 max-md:z-30 max-md:shadow-drawer"}`}>
             <nav aria-label={labels.pages} className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2.5 pt-3">
               {pages.map(({ path, label, icon: Icon, group }, i) => (
                 <Fragment key={path}>
                   {group !== pages[i - 1]?.group && (collapsed
-                    ? i > 0 && <hr className="mx-2 my-2.5 border-haze/20" />
-                    : <div className={`px-3 pb-1.5 font-mono text-eyebrow font-medium uppercase text-haze ${i > 0 ? "pt-5" : "pt-1"}`}>{nav.groups[group]}</div>)}
-                  <NavLink to={path} end={path === "/"} title={collapsed ? label : undefined}
+                    ? i > 0 && <hr className="mx-2 my-2.5 border-sage/20" />
+                    : <div className={`px-3 pb-1.5 font-mono text-eyebrow font-medium uppercase text-sage ${i > 0 ? "pt-5" : "pt-1"}`}>{nav.groups[group]}</div>)}
+                  <NavLink to={path} title={collapsed ? label : undefined}
                     className={({ isActive }) =>
                       `group relative flex h-10 items-center gap-3 rounded-panel px-3 text-label font-medium transition-colors duration-fast ${collapsed ? "justify-center" : ""} ${
-                        isActive ? "bg-white/[0.07] font-semibold text-white" : "text-mist hover:bg-white/[0.05] hover:text-white"}`}>
+                        isActive ? "bg-emerald/[0.09] font-semibold text-white ring-1 ring-inset ring-emerald/25" : "text-mist hover:bg-white/[0.05] hover:text-white"}`}>
                     {({ isActive }) => (
                       <>
-                        {isActive && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-sky shadow-glow" aria-hidden />}
-                        <Icon size={18} aria-hidden className={`shrink-0 transition-colors duration-fast ${isActive ? "text-sky" : "text-haze group-hover:text-mist"}`} />
+                        {isActive && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-emerald shadow-glow" aria-hidden />}
+                        <Icon size={18} aria-hidden className={`shrink-0 transition-colors duration-fast ${isActive ? "text-emerald" : "text-sage group-hover:text-mist"}`} />
                         {!collapsed ? <span className="truncate">{label}</span> : <span className="sr-only">{label}</span>}
+                        {!collapsed && <span aria-hidden className={`ml-auto font-mono text-eyebrow tabular-nums ${isActive ? "text-emerald" : "text-sage"}`}>{String(i + 1).padStart(2, "0")}</span>}
                       </>
                     )}
                   </NavLink>
                 </Fragment>
               ))}
             </nav>
-            <div className={`flex items-center border-t border-haze/15 p-2.5 ${collapsed ? "justify-center" : "justify-between pl-4"}`}>
+            <div className={`flex items-center border-t border-sage/15 p-2.5 ${collapsed ? "justify-center" : "justify-between pl-4"}`}>
               {!collapsed && (
                 <div className="min-w-0 leading-none">
                   <div className="truncate font-mono text-eyebrow font-medium uppercase text-mist">{brandLine.short}</div>
-                  <div className="mt-1.5 truncate text-caption text-haze">{brandLine.stage}</div>
+                  <div className="mt-1.5 truncate text-caption text-sage">{brandLine.stage}</div>
                 </div>
               )}
-              <button className="rounded-panel p-2 text-haze transition-colors duration-fast hover:bg-white/10 hover:text-white" onClick={() => setCollapsed((c) => !c)}
+              <button className="rounded-panel p-2 text-sage transition-colors duration-fast hover:bg-white/10 hover:text-white" onClick={() => setCollapsed((c) => !c)}
                 aria-label={collapsed ? nav.expand : nav.collapse} title={collapsed ? nav.expand : nav.collapse}>
                 {collapsed ? <PanelLeftOpen size={18} aria-hidden /> : <PanelLeftClose size={18} aria-hidden />}
               </button>
@@ -115,7 +119,7 @@ export default function Shell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col">
-          <main id="main" key={section} tabIndex={-1} className="anim-page min-h-[calc(100vh-4rem)] flex-1 outline-none">{children}</main>
+          <main id="main" key={section} tabIndex={-1} className="anim-page min-h-[calc(100vh-var(--header-h))] flex-1 outline-none">{children}</main>
           <BrandFooter />
         </div>
       </div>

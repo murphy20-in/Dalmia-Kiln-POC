@@ -3,7 +3,7 @@ import { Lock } from "lucide-react";
 import Chart from "../charts/Chart";
 import { consoleCopy, healthIndex, zoneName } from "../copy";
 import type { Edges } from "../data";
-import { brand, font, status, type Zone } from "../theme";
+import { font, semantic, status, type Zone } from "../theme";
 
 /** 0–100 Health Index gauge. Critical is drawn as a greyed, locked outer arc over Warning:
  *  it has no edge until it is calibrated on the plant's event logs. */
@@ -17,14 +17,14 @@ export default memo(function StatusGauge({ value, zone, edges }: { value: number
         ...common,
         radius: "86%",
         axisLine: { lineStyle: { width: 20, color: [[w, status.N.fill], [a, status.W.fill], [1, status.A.fill]] } },
-        pointer: { show: value != null, length: "62%", width: 6, itemStyle: { color: brand.navyInk } },
-        anchor: { show: value != null, size: 14, itemStyle: { color: brand.navyInk } },
+        pointer: { show: value != null, length: "62%", width: 6, itemStyle: { color: semantic.textPrimary } },
+        anchor: { show: value != null, size: 14, itemStyle: { color: semantic.textPrimary } },
         axisTick: { show: false },
         splitLine: { show: false },
-        axisLabel: { distance: -46, color: brand.muted, fontSize: 11, formatter: (v: number) => (v === 0 || v === 100 ? String(v) : "") },
+        axisLabel: { distance: -46, color: semantic.textMuted, fontSize: 11, formatter: (v: number) => (v === 0 || v === 100 ? String(v) : "") },
         title: { show: false },
         detail: {
-          valueAnimation: true, offsetCenter: [0, "38%"], fontSize: 40, fontWeight: 700, color: brand.navyInk,
+          valueAnimation: true, offsetCenter: [0, "38%"], fontSize: 40, fontWeight: 700, color: semantic.textPrimary,
           fontFamily: font.sans, formatter: () => (value == null ? "–" : value.toFixed(1)),
         },
         data: [{ value: value ?? 0 }],
@@ -34,7 +34,7 @@ export default memo(function StatusGauge({ value, zone, edges }: { value: number
       {
         ...common,
         radius: "99%",
-        axisLine: { lineStyle: { width: 5, color: [[a, brand.clear], [1, status.C.fill]] } },
+        axisLine: { lineStyle: { width: 5, color: [[a, semantic.clear], [1, status.C.fill]] } },
         pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, detail: { show: false },
         data: [{ value: 0 }], silent: true,
       },

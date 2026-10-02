@@ -8,8 +8,8 @@ import { useData, type AfrCard } from "../data";
 import { fmtMonth, fmtSigned } from "../lib/format";
 import { chart } from "../theme";
 
-const strengthTone: Record<AfrCard["strength"], "navy" | "tint" | "outline"> = {
-  Consistent: "navy",
+const strengthTone: Record<AfrCard["strength"], "brand" | "tint" | "outline"> = {
+  Consistent: "brand",
   "Lower confidence": "tint",
   Emerging: "outline",
 };
@@ -29,7 +29,7 @@ export default function AltFuel() {
         <ol className="grid border-t border-line md:grid-cols-3 md:divide-x md:divide-line">
           {t.domino.map((s, i) => (
             <li key={i} className="relative flex gap-3 border-b border-line p-5 last:border-b-0 md:border-b-0">
-              <NumberDot n={i + 1} tone={i === 1 ? "navy" : "tint"} />
+              <NumberDot n={i + 1} tone={i === 1 ? "brand" : "tint"} />
               <div>
                 <h3 className="t-card">{typeof s.title === "function" ? s.title(d.coalStepTph) : s.title}</h3>
                 <p className="mt-1 text-label text-ink-muted">{s.body}</p>
@@ -69,12 +69,12 @@ export default function AltFuel() {
       </section>
 
       <section className="card-dashed flex flex-col gap-4 md:flex-row md:items-start" aria-labelledby="deeper">
-        <FlaskConical size={28} className="shrink-0 text-navy" aria-hidden />
+        <FlaskConical size={28} className="shrink-0 text-brunswick" aria-hidden />
         <div>
           <h2 id="deeper" className="t-section">{t.deeperTitle}</h2>
           <p className="mt-1 text-label text-ink-muted">{t.deeperBody}</p>
           <ul className="mt-3 flex flex-wrap gap-2">{t.deeperItems.map((x) => <li key={x}><Badge>{x}</Badge></li>)}</ul>
-          <p className="mt-3 text-label font-semibold text-navy">{t.deeperUnlocks}</p>
+          <p className="mt-3 text-label font-semibold text-brunswick">{t.deeperUnlocks}</p>
         </div>
       </section>
     </Page>

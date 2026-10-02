@@ -39,12 +39,12 @@ export default function Validation() {
       <div className="mx-auto flex w-full max-w-page flex-col gap-8 px-4 py-8 sm:px-8">
         <section className="card" aria-labelledby="result">
           <SectionHeader id="result" eyebrow={t.sections.result} title={t.resultTitle} />
-          <p className="text-lead font-semibold text-navy-ink">{t.result}</p>
+          <p className="text-lead font-semibold text-ink">{t.result}</p>
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {stats.map(([k, v]) => (
               <div key={k} className="inset">
                 <dt className="eyebrow">{k}</dt>
-                <dd className="mt-1 text-section font-semibold text-navy-ink num">{v}</dd>
+                <dd className="mt-1 text-section font-semibold text-ink num">{v}</dd>
               </div>
             ))}
           </dl>
@@ -56,13 +56,13 @@ export default function Validation() {
             <SectionHeader id="why" eyebrow={t.sections.interpretation} title={t.whyTitle} />
             <ul className="flex flex-col gap-2.5">
               {t.why.map((w, i) => (
-                <li key={i} className="flex gap-2.5 text-label text-ink-body"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-navy" aria-hidden />{w(d.censored, d.periods)}</li>
+                <li key={i} className="flex gap-2.5 text-label text-ink-body"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brunswick" aria-hidden />{w(d.censored, d.periods)}</li>
               ))}
             </ul>
           </section>
           <section className="panel" aria-labelledby="fix">
             <SectionHeader id="fix" eyebrow={t.sections.limitations} title={t.fixTitle} />
-            <p className="text-label text-navy-ink">{t.fix(d.revalidateAt)}</p>
+            <p className="text-label text-ink">{t.fix(d.revalidateAt)}</p>
           </section>
         </div>
 
@@ -70,7 +70,7 @@ export default function Validation() {
           <SectionHeader id="method" eyebrow={t.sections.method} title={t.methodTitle} />
           <ol className="grid gap-5 md:grid-cols-5">
             {t.method.map((m, i) => (
-              <li key={m.title} className="flex flex-col gap-2 border-t-2 border-navy-ink pt-3">
+              <li key={m.title} className="flex flex-col gap-2 border-t-2 border-ink pt-3">
                 <div className="flex items-center gap-2"><NumberDot n={i + 1} tone="tint" /><h3 className="t-card">{m.title}</h3></div>
                 <p className="text-label text-ink-muted">{m.body}</p>
               </li>

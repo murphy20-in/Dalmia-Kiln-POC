@@ -9,7 +9,7 @@ export const context = {
   plantShort: "Ariyalur",
   period: "Jun–Aug 2025 history",
   status: "Historical analytical view",
-  statusShort: "Historical · Jun–Aug 2025",
+  statusShort: "Historical analysis · Jun–Aug 2025",
   statusHint: "Every screen replays or summarises recorded June–August 2025 data. Nothing here is connected to the plant.",
 };
 // Co-brand footer: text only, no repeated logos.
@@ -107,7 +107,9 @@ export const common = {
 // ---------------------------------------------------------------- 1. Executive Summary
 export const summary = {
   eyebrow: "Stage 1 · delivered on your data",
-  heroTitle: "A historical view of efficiency deterioration and process behaviour at Ariyalur.",
+  heroEyebrow: context.plant,
+  heroName: brandLine.product, // the H1: product identity
+  heroLead: "A historical view of efficiency deterioration and process behaviour at Ariyalur.", // supporting text, deliberately smaller
   heroPeriod: "Jun — Aug 2025",
   core: {
     label: "Core finding",
@@ -138,10 +140,11 @@ export const summary = {
     { label: "Planned intervention", note: "Stages 3–4", state: "future" },
   ] as const,
   kpis: {
-    rows: { label: "SCADA rows analysed", sub: (tags: number) => `Across ${tags} process tags, five months of running data.` },
-    periods: { label: "Abnormal periods, Jun–Aug", sub: (high: number) => `Found automatically in the process data; ${high} rated high severity.` },
-    eff: { label: "Efficiency Index, June → August", sub: "Process drift away from the April–May normal." },
-    issues: { label: "Data issues caught", sub: (i: Record<"critical" | "high" | "medium" | "low" | "info", number>) => `${i.critical} critical · ${i.high} high · ${i.medium} medium · ${i.low + i.info} low / info. Each fixed, masked or set aside.` },
+    // category (eyebrow) → number → label (the metric, in plain words) → context line
+    rows: { category: "Data scope", label: "Process records analysed", sub: (tags: number) => `SCADA rows across ${tags} process parameters, five months of running data.` },
+    periods: { category: "Abnormal behaviour", label: "KPI-derived abnormal periods", sub: (high: number) => `Jun–Aug 2025, found in the process data; ${high} rated high severity.` },
+    eff: { category: "Efficiency", label: "Efficiency deterioration index", sub: "Monthly median, June → August: process drift away from the April–May normal." },
+    issues: { category: "Data quality", label: "Data quality issues caught", sub: (i: Record<"critical" | "high" | "medium" | "low" | "info", number>) => `${i.critical} critical · ${i.high} high · ${i.medium} medium · ${i.low + i.info} low / info. Each fixed, masked or set aside.` },
   },
   findingsTitle: "What your kiln data revealed",
   findings: {
@@ -212,7 +215,21 @@ export const consoleCopy = {
     stepBack: "Back 10 minutes",
     stepFwd: "Forward 10 minutes",
   },
-  legend: { running: "Running data", high: "High-severity abnormal period", other: "Other abnormal period" },
+  // The timeline legend sits inside the bar. States describe the recorded history only.
+  deckState: "Operating state",
+  running: "Kiln running",
+  stoppedState: "Kiln stopped",
+  noDataState: "Data not recorded",
+  stoppedOrNoData: "Stopped or no data",
+  dataPresent: "Data available",
+  dataAbsent: "No data recorded",
+  legend: {
+    title: "Historical replay timeline",
+    normal: zoneName.N, watch: zoneName.W, warning: zoneName.A, gap: "Data gap",
+    high: "High-severity period", other: "Other period",
+    note: "One column per day · Warning on top",
+    sr: "Timeline of June to August. Each day shows its recorded time in Normal, Watch and Warning; stopped or missing data is a gap. Abnormal periods are KPI-derived, not validated plant events. Use the arrow keys to move in 10-minute steps, or the controls below to jump.",
+  },
   gapTitle: "Kiln stopped / no data",
   gapBody: "The kiln was stopped, restarting, or the data was incomplete at this time. Nothing is drawn rather than guessed.",
 };
@@ -249,7 +266,7 @@ export const periods = {
   question: "What went wrong, when, and which systems?",
   subtitle: "Found automatically from process data; next step is matching them to your plant logs.",
   tiles: {
-    total: "Abnormal periods, Jun–Aug", high: "High severity", multi: "Involved several systems", longest: "Longest period",
+    total: "KPI-derived abnormal periods, Jun–Aug", high: "High-severity periods", multi: "Multi-system periods", longest: "Longest abnormal period",
     highNote: "Severity = how far, how broad, how long",
     multiNote: (n: number) => `Out of ${n} periods`,
   },

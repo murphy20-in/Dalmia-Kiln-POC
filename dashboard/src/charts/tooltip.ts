@@ -1,7 +1,7 @@
 // One tooltip layout for every chart: title, optional subtitle, labelled rows, optional note.
-// Dark navy shell (theme.ts → chart.tooltip) with a short sky rule under the title.
+// Deep Forest shell (theme.ts → chart.tooltip) with a short Emerald rule under the title.
 // ECharts injects formatter output as HTML, so every string is escaped here, including colours.
-import { brand, chart } from "../theme";
+import { chart, colors } from "../theme";
 
 const esc = (s: string | number) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -13,7 +13,7 @@ const t = chart.tooltip;
 export function tip({ title, sub, rows = [], note }: { title: string; sub?: string; rows?: TipRow[]; note?: string }): string {
   const head = `<div style="font-weight:600;color:${t.title};font-size:13px;letter-spacing:-0.005em">${esc(title)}</div>`
     + (sub ? `<div style="color:${t.text};margin-top:2px;font-size:11px;letter-spacing:0.04em;text-transform:uppercase">${esc(sub)}</div>` : "")
-    + `<div style="width:24px;height:2px;border-radius:2px;background:${brand.sky};margin-top:7px"></div>`;
+    + `<div style="width:24px;height:2px;border-radius:2px;background:${colors.emerald};margin-top:7px"></div>`;
   const body = rows.map((r) =>
     `<div style="display:flex;align-items:center;gap:8px;margin-top:6px">`
     + (r.color ? `<span style="width:8px;height:8px;border-radius:2px;background:${esc(r.color)};box-shadow:0 0 0 1px ${t.border};flex:none"></span>` : "")

@@ -1,7 +1,7 @@
 import { Component, Suspense, type ReactNode } from "react";
 import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Shell from "./components/Shell";
-import { pages } from "./routes";
+import { HOME, pages } from "./routes";
 import { common } from "./copy";
 
 class Boundary extends Component<{ children: ReactNode }, { error?: Error }> {
@@ -30,7 +30,7 @@ export default function App() {
             <Routes>
               {pages.map(({ path, Component }) => <Route key={path} path={path} element={<Component />} />)}
               <Route path="/periods/:id" element={<Periods />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to={HOME} replace />} />
             </Routes>
           </Suspense>
         </RouteBoundary>

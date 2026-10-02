@@ -314,6 +314,27 @@ Lighthouse accessibility 100 on all 8 routes before and after these fixes. Contr
 | BP1 | `background.navy/hero/surfaceElevated/overlay`, `dalmia.blue/green/grey`, `fog` have no component uses. | ACCEPTED: named in the brief as the semantic token set. |
 | BP2 | `motion.ease`, `elevation.*` and `gradient.*` are read only by `tailwind.config.ts`. | ACCEPTED: that is how they reach CSS. |
 
+## Green pitch pass (BG), 2026-10-03
+
+Scope: presentation only. Green token system, Console first, integrated Console timeline, Executive Summary hero and KPI names, green charts and surfaces on every page. Reviewers: React, security, analytical semantics, accessibility; Ponytail audit; Lighthouse (Accessibility, Best Practices, SEO 100 on `#/console` and `#/summary`, production build); Playwright journeys.
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| BG1 | MEDIUM | The first Console state bar drew the *dominant* state per day. 37 of 75 days contained Warning rows but were drawn Normal or Watch, and 3 abnormal periods sat under days drawn with no Warning. | FIXED: each day is a stacked column of the recorded share of Normal / Watch / Warning (Warning on top). No dominance rule. The legend note says so. |
+| BG2 | MEDIUM | The deck said "Kiln stopped" for every missing row, including `nodata` gaps. | FIXED: the label follows the gap kind ("Kiln stopped", "Data not recorded", or "Stopped or no data"). |
+| BG3 | MEDIUM (a11y) | The state bar relied on colour alone; Eucalyptus (Normal) and the Warning orange have the same luminance (1.05:1). | FIXED: Warning carries a pinstripe texture (also in the legend) on top of its colour, and Warning stacks on top. |
+| BG4 | MEDIUM (a11y) | Non-text contrast: gap hatch invisible on its slate fill (1.1:1); selected-speed state a faint tint (1.56:1); text-input borders 1.6–1.9:1; marker line 1.2–2.0:1 on the state fills. | FIXED: light hatch on dark; selected speed has an Emerald fill tint and inset ring; deck input border `sage/70`, Roadmap inputs Eucalyptus (3.8:1); the marker has a Deep Forest halo. |
+| BG5 | LOW (a11y) | Label contrast: Watch bars (4.1:1) and the Draft series (3.8:1). Watch fill 2.45:1 on white. | FIXED: Watch labels Deep Forest (5.9:1), Watch fill `#c28700` (3.1:1 on white, labels 4.65:1), Draft series olive `#6b7a2e` with white labels (4.7:1). |
+| BG6 | LOW (a11y) | The scrubber focus ring vanishes in forced-colors mode. The slider's value text carried only the time, and the status line then announced the state a second time on every key press. | FIXED: transparent outline fallback; `aria-valuetext` is "time: state, index"; the status line stays silent while the slider has focus; a screen-reader description of the bar is attached with `aria-describedby`. |
+| BG7 | LOW | Marker lagged the scrub by 120 ms; the opacity-0 slider could fight touch scrolling; stale "navy" comments; a redundant `/` route; unused tokens; the Mist contrast comment said 10:1 (it is 8:1). | FIXED. |
+| BG8 | LOW | The 375 px date scale collided. | FIXED: only month labels below 640 px. |
+| BG9 | n/a | Playback re-renders three ECharts per tick (design from before this pass). | ACCEPTED: `animate={!playing}` is set; unchanged from the previous commit. |
+| BG10 | n/a | Editing `?t=` by hand while the Console is mounted can be ignored, and Play may then not start. | PRE-EXISTING: reproduced on the previous commit. Fresh loads and deep links (the drawer's "Replay" link, jump chips, pasted URLs) work. Not fixed. |
+| BG11 | n/a | "Efficiency deterioration index" rather than "Kiln Efficiency Index". | DELIBERATE: it is the index's real name and higher means worse; "Efficiency Index" alone could read as higher-is-better. |
+| BG12 | n/a | Data, scripts, numbers, wording. | VERIFIED: SHA-256 of every `public/data/*.json` identical before and after; no diff under `public/` or `scripts/`; the wording and token tests pass; the security review found no new dependency, no unescaped data in tooltips, no external loads. |
+| BG13 | n/a | Remaining advisories from the accessibility review: orange annotation line (2.3:1) and the Breadth bar (2.5:1) on white; `textFaint` Roadmap icons (2.8:1); `emeraldDeep` on the canvas (2.9:1). | ACCEPTED: each carries a text label or value beside it, or is decorative; no chart sits directly on the canvas. |
+| BG14 | n/a | The brief lists ecc:planner and ecc:code-architect. | NOT SPAWNED: the plan came from reading the existing code. The React, accessibility, analytics and security reviewers and the Ponytail audit were run. |
+
 ## Builder (BB)
 
 | # | Finding | Disposition |
@@ -326,3 +347,23 @@ Lighthouse accessibility 100 on all 8 routes before and after these fixes. Contr
 | BB6 | Console playback after the redesign. | MEASURED against the previous commit on the same machine: 59.8 / 60.1 fps vs 60.1 / 60.1, 0 long tasks. |
 | BB7 | The brief names `/mnt/data/...` for the logos and references. | The files were in the repo at `Astrikos and Dalmia logo SVG/`; used from there. That folder is left untracked; the logos used by the app are copied to `src/assets/brand/`. |
 | BB8 | The brief lists ecc:planner and ecc:code-architect. | NOT SPAWNED: the design was planned in-session from the existing code. The React, accessibility, security and claims reviewers and the Ponytail audit were run. |
+
+## Visual correction pass (VC): gradient depth, timeline rebuild, product name
+
+A later pass with three objectives and nothing else: make the green gradient system visibly atmospheric, rebuild
+the historical console bar, and raise "Kiln Intelligence" to product-title scale. No data, methodology or claim
+changed; `public/`, `scripts/` and every analytical string are untouched.
+
+| # | Finding | Disposition |
+|---|---|---|
+| VC1 | The palette was green but the surfaces were flat: two-stop linear washes read as "a blue dashboard recoloured green". | FIXED: every gradient is radial-first and travels Abyss → Deep Forest → Brunswick → an Emerald light, with dark edges. `abyss` #08201a added as the darkest Deep Forest step, for gradient anchors only. Strength is a hierarchy (hero/header → deck/sidebar → well → canvas → none on cards). |
+| VC2 | The state bar read as a barcode: a `border-r` divider on each of 92 day-columns combed the ribbon into stripes. | FIXED: dividers removed, columns overlap by half a pixel, so the days read as one band. The encoding is unchanged — same per-day shares, Warning on top, no dominant-state rule. |
+| VC3 | The Warning pinstripe (vertical, 1 px every 4 px) beat against the ~10 px columns into visual static. | FIXED: the texture now runs **horizontally**, across the columns, at lower contrast. State is still never colour alone, and the legend key carries the same weave. |
+| VC4 | Data gaps were drawn as near-opaque light slate with a bright hatch — the loudest thing on the track, reading as alarm rather than absence. | FIXED: a recessive slate veil (`/45`) with a low-contrast hatch. A gap is now the quietest mark on the ribbon. |
+| VC5 | The legend floated above the bar, and the period strip, scale and footnote each sat on their own row: five objects, not one control. | FIXED: one clipped well (`bg-track`, `shadow-inset`) with a fused internal header strip (title · recorded range · the four state keys), the lane, and a footer strip. Measured: zero pixels of any descendant escape the well at 375 / 768 / 1024 / 1280 / 1440 / 1920. |
+| VC6 | The date scale used full-height left borders, cutting the object into table cells. | FIXED: a short tick at the mark with its label beside it. |
+| VC7 | "Kiln Intelligence" read as a navigation label (22–46 px, semibold). | FIXED: 24 → 32 → 48 → 56 → 64 px, bold, `-0.045em`, Polar + Emerald, with a close and a wide Emerald halo and a short rule above the plant caption. `--header-h` steps with it. |
+| VC8 | At 1024 px the enlarged name overflowed its shrunk flex box and ran under the history icon and status text. | FIXED: the status block's long line appears from 1280 px and the block itself from 1024 px; the name's steps are now bounded by measured clearance at every breakpoint (640: 18 px, 768: 116, 1024: 125, 1280: 81, 1440: 241, 1920: 649; name overflow 0 everywhere). |
+| VC9 | The timeline well is ~196 px tall, above the 120–170 px the brief suggests. | ACCEPTED: the extra height is the evidence footer ("KPI-derived abnormal periods · Not validated plant events"), which the claims audit requires to stay inside the component. The whole deck still ends at y=651 on a 1280×720 fold. |
+| VC10 | The brief sketches a six-component tree (TimelineHeader / TimelineTrack / StateSegments / GapSegments / PeriodMarkers / SelectedMarker / TimeScale). | NOT BUILT AS COMPONENTS: that is the visual structure, and it is what the rendered object now is. Six single-use components around 40 lines of markup would be abstraction for its own sake; `Track` and `Scrubber` remain the only two. |
+| VC11 | Verification. | Lighthouse (desktop, production build): accessibility 100, best practices 100, SEO 100; the single failure is a missing `llms.txt`, irrelevant here. Performance trace: LCP 92 ms, CLS 0.00. Zero console errors or warnings. `npm test` 10/10, `npm run typecheck`, `npm run build` all pass. |

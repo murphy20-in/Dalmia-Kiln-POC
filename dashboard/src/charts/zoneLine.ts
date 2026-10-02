@@ -4,7 +4,7 @@
 import { common } from "../copy";
 import type { Edges } from "../data";
 import { fmtDateTime, fromMs } from "../lib/format";
-import { background, brand, chart, status } from "../theme";
+import { chart, colors, semantic, status } from "../theme";
 import type { Option } from "./Chart";
 import { tip } from "./tooltip";
 
@@ -42,14 +42,14 @@ export function zoneLine({ series, edges, periods = [], now, yMax = 100, zoom = 
       ]
     : [];
   const shaded = periods.map((p) => [
-    { xAxis: p.from, name: p.label, itemStyle: { color: brand.periodFill, borderColor: brand.periodEdge, borderWidth: 1, borderType: "dashed" },
-      label: { show: !compact && !!p.label, position: "insideTop", color: brand.navyInk, fontSize: 10, fontWeight: 600 } },
+    { xAxis: p.from, name: p.label, itemStyle: { color: semantic.periodFill, borderColor: semantic.periodEdge, borderWidth: 1, borderType: "dashed" },
+      label: { show: !compact && !!p.label, position: "insideTop", color: semantic.textPrimary, fontSize: 10, fontWeight: 600 } },
     { xAxis: p.to },
   ]);
   const data0 = series[0]?.data ?? [];
   const range = data0.length > 1 ? data0[data0.length - 1][0] - data0[0][0] : 1;
   const gaps = compact ? [] : gapSpans(data0).map((g) => [
-    { xAxis: g.from, name: common.stopped, itemStyle: { color: brand.gapFill },
+    { xAxis: g.from, name: common.stopped, itemStyle: { color: semantic.gapFill },
       label: { show: (g.to - g.from) / range > 0.12, position: "insideBottom", color: chart.axis, fontSize: 10 } },
     { xAxis: g.to },
   ]);
@@ -66,7 +66,7 @@ export function zoneLine({ series, edges, periods = [], now, yMax = 100, zoom = 
     },
     xAxis: { type: "time", show: !compact, axisLabel: { hideOverlap: true } },
     yAxis: { type: "value", min: compact ? "dataMin" : 0, max: compact ? "dataMax" : yMax, show: !compact, interval: compact ? undefined : 25 },
-    dataZoom: zoom ? [{ type: "slider", height: 20, bottom: 12, borderColor: brand.line, backgroundColor: background.subtle, fillerColor: brand.zoomFill, handleStyle: { color: brand.navy }, moveHandleStyle: { color: brand.navyTint }, textStyle: { color: chart.axis }, labelFormatter: (v: number) => fromMs(v).slice(5, 10) }, { type: "inside" }] : undefined,
+    dataZoom: zoom ? [{ type: "slider", height: 20, bottom: 12, borderColor: semantic.border, backgroundColor: semantic.surfaceSoft, fillerColor: semantic.zoomFill, handleStyle: { color: colors.brunswick }, moveHandleStyle: { color: semantic.surfaceStrong }, textStyle: { color: chart.axis }, labelFormatter: (v: number) => fromMs(v).slice(5, 10) }, { type: "inside" }] : undefined,
     series: series.map((s, i) => ({
       type: "line",
       name: s.name,
@@ -84,7 +84,7 @@ export function zoneLine({ series, edges, periods = [], now, yMax = 100, zoom = 
               ? {
                   silent: true, symbol: "none",
                   data: [
-                    ...(now != null ? [{ xAxis: now, lineStyle: { color: brand.navyInk, width: 1.5, type: "solid" }, label: { show: false } }] : []),
+                    ...(now != null ? [{ xAxis: now, lineStyle: { color: semantic.textPrimary, width: 1.5, type: "solid" }, label: { show: false } }] : []),
                     // Period-start annotations are the one place Dalmia orange is used on a chart.
                     ...markers.map((m) => ({ xAxis: m.at, lineStyle: { color: chart.annotation, width: 1.25, type: "dotted", opacity: 0.9 }, label: { formatter: m.label, color: chart.annotationInk, fontSize: 10, fontWeight: 600, position: "end" } })),
                   ],

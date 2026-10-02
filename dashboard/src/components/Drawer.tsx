@@ -25,17 +25,17 @@ export default function Drawer({ title, eyebrow, meta, onClose, children }: { ti
   }, []);
   return createPortal(
     <div className="no-print fixed inset-0 z-40 flex justify-end">
-      <div aria-hidden className="anim-fade absolute inset-0 bg-night/55" onClick={() => close.current()} />
+      <div aria-hidden className="anim-fade absolute inset-0 bg-forest/55" onClick={() => close.current()} />
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}
         className="anim-drawer relative flex h-full w-full max-w-xl flex-col bg-white shadow-drawer outline-none">
         <div className="relative flex items-start justify-between gap-4 border-b border-line bg-surface px-6 py-5">
-          <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-navy" />
+          <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-brunswick" />
           <div className="min-w-0">
             {eyebrow && <p className="eyebrow mb-1.5">{eyebrow}</p>}
-            <h2 id={id} className="text-title font-semibold text-navy-ink">{title}</h2>
+            <h2 id={id} className="text-title font-semibold text-ink">{title}</h2>
             {meta && <div className="mt-2 flex flex-wrap gap-2">{meta}</div>}
           </div>
-          <button onClick={() => close.current()} className="rounded-panel p-2 text-ink-muted transition-colors hover:bg-page hover:text-navy" aria-label={common.close}><X size={20} aria-hidden /></button>
+          <button onClick={() => close.current()} className="rounded-panel p-2 text-ink-muted transition-colors hover:bg-page hover:text-brunswick" aria-label={common.close}><X size={20} aria-hidden /></button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
       </div>

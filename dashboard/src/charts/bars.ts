@@ -1,5 +1,5 @@
 // Stacked columns (monthly shares), sorted horizontal bars (contributions) and small month columns.
-import { background, brand } from "../theme";
+import { semantic } from "../theme";
 import type { Option } from "./Chart";
 import { tip } from "./tooltip";
 
@@ -13,21 +13,21 @@ export function stackedColumns({ categories, stacks }: { categories: string[]; s
   return {
     grid: { left: 44, right: 8, top: 12, bottom: 28 },
     tooltip: {
-      trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: brand.hoverFill } },
+      trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: semantic.hoverFill } },
       formatter: (ps: { dataIndex: number }[]) => {
         const i = ps[0].dataIndex;
         return tip({ title: categories[i], rows: [...stacks].reverse().map((s) => ({ label: s.name, value: pct(s.values[i], 1), color: s.color })) });
       },
     },
-    xAxis: { type: "category", data: categories, axisLabel: { fontSize: 13, color: brand.ink, fontWeight: 600 } },
+    xAxis: { type: "category", data: categories, axisLabel: { fontSize: 13, color: semantic.textSecondary, fontWeight: 600 } },
     yAxis: { type: "value", max: (v: { max: number }) => Math.max(1, v.max), interval: 0.25, axisLabel: { formatter: (v: number) => pct(v) } },
     series: stacks.map((s, i) => ({
       type: "bar",
       name: s.name,
       stack: "all",
       barWidth: "44%",
-      itemStyle: { color: s.color, borderColor: brand.white, borderWidth: 1.5, borderRadius: i === stacks.length - 1 ? [3, 3, 0, 0] : 0 },
-      label: { show: true, color: s.labelColor ?? brand.white, fontWeight: 600, fontSize: 12, formatter: (p: { value: number }) => (p.value >= 0.06 ? pct(p.value) : "") },
+      itemStyle: { color: s.color, borderColor: semantic.surface, borderWidth: 1.5, borderRadius: i === stacks.length - 1 ? [3, 3, 0, 0] : 0 },
+      label: { show: true, color: s.labelColor ?? semantic.surface, fontWeight: 600, fontSize: 12, formatter: (p: { value: number }) => (p.value >= 0.06 ? pct(p.value) : "") },
       data: s.values,
       emphasis: { focus: "series" },
     })),
@@ -41,12 +41,12 @@ export function hbars({ items, max, unit = "Index points" }: { items: { name: st
     grid: { left: 8, right: 44, top: 4, bottom: 4, containLabel: true },
     tooltip: { trigger: "item", formatter: (p: { dataIndex: number }) => tip({ title: sorted[p.dataIndex].name, rows: [{ label: unit, value: sorted[p.dataIndex].value.toFixed(1), color: sorted[p.dataIndex].color }] }) },
     xAxis: { type: "value", max, show: false },
-    yAxis: { type: "category", data: sorted.map((d) => d.name), axisLine: { show: false }, axisLabel: { color: brand.ink, fontSize: 13 } },
+    yAxis: { type: "category", data: sorted.map((d) => d.name), axisLine: { show: false }, axisLabel: { color: semantic.textSecondary, fontSize: 13 } },
     series: [{
       type: "bar", barWidth: 14,
-      showBackground: true, backgroundStyle: { color: background.subtle, borderRadius: [0, 3, 3, 0] },
+      showBackground: true, backgroundStyle: { color: semantic.surfaceSoft, borderRadius: [0, 3, 3, 0] },
       data: sorted.map((d) => ({ value: d.value, itemStyle: { color: d.color, borderRadius: [0, 3, 3, 0] } })),
-      label: { show: true, position: "right", color: brand.navyInk, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) },
+      label: { show: true, position: "right", color: semantic.textPrimary, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) },
       animationDurationUpdate: 250,
     }],
   };
@@ -56,11 +56,11 @@ export function hbars({ items, max, unit = "Index points" }: { items: { name: st
 export function monthBars({ months, values, color, unit }: { months: string[]; values: number[]; color: string; unit: string }): Option {
   return {
     grid: { left: 36, right: 8, top: 24, bottom: 24 },
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: brand.hoverFill } },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: semantic.hoverFill } },
       formatter: (ps: { dataIndex: number }[]) => tip({ title: months[ps[0].dataIndex], rows: [{ label: unit, value: values[ps[0].dataIndex].toFixed(1), color }] }) },
-    xAxis: { type: "category", data: months, axisLabel: { color: brand.ink } },
+    xAxis: { type: "category", data: months, axisLabel: { color: semantic.textSecondary } },
     yAxis: { type: "value", min: 0, splitNumber: 3 },
     series: [{ type: "bar", data: values, barWidth: "48%", itemStyle: { color, borderRadius: [3, 3, 0, 0] },
-      label: { show: true, position: "top", color: brand.navyInk, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) } }],
+      label: { show: true, position: "top", color: semantic.textPrimary, fontWeight: 600, formatter: (p: { value: number }) => p.value.toFixed(1) } }],
   };
 }

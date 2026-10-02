@@ -12,13 +12,13 @@ import { Badge, KpiTile, Loading, Page, PeriodEvidence } from "../components/ui"
 import { evidence, healthIndex, labels, nav, periods as t, severityName, systemName } from "../copy";
 import { useData, type Family, type Period, type Severity } from "../data";
 import { fmtDateTime, fmtDuration, fmtPct, fmtSigned, fmtStamp, toMs } from "../lib/format";
-import { brand, chart, severityColor, systemColor } from "../theme";
+import { chart, semantic, severityColor, systemColor } from "../theme";
 
 const FAMILIES: Family[] = ["EFFICIENCY", "COMBUSTION", "THERMAL", "DRAFT_PRESSURE", "STABILITY"];
 const SEVERITIES: Severity[] = ["HIGH", "MODERATE", "LOW"];
 const monthName = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "long", year: "numeric" });
 
-/** The vertical timeline: navy base, blue markers, amber only for high severity. Each item is a link to its evidence drawer. */
+/** The vertical timeline: Brunswick base, Emerald markers, orange only for high severity. Each item is a link to its evidence drawer. */
 function Timeline({ periods, openId }: { periods: Period[]; openId?: string }) {
   const groups = useMemo(() => {
     const out: { month: string; items: Period[] }[] = [];
@@ -34,23 +34,23 @@ function Timeline({ periods, openId }: { periods: Period[]; openId?: string }) {
       <p className="eyebrow-dark">{t.indexTitle}</p>
       <h2 id="timeline" className="mt-1 text-section font-semibold">{t.timelineTitle}</h2>
       <p className="mt-1 text-label text-mist">{t.indexSub}</p>
-      <p className="mt-1 flex items-center gap-1.5 text-caption text-haze"><span aria-hidden className="h-2 w-2 rounded-full bg-dalmia-orange" />{t.timelineNote}</p>
+      <p className="mt-1 flex items-center gap-1.5 text-caption text-sage"><span aria-hidden className="h-2 w-2 rounded-full bg-dalmia-orange" />{t.timelineNote}</p>
       <div className="mt-5 flex flex-col gap-6">
         {groups.map((g) => (
           <div key={g.month}>
-            <h3 className="font-mono !text-eyebrow font-medium uppercase !text-haze">{g.month}</h3>
-            <ol className="relative ml-[7px] mt-3 border-l border-steel">
+            <h3 className="font-mono !text-eyebrow font-medium uppercase !text-sage">{g.month}</h3>
+            <ol className="relative ml-[7px] mt-3 border-l border-moss">
               {g.items.map((p) => {
                 const high = p.severity === "HIGH";
                 const open = p.id === openId;
                 return (
                   <li key={p.id} className="relative pb-3 pl-5 last:pb-0">
-                    <span aria-hidden className={`absolute -left-[7px] top-4 h-3.5 w-3.5 rounded-full border-2 border-midnight ${high ? "bg-dalmia-orange" : "bg-sky"} ${open ? "ring-2 ring-white" : ""}`} />
+                    <span aria-hidden className={`absolute -left-[7px] top-4 h-3.5 w-3.5 rounded-full border-2 border-brunswick ${high ? "bg-dalmia-orange" : "bg-emerald"} ${open ? "ring-2 ring-white" : ""}`} />
                     <Link to={`/periods/${p.id}`} aria-current={open ? "page" : undefined}
                       className={`block rounded-panel px-3 py-2.5 transition-colors duration-fast hover:bg-white/[0.07] ${open ? "bg-white/[0.09]" : ""}`}>
                       <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                         <span className="text-card font-semibold text-white">{t.label(p.n)}</span>
-                        <span className="num font-mono text-caption text-haze">{fmtStamp(p.onset)}</span>
+                        <span className="num font-mono text-caption text-sage">{fmtStamp(p.onset)}</span>
                       </span>
                       <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-label text-mist">
                         <span className={high ? "font-semibold text-dalmia-orange" : ""}>{severityName[p.severity]} {labels.severity.toLowerCase()}</span>
@@ -58,7 +58,7 @@ function Timeline({ periods, openId }: { periods: Period[]; openId?: string }) {
                         <span className="num">{fmtDuration(p.durationMin)}</span>
                         <span className="num">{t.systemsCount(p.systems.length)}</span>
                       </span>
-                      <span className="mt-1 block text-caption text-haze">{evidence.kpiDerived} · {evidence.notValidated}</span>
+                      <span className="mt-1 block text-caption text-sage">{evidence.kpiDerived} · {evidence.notValidated}</span>
                     </Link>
                   </li>
                 );
@@ -98,7 +98,7 @@ export default function Periods() {
   const heatOption = useMemo(() => d && heatmap({
     x: FAMILIES.map((f) => systemName[f]), y: d.periods.map((p) => t.label(p.n)), leftWidth: 72,
     cells: d.periods.flatMap((p, row) => FAMILIES.map((f, col) => [col, row, p.deviation[f]] as [number, number, number])),
-    max: 3, ramp: [brand.heatLow, brand.navyInk], format: (v) => v.toFixed(1), valueLabel: t.matrixLabel,
+    max: 3, ramp: [semantic.heatLow, semantic.textPrimary], format: (v) => v.toFixed(1), valueLabel: t.matrixLabel,
   }), [d]);
 
   const onBar = useMemo(() => ({ click: (e: { data?: { id?: string } }) => { if (e.data?.id) navigate(`/periods/${e.data.id}`); } }), [navigate]);
@@ -160,7 +160,7 @@ function PeriodDrawer({ p, edges, onClose }: { p: Period; edges: { watch: number
   ];
   return (
     <Drawer title={t.label(p.n)} eyebrow={t.drawer.eyebrow(fmtStamp(p.onset))} onClose={onClose}
-      meta={<><Badge tone="navy">{severityName[p.severity]} {labels.severity.toLowerCase()}</Badge><PeriodEvidence /></>}>
+      meta={<><Badge tone="brand">{severityName[p.severity]} {labels.severity.toLowerCase()}</Badge><PeriodEvidence /></>}>
       <DrawerSection title={t.drawer.factsTitle}><Facts rows={facts} /></DrawerSection>
       <DrawerSection title={t.drawer.changedTitle}><Facts rows={changed} /></DrawerSection>
       <DrawerSection title={t.drawer.evidenceTitle} sub={t.drawer.evidenceSub}>
@@ -170,7 +170,7 @@ function PeriodDrawer({ p, edges, onClose }: { p: Period; edges: { watch: number
         <Chart option={context} height={190} label={t.drawer.chart} />
       </DrawerSection>
       <div className="flex flex-col gap-3 border-t border-line pt-5">
-        <Link to={`/console?t=${encodeURIComponent(p.onset)}`} className="btn-navy self-start"><Play size={16} aria-hidden /> {t.drawer.replay}</Link>
+        <Link to={`/console?t=${encodeURIComponent(p.onset)}`} className="btn-brand self-start"><Play size={16} aria-hidden /> {t.drawer.replay}</Link>
         <p className="text-caption text-ink-muted">{t.subtitle}</p>
       </div>
     </Drawer>

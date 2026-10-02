@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2, CircleDashed, Sparkles } from "lucide-react";
 import { ProcessLines } from "../components/Brand";
 import { CountUp, HeroBand, InsightCard, KpiTile, Loading, NumberDot, SectionHeader, Stepper } from "../components/ui";
-import { ask, brandLine, context, labels, summary as t } from "../copy";
+import { ask, labels, summary as t } from "../copy";
 import { useData } from "../data";
 import { fmt1, fmtMonth, fmtPct } from "../lib/format";
 import { issueColor, status } from "../theme";
 
 const objectiveStyle = {
   delivered: { icon: CheckCircle2, className: "text-normal-ink" },
-  signals: { icon: Sparkles, className: "text-navy" },
+  signals: { icon: Sparkles, className: "text-brunswick" },
   next: { icon: CircleDashed, className: "text-ink-muted" },
 };
 
@@ -29,12 +29,15 @@ export default function ExecSummary() {
       {/* Level 1: brand → product → context → insight. The flagship hero. */}
       <section className="atmosphere" aria-labelledby="hero">
         <ProcessLines />
-        <div className="mx-auto grid max-w-page gap-10 px-4 pb-20 pt-10 sm:px-8 lg:grid-cols-[1.3fr_1fr] lg:items-center lg:pb-24 lg:pt-12">
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-rule opacity-70" />
+        <div className="mx-auto grid max-w-page gap-10 px-4 pb-20 pt-10 sm:px-8 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:pb-20 lg:pt-8">
           <div>
-            <p className="eyebrow-dark">{brandLine.product} · {context.plantShort}</p>
-            <h1 id="hero" className="mt-4 max-w-2xl text-display font-semibold text-white sm:text-hero">{t.heroTitle}</h1>
+            <p className="eyebrow-dark">{t.heroEyebrow}</p>
+            <h1 id="hero" className="mt-4 text-[44px] font-semibold uppercase leading-[0.98] tracking-[-0.04em] text-white sm:text-[58px] lg:text-masthead">{t.heroName}</h1>
+            <span aria-hidden className="mt-5 block h-px w-28 bg-rule" />
+            <p className="mt-5 max-w-xl text-[17px] leading-7 text-mist">{t.heroLead}</p>
             <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-eyebrow uppercase text-mist">
-              <span className="rounded-full border border-sky/40 px-3 py-1 font-medium text-sky-soft">{t.heroPeriod}</span>
+              <span className="rounded-full border border-emerald/40 px-3 py-1 font-medium text-emerald">{t.heroPeriod}</span>
               <span>{t.eyebrow}</span>
             </p>
             <p className="mt-4 max-w-xl text-label text-mist">{t.heroSub(`${(s.rows / 1e6).toFixed(2)} million`)}</p>
@@ -48,11 +51,11 @@ export default function ExecSummary() {
             <p className="mt-3 text-lead font-semibold text-white">{t.core.lead}</p>
             <div className="mt-3 flex items-end gap-4 text-white num">
               <div><div className="text-numeral font-semibold">{fmtPct(zJun.warning)}</div><div className="mt-1 font-mono text-eyebrow uppercase text-mist">{t.core.from}</div></div>
-              <span aria-hidden className="pb-6 text-title text-sky">→</span><span className="sr-only"> to </span>
-              <div><div className="text-numeral font-semibold text-sky-soft">{fmtPct(zAug.warning)}</div><div className="mt-1 font-mono text-eyebrow uppercase text-mist">{t.core.to}</div></div>
+              <span aria-hidden className="pb-6 text-title text-emerald">→</span><span className="sr-only"> to </span>
+              <div><div className="text-numeral font-semibold text-emerald">{fmtPct(zAug.warning)}</div><div className="mt-1 font-mono text-eyebrow uppercase text-mist">{t.core.to}</div></div>
             </div>
             <p className="mt-4 text-label text-mist">{t.core.sub}</p>
-            <p className="mt-4 border-t border-haze/20 pt-4 text-caption text-mist">{t.core.foot(s.periods.total)}</p>
+            <p className="mt-4 border-t border-sage/20 pt-4 text-caption text-mist">{t.core.foot(s.periods.total)}</p>
           </section>
         </div>
       </section>
@@ -60,12 +63,12 @@ export default function ExecSummary() {
       <div className="mx-auto flex w-full max-w-page flex-col gap-10 px-4 pb-8 sm:px-8">
         {/* Level 2: the evidence, rising out of the hero */}
         <section className="relative -mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label={labels.headline}>
-          <KpiTile label={t.kpis.rows.label} value={<CountUp to={s.rows / 1e6} format={(n) => n.toFixed(2)} />} unit="M" sub={t.kpis.rows.sub(s.tags)} evidence={t.evidence.rows} />
-          <KpiTile label={t.kpis.periods.label} value={<CountUp to={s.periods.total} />} sub={t.kpis.periods.sub(s.periods.high)} evidence={t.evidence.periods}
-            micro={<div className="flex gap-[3px]">{Array.from({ length: s.periods.total }, (_, i) => <span key={i} className={`h-5 w-1 rounded-full ${i < s.periods.high ? "bg-navy-ink" : "bg-navy-line"}`} />)}</div>} />
-          <KpiTile label={t.kpis.eff.label} value={<span className="whitespace-nowrap text-title">{fmt1(jun.median)}<span className="mx-1.5 text-ink-faint" aria-hidden>→</span><span className="sr-only"> to </span>{fmt1(aug.median)}</span>} sub={t.kpis.eff.sub} evidence={t.evidence.eff}
-            micro={<div className="flex h-8 items-end gap-1">{medians.map((m, i) => <span key={i} className={`w-2 rounded-t-sm ${i === medians.length - 1 ? "bg-navy-ink" : "bg-indigo/60"}`} style={{ height: `${Math.max(12, (m / Math.max(...medians)) * 100)}%` }} />)}</div>} />
-          <KpiTile label={t.kpis.issues.label} value={<CountUp to={s.issuesTotal} />} sub={t.kpis.issues.sub(s.issues)} evidence={t.evidence.issues}
+          <KpiTile category={t.kpis.rows.category} label={t.kpis.rows.label} value={<CountUp to={s.rows / 1e6} format={(n) => n.toFixed(2)} />} unit="M" sub={t.kpis.rows.sub(s.tags)} evidence={t.evidence.rows} />
+          <KpiTile category={t.kpis.periods.category} label={t.kpis.periods.label} value={<CountUp to={s.periods.total} />} sub={t.kpis.periods.sub(s.periods.high)} evidence={t.evidence.periods}
+            micro={<div className="flex gap-[3px]">{Array.from({ length: s.periods.total }, (_, i) => <span key={i} className={`h-5 w-1 rounded-full ${i < s.periods.high ? "bg-ink" : "bg-sage/50"}`} />)}</div>} />
+          <KpiTile category={t.kpis.eff.category} label={t.kpis.eff.label} value={<span className="whitespace-nowrap text-[26px]">{fmt1(jun.median)}<span className="mx-1.5 text-ink-faint" aria-hidden>→</span><span className="sr-only"> to </span>{fmt1(aug.median)}</span>} sub={t.kpis.eff.sub} evidence={t.evidence.eff}
+            micro={<div className="flex h-8 items-end gap-1">{medians.map((m, i) => <span key={i} className={`w-2 rounded-t-sm ${i === medians.length - 1 ? "bg-ink" : "bg-eucalyptus/60"}`} style={{ height: `${Math.max(12, (m / Math.max(...medians)) * 100)}%` }} />)}</div>} />
+          <KpiTile category={t.kpis.issues.category} label={t.kpis.issues.label} value={<CountUp to={s.issuesTotal} />} sub={t.kpis.issues.sub(s.issues)} evidence={t.evidence.issues}
             micro={<div className="flex h-1.5 w-16 overflow-hidden rounded-full">{ISSUE_ORDER.map((k) => <span key={k} style={{ width: `${(s.issues[k] / s.issuesTotal) * 100}%`, background: issueColor[k] }} />)}</div>} />
         </section>
 
@@ -87,19 +90,19 @@ export default function ExecSummary() {
             <InsightCard title={t.findings.multi.title(s.periods.multiSystem, s.periods.total)} body={t.findings.multi.body} to="/periods" link={t.findings.multi.link}>
               <div className="grid grid-cols-6 gap-1.5" aria-hidden>
                 {Array.from({ length: s.periods.total }, (_, i) => (
-                  <div key={i} className={`h-7 rounded-sm ${i < s.periods.multiSystem ? "bg-navy" : "bg-navy-line"}`} />
+                  <div key={i} className={`h-7 rounded-sm ${i < s.periods.multiSystem ? "bg-brunswick" : "bg-sage/50"}`} />
                 ))}
               </div>
               <p className="flex flex-wrap gap-x-3 text-caption text-ink-muted">
-                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-navy align-middle" aria-hidden />{t.findings.multiLegend.many}</span>
-                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-navy-line align-middle" aria-hidden />{t.findings.multiLegend.one}</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-brunswick align-middle" aria-hidden />{t.findings.multiLegend.many}</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-sage/50 align-middle" aria-hidden />{t.findings.multiLegend.one}</span>
               </p>
             </InsightCard>
             <InsightCard title={t.findings.fuel.title(afr.coalStepTph)} body={t.findings.fuel.body} to="/alternative-fuel" link={t.findings.fuel.link}>
               <div className="flex flex-wrap items-center gap-2 text-label font-semibold" aria-hidden>
-                <span className="rounded-panel bg-navy-tint px-3 py-2 text-navy-ink">{t.findings.fuelFrom}</span>
+                <span className="rounded-panel bg-polar px-3 py-2 text-ink">{t.findings.fuelFrom}</span>
                 <ArrowRight size={16} className="text-ink-faint" />
-                <span className="rounded-panel bg-navy px-3 py-2 text-white">{t.findings.fuelTo(afr.coalStepTph)}</span>
+                <span className="rounded-panel bg-brunswick px-3 py-2 text-white">{t.findings.fuelTo(afr.coalStepTph)}</span>
               </div>
               <p className="text-caption text-ink-muted">{t.findings.fuelAfter}</p>
             </InsightCard>
@@ -122,7 +125,7 @@ export default function ExecSummary() {
                   <NumberDot n={i + 1} tone="tint" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                      <span className="text-label font-semibold text-navy-ink">{o.name}</span>
+                      <span className="text-label font-semibold text-ink">{o.name}</span>
                       <span className={`inline-flex items-center gap-1 text-caption font-semibold ${st.className}`}><st.icon size={13} aria-hidden />{t.objectiveStatus[o.status]}</span>
                     </div>
                     <p className="mt-0.5 text-label text-ink-muted">{o.note}</p>
@@ -144,7 +147,7 @@ export default function ExecSummary() {
             <ol className="grid gap-3 sm:grid-cols-2">
               {ask.items.map((a, i) => (
                 <li key={a} className="surface-glass flex items-start gap-2.5 p-4 text-label text-white/90">
-                  <NumberDot n={i + 1} tone="sky" />{a}
+                  <NumberDot n={i + 1} tone="emerald" />{a}
                 </li>
               ))}
             </ol>
